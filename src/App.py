@@ -40,10 +40,6 @@ class App:
 
                     if event.key == pygame.K_f:
                         self.screen.fill((255, 255, 255))
-                        if chosen_player.count_mail == self.required_mail:
-                            game_over = True
-                            img = self.font1.render(f"Player {Robot.colors_map[chosen_player.color]} win", True, Cell.colors[chosen_player.color])
-                            self.screen.blit(img, (9*DEFAULT_IMAGE_SIZE[0]+(18*DEFAULT_IMAGE_SIZE[0]-img.get_width())/2, 0))
                         if not any([robot.pos.color == "b" and robot.battery == MAXIMUM_ROBOT_BATTERY and robot.allowed_step_per_turn != 0 for robot in chosen_player.robots]):        
                             #change player: next player turn
                             chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
@@ -98,6 +94,11 @@ class App:
                                 if blue_cell.robot:
                                     if blue_cell.robot is not chosen_player.chosen_robot:
                                         blue_cell.robot.charge() 
+
+            if chosen_player.count_mail == self.required_mail:
+                game_over = True
+                img = self.font1.render(f"Player {Robot.colors_map[chosen_player.color]} win", True, Cell.colors[chosen_player.color])
+                self.screen.blit(img, (9*DEFAULT_IMAGE_SIZE[0]+(18*DEFAULT_IMAGE_SIZE[0]-img.get_width())/2, 0))
 
             for i in range(self.board.size):
                 for j in range(self.board.size):
