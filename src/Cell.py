@@ -12,8 +12,8 @@ class Cell:
     def __init__(self, y, x, color='w', target=0, robot=None, *,
                  front=None, back=None, left=None, right=None ) -> None:
         
-        self.x = x
-        self.y = y
+        self.__x = x
+        self.__y = y
         self.color = color
         self.target = target
         self.robot = robot
@@ -26,6 +26,34 @@ class Cell:
         if self.target:
             target_font = pygame.font.SysFont(None, 64)
             self.img = target_font.render(str(self.target), True, (0,0,0))
+
+    def __repr__(self) -> str:
+        return f'Cell({self.x}, {self.y})'
+    
+    #equal and hash dunder method for using a Cell as dictionary's key
+    def __eq__(self, cell):
+        if isinstance(cell, Cell):
+            return self.x == cell.x and self.y == cell.y 
+        return NotImplemented
+
+    def __hash__(self):
+        return hash((self.x, self.y))    
+
+    @property
+    def x(self):
+        return self.__x
+    
+    @x.setter
+    def x(self, x):
+        raise ValueError('Don\'t change x')    
+    
+    @property
+    def y(self):
+        return self.__y
+    
+    @y.setter
+    def y(self, y):
+        raise ValueError('Don\'t change y')    
 
     @property
     def adj(self):

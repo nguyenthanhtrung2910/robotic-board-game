@@ -11,6 +11,12 @@ class Board:
         self.blue_cells = self.__get_cells_by_color('b')
         self.white_cells = self.__get_cells_by_color('w')
 
+        self.distances_matrix = {self[i][j] : self.bfs_shortest_path_from_vertex(self[i][j])  for j in range(self.size) for i in range(self.size)}
+
+    # allow us iterate through cells of boards               
+    def __getitem__(self, index):
+        return self.cells[index]
+
     def __get_cells_by_color(self, color):
         return [cell for row_cell in self.cells for cell in row_cell if cell.color == color]
     
@@ -41,7 +47,30 @@ class Board:
                 if ((i+1)<len(self.cells[i])): self.cells[i][j].back = self.cells[i+1][j]
                 if ((j+1)<len(self.cells[i])): self.cells[i][j].right = self.cells[i][j+1]
                 if ((j-1)>=0): self.cells[i][j].left = self.cells[i][j-1]
-                
-    # allow us iterate through cells of boards               
-    def __getitem__(self, index):
-        return self.cells[index]
+
+    def bfs_shortest_path_from_vertex(self, start):
+        # Create a queue and add the starting vertex to it
+        queue = [start]
+        graph = [self[i][j] for j in range(self.size) for i in range(self.size)]
+        # Create an array to keep track of the distances from the starting vertex to all other vertices
+        distances = {cell: float('inf') for cell in graph}
+        distances[start] = 0
+        
+        # Create a set to keep track of visited vertices
+        visited = set()
+        
+        # Perform BFS
+        while queue:
+            # Dequeue the next vertex
+            vertex = queue.pop(0)
+            visited.add(vertex)
+            
+            # Update the distances of neighbors
+            for neighbor in vertex.adj:
+                if neighbor not in visited:
+                    distances[neighbor] = distances[vertex] + 1
+                    queue.append(neighbor)
+	
+        return distances      
+
+
