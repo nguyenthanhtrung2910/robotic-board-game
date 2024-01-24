@@ -94,9 +94,13 @@ class Robot:
         return False
 
     def charge(self):
-        self.battery += 3
+        self.battery += BATERRY_UP_PER_STEP
         if self.battery > MAXIMUM_ROBOT_BATTERY:
             self.battery = MAXIMUM_ROBOT_BATTERY
+    
+    @property
+    def is_charged(self):
+        return self.pos.color == 'b'
 
     def set_image(self):
         if self.color == 'b':
@@ -114,4 +118,16 @@ class Robot:
     def set_number_image(self):
         robot_number_font = pygame.font.SysFont(None, 16)
         self.number_img = robot_number_font.render(str(self.index), True, (0,0,0))
+
+    def set_destination(self, board):
+        if self.battery <= 22:
+            self.dest = min(board.blue_cells, key=lambda blue_cell : len(board.a_star_search(self.pos, blue_cell)))
+        else:
+            if self.mail:
+                for yellow_cell in board.yellow_cells:
+                    if yellow_cell.target == self.mail: 
+                        self.dest = yellow_cell
+                        break
+            else:
+                self.dest = min(board.green_cells, key=lambda green_cell : len(board.a_star_search(self.pos, green_cell)))
     

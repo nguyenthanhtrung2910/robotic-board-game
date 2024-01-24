@@ -7,16 +7,14 @@
 ``--targte_map``: path for csv target map file. <br/>
 ``--required_mail``: number requried mails in order to win, it shouldn't more than 5.<br/> 
 ``--number_robot_per_player``: number robots for each player. <br/>
-``--player1_color``: first player's color. <br/>
-``--player2_color``: second player's color. <br/>
-``--player3_color``: third player's color. <br/>
-``--player4_color``: fourth player's color. <br/>
-``--player5_color``: fiveth player's color. <br/>
+``--player{number player}_color``: player's color. <br/>
+``--player{number player}_type``: player's type. It can be ``'computer'`` or ``'player'``.<br/>
 Allowed player's colors: ``r`` : red, ``b`` :blue, ``gr`` :green, ``y`` :yellow, ``w`` : white.<br/>
+
 Game can have less than 5 players.
 ### Example:
 ```
-python main.py --color_map csv_files/colors_map.csv --target_map csv_files/targets_map.csv --required_mail 1 --number_robot_per_player 3 --player1_color r --player2_color gr
+python main.py --color_map csv_files/colors_map.csv --target_map csv_files/targets_map.csv --required_mail 100 --number_robot_per_player 3 --player1_color b --player1_type computer --player2_color gr --player2_type computer
 
 ```
 ## Buttons detail:
@@ -31,3 +29,9 @@ When all your robots have done their moves, keyboard is blocked. You must press 
 
 Game's process is writen in file ``events.log``. 
 
+## About Computer Algorithm:
+Our board changes every step so we need search shortest path to destination for each robot every movement.<br/>
+I use A* algorithm for shortest path searching.<br/>
+When robot reach its destination,it changes its destination to new destination. <br/>
+Robot need to charge if its baterry less than 25 and get ready to go if its battery more than 50. <br/>
+But sometimes when too many robots are going to baterry station, they may get stuck. So I consider put baterry stations in center of board. <br/>

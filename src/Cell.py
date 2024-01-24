@@ -38,6 +38,12 @@ class Cell:
 
     def __hash__(self):
         return hash((self.x, self.y))    
+    
+    #less than dunder method for puttting a Cell in priority queue
+    def __lt__(self, cell):
+        if isinstance(cell, Cell):
+            return True
+        return NotImplemented
 
     @property
     def x(self):
@@ -56,8 +62,12 @@ class Cell:
         raise ValueError('Don\'t change y')    
 
     @property
-    def adj(self):
+    def neighbors(self):
         return [cell for cell in [self.front, self.back, self.left, self.right] if cell]
+    
+    @property
+    def priority(self):
+        return sum([cell.robot != None for cell in self.neighbors])
 
     def display(self, screen):
         pygame.draw.rect(screen, self.colors[self.color], ((self.x+1)*DEFAULT_IMAGE_SIZE[0], 

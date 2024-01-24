@@ -1,7 +1,7 @@
 from src.Robot import Robot
 
 class Player:
-    def __init__(self, robot_cells_init, color) -> None:
+    def __init__(self, robot_cells_init, color, board) -> None:
         self.robots = [Robot(robot_cells_init[i], i+1, color) for i in range(len(robot_cells_init))]
         self.number_robot = len(self.robots)
         self.color = color

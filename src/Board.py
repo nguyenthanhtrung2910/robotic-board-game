@@ -1,5 +1,10 @@
 import csv
+import queue
 from src.Cell import Cell
+
+def heuristic(a: Cell, b: Cell) -> float:
+    return abs(a.x - b.x) + abs(a.y - b.y)
+
 class Board:
     def __init__(self, colors_map, targets_map) -> None:
         self.__load_from_file(colors_map, targets_map)
@@ -10,8 +15,6 @@ class Board:
         self.green_cells = self.__get_cells_by_color('gr')
         self.blue_cells = self.__get_cells_by_color('b')
         self.white_cells = self.__get_cells_by_color('w')
-
-        self.distances_matrix = {self[i][j] : self.bfs_shortest_path_from_vertex(self[i][j])  for j in range(self.size) for i in range(self.size)}
 
     # allow us iterate through cells of boards               
     def __getitem__(self, index):
@@ -48,29 +51,43 @@ class Board:
                 if ((j+1)<len(self.cells[i])): self.cells[i][j].right = self.cells[i][j+1]
                 if ((j-1)>=0): self.cells[i][j].left = self.cells[i][j-1]
 
-    def bfs_shortest_path_from_vertex(self, start):
-        # Create a queue and add the starting vertex to it
-        queue = [start]
-        graph = [self[i][j] for j in range(self.size) for i in range(self.size)]
-        # Create an array to keep track of the distances from the starting vertex to all other vertices
-        distances = {cell: float('inf') for cell in graph}
-        distances[start] = 0
+    @property
+    def cannot_step(self):
+        return [cell for cells in self for cell in cells if (cell.robot or cell.color == 'r' or cell.color == 'y')] 
+    
+    def a_star_search(self, start, goal):
+        open_set = queue.PriorityQueue()
+        open_set.put((0, start))
         
-        # Create a set to keep track of visited vertices
-        visited = set()
-        
-        # Perform BFS
-        while queue:
-            # Dequeue the next vertex
-            vertex = queue.pop(0)
-            visited.add(vertex)
+        came_from = {}
+        cost_so_far = {}
+        came_from[start] = None
+        cost_so_far[start] = 0
+
+        i=0
+        while not open_set.empty():
+            current = open_set.get()[1]
             
-            # Update the distances of neighbors
-            for neighbor in vertex.adj:
-                if neighbor not in visited:
-                    distances[neighbor] = distances[vertex] + 1
-                    queue.append(neighbor)
-	
-        return distances      
+            if current == goal:
+                path = []
+                while current != start:
+                    path.append(current)
+                    current = came_from[current]
+                path.reverse() 
+                return path
+            
+            neighbors = current.neighbors
+            #Reverse neighbors list if i is odd, change order putting cell to queue
+            #According to that, we don't get cell from queue over one row or column and search over diagonal
+            if i%2 == 1 : neighbors.reverse()      
+            for next in neighbors:
+                new_cost = cost_so_far[current] + 1
+                if (next not in cost_so_far or new_cost < cost_so_far[next]) and (next not in self.cannot_step or next == start or next == goal):
+                    cost_so_far[next] = new_cost
+                    priority = new_cost + heuristic(next, goal)
+                    open_set.put((priority, next))
+                    came_from[next] = current
+            i += 1
+        return []
 
-
+    

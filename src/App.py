@@ -1,18 +1,19 @@
 import random
 import pygame
+import src
 from src.Cell import Cell
 from src.Board import Board
 from src.Robot import Robot
 from src.Player import Player
+from src.Computer import Computer
 from src.consts import *
 pygame.init()
 class App:
 
     font1 = pygame.font.SysFont(None, 64)
-    font2 = pygame.font.SysFont(None, 24)
     images_for_cell_coordinate =[pygame.font.SysFont(None, 48).render(str(i), True,(0,0,0)) for i in range(9)]
 
-    def __init__(self, colors_map, targets_map, required_mail, number_robot_per_player, player_colors) -> None:
+    def __init__(self, colors_map, targets_map, required_mail, number_robot_per_player, player_types, player_colors) -> None:
 
         self.screen = pygame.display.set_mode((DEFAULT_IMAGE_SIZE[0]*28, DEFAULT_IMAGE_SIZE[1]*11)) 
         pygame.display.set_caption('Robotics Board Game') 
@@ -24,14 +25,17 @@ class App:
         self.number_players = len(player_colors)
 
         robot_cells_init = random.sample(self.board.white_cells, k = self.number_robot_per_player*len(player_colors))
-        self.players = [Player(robot_cells_init[self.number_robot_per_player*i:self.number_robot_per_player*i+self.number_robot_per_player], player_color) 
-                        for i, player_color in enumerate(player_colors)]
+        self.players = []
+        for i, (player_type, player_color) in enumerate(zip(player_types,player_colors)):
+            self.players.append(getattr(src, player_type.capitalize())(robot_cells_init[self.number_robot_per_player*i:self.number_robot_per_player*i+self.number_robot_per_player], 
+                                                                       player_color, self.board))
 
     def run(self):
         self.screen.fill((255, 255, 255))
         chosen_player = self.players[0]
         game_over = False
-        while self.running:  
+        while self.running:
+
             for event in pygame.event.get(): 
                 if event.type == pygame.QUIT: 
                     self.running = False
@@ -39,18 +43,9 @@ class App:
                 if event.type == pygame.KEYDOWN and not game_over:
 
                     if event.key == pygame.K_f:
-                        self.screen.fill((255, 255, 255))
-                        if not any([robot.pos.color == "b" and robot.battery == MAXIMUM_ROBOT_BATTERY and robot.allowed_step_per_turn != 0 for robot in chosen_player.robots]):        
-                            #change player: next player turn
-                            chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
-                            for robot in chosen_player.robots:
-                                robot.allowed_step_per_turn = 1
-                        else:
-                            img = self.font2.render("You can't skip your turn if you haven't moved all fully charged robot from blue cell", True,(0,0,0))
-                            self.screen.blit(img, (9*DEFAULT_IMAGE_SIZE[0]+(18*DEFAULT_IMAGE_SIZE[0]-img.get_width())/2, 7*DEFAULT_IMAGE_SIZE[0]))
-
-                    #it doesn't do anything if chosen_player is a Player
-                    chosen_player.move(self.board)
+                        chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
+                        for robot in chosen_player.robots:
+                            robot.allowed_step_per_turn = 1
 
                     if event.key == pygame.K_1 and self.number_robot_per_player >= 1:
                         chosen_player.chosen_robot = chosen_player.robots[0]
@@ -94,6 +89,8 @@ class App:
                                 if blue_cell.robot:
                                     if blue_cell.robot is not chosen_player.chosen_robot:
                                         blue_cell.robot.charge() 
+            
+            if not game_over: chosen_player.move(self.board)
 
             if chosen_player.count_mail == self.required_mail:
                 game_over = True
@@ -131,4 +128,11 @@ class App:
                                                     DEFAULT_IMAGE_SIZE[0], 
                                                     DEFAULT_IMAGE_SIZE[1]), 2) 
             pygame.display.update()
+
+            if not game_over and type(chosen_player) != Player:
+                pygame.time.wait(DELAY_STEP)
+                chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
+                for robot in chosen_player.robots:
+                    robot.allowed_step_per_turn = 1
+
         
