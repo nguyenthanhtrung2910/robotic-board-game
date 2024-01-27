@@ -8,6 +8,7 @@ class Computer:
         self.number_robot = len(self.robots)
         self.color = color
         self.chosen_robot = self.robots[0]
+        self.frame_count = 0
 
     @property
     def count_mail(self):
@@ -41,5 +42,10 @@ class Computer:
                                 blue_cell.robot.charge()       
 
     def move(self, board):
-        for robot in self.robots:
-            self.move_robot(robot, board)
+        if self.frame_count == self.number_robot*10:
+            self.frame_count = 0
+        if self.frame_count % 10 == 0:
+            self.chosen_robot = self.robots[int(self.frame_count/10)]
+        if self.frame_count % 10 == 5:
+            self.move_robot(self.chosen_robot, board)
+        self.frame_count += 1

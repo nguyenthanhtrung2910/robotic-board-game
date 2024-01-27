@@ -32,6 +32,7 @@ class App:
 
     def run(self):
         self.screen.fill((255, 255, 255))
+        clock = pygame.time.Clock()
         chosen_player = self.players[0]
         game_over = False
         while self.running:
@@ -89,8 +90,14 @@ class App:
                                 if blue_cell.robot:
                                     if blue_cell.robot is not chosen_player.chosen_robot:
                                         blue_cell.robot.charge() 
-            
+
             if not game_over: chosen_player.move(self.board)
+
+            if not game_over and type(chosen_player) != Player:
+                if chosen_player.frame_count == self.number_robot_per_player*10:
+                    chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
+                    for robot in chosen_player.robots:
+                        robot.allowed_step_per_turn = 1
 
             if chosen_player.count_mail == self.required_mail:
                 game_over = True
@@ -128,11 +135,6 @@ class App:
                                                     DEFAULT_IMAGE_SIZE[0], 
                                                     DEFAULT_IMAGE_SIZE[1]), 2) 
             pygame.display.update()
-
-            if not game_over and type(chosen_player) != Player:
-                pygame.time.wait(DELAY_STEP)
-                chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
-                for robot in chosen_player.robots:
-                    robot.allowed_step_per_turn = 1
+            clock.tick(1000)
 
         
