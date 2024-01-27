@@ -1,4 +1,5 @@
 from src.Robot import Robot
+from src.consts import *
 import logging as log
 class Computer:
     def __init__(self, robot_cells_init, color, board) -> None:
@@ -42,10 +43,10 @@ class Computer:
                                 blue_cell.robot.charge()       
 
     def move(self, board):
-        if self.frame_count == self.number_robot*10:
+        if self.frame_count == self.number_robot*FRAME_PER_MOVE:
             self.frame_count = 0
-        if self.frame_count % 10 == 0:
+        if self.frame_count % FRAME_PER_MOVE == 0:
             self.chosen_robot = self.robots[int(self.frame_count/10)]
-        if self.frame_count % 10 == 5:
+        if self.frame_count % FRAME_PER_MOVE == int(FRAME_PER_MOVE/2):
             self.move_robot(self.chosen_robot, board)
         self.frame_count += 1
