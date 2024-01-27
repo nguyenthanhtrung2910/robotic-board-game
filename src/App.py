@@ -94,7 +94,7 @@ class App:
             if not game_over: chosen_player.move(self.board)
 
             if not game_over and type(chosen_player) != Player:
-                if chosen_player.frame_count == self.number_robot_per_player*10:
+                if chosen_player.frame_count == self.number_robot_per_player*FRAME_PER_MOVE:
                     chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
                     for robot in chosen_player.robots:
                         robot.allowed_step_per_turn = 1
@@ -135,6 +135,6 @@ class App:
                                                     DEFAULT_IMAGE_SIZE[0], 
                                                     DEFAULT_IMAGE_SIZE[1]), 2) 
             pygame.display.update()
-            clock.tick(1000)
+            clock.tick(FRAME_PER_SECOND)
 
         
