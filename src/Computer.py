@@ -1,9 +1,10 @@
 from src.Robot import Robot
 from src.consts import *
 import logging as log
+from src.Mail import Mail
 class Computer:
-    def __init__(self, robot_cells_init, color, board) -> None:
-        self.robots = [Robot(robot_cells_init[i], i+1, color) for i in range(len(robot_cells_init))]
+    def __init__(self, robot_cells_init, color, sprites_group, board) -> None:
+        self.robots = [Robot(robot_cells_init[i], i+1, color, sprites_group) for i in range(len(robot_cells_init))]
         for robot in self.robots:
             robot.set_destination(board)
         self.number_robot = len(self.robots)

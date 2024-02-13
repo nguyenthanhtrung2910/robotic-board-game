@@ -6,6 +6,7 @@ from src.Board import Board
 from src.Robot import Robot
 from src.Player import Player
 from src.Computer import Computer
+from src.Mail import Mail
 from src.consts import *
 pygame.init()
 class App:
@@ -17,7 +18,8 @@ class App:
 
         self.screen = pygame.display.set_mode((DEFAULT_IMAGE_SIZE[0]*28, DEFAULT_IMAGE_SIZE[1]*11)) 
         pygame.display.set_caption('Robotics Board Game') 
-        self.running = True 
+        self.sprites = pygame.sprite.Group()
+        self.running = True
 
         self.board = Board(colors_map, targets_map)
         self.required_mail = required_mail
@@ -28,105 +30,71 @@ class App:
         self.players = []
         for i, (player_type, player_color) in enumerate(zip(player_types,player_colors)):
             self.players.append(getattr(src, player_type.capitalize())(robot_cells_init[self.number_robot_per_player*i:self.number_robot_per_player*i+self.number_robot_per_player], 
-                                                                       player_color, self.board))
+                                                                       player_color, self.sprites, self.board))
+
+        #draw a background
+        self.background = pygame.Surface(self.screen.get_size())
+        self.background.fill((255, 255, 255))
+        #draw board
+        for i in range(self.board.size):
+            for j in range(self.board.size):
+                self.board[i][j].display(self.background)
+
+        for i in range(self.board.size):     
+            self.background.blit(self.images_for_cell_coordinate[i], ((i+1)*DEFAULT_IMAGE_SIZE[0]+(DEFAULT_IMAGE_SIZE[0]-self.images_for_cell_coordinate[i].get_width())/2, 
+                                                                    (DEFAULT_IMAGE_SIZE[1]-self.images_for_cell_coordinate[i].get_height())/2))
+            self.background.blit(self.images_for_cell_coordinate[i], ((DEFAULT_IMAGE_SIZE[0]-self.images_for_cell_coordinate[i].get_width())/2, 
+                                                                    (i+1)*DEFAULT_IMAGE_SIZE[1]+(DEFAULT_IMAGE_SIZE[1]-self.images_for_cell_coordinate[i].get_height())/2))
+        #draw baterry bar
+        for j in range(self.number_players*self.number_robot_per_player):
+            for i in range(MAXIMUM_ROBOT_BATTERY+1):
+                rect = pygame.Rect(10.5*DEFAULT_IMAGE_SIZE[0]+i*CELL_BATTERY_SIZE[0], 
+                                  (DEFAULT_IMAGE_SIZE[1]*11 - CELL_BATTERY_SIZE[1]*self.number_robot_per_player*self.number_players)/2 +j*CELL_BATTERY_SIZE[1], 
+                                   CELL_BATTERY_SIZE[0], 
+                                   CELL_BATTERY_SIZE[1])    
+                pygame.draw.rect(self.background, (0,0,0), rect, 1) 
+        
+        self.sprites.add([robot for player in self.players for robot in player.robots])
 
     def run(self):
-        self.screen.fill((255, 255, 255))
         clock = pygame.time.Clock()
         chosen_player = self.players[0]
         game_over = False
         while self.running:
-
+            self.screen.blit(self.background, (0,0))
             for event in pygame.event.get(): 
                 if event.type == pygame.QUIT: 
                     self.running = False
-                
+                #player finish turn
                 if event.type == pygame.KEYDOWN and not game_over:
-
                     if event.key == pygame.K_f:
                         chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
                         for robot in chosen_player.robots:
                             robot.allowed_step_per_turn = 1
 
-                    if event.key == pygame.K_1 and self.number_robot_per_player >= 1:
-                        chosen_player.chosen_robot = chosen_player.robots[0]
-
-                    if event.key == pygame.K_2 and self.number_robot_per_player >= 2:
-                        chosen_player.chosen_robot = chosen_player.robots[1]
-
-                    if event.key == pygame.K_3 and self.number_robot_per_player >= 3:
-                        chosen_player.chosen_robot = chosen_player.robots[2]
-
-                    if event.key == pygame.K_4 and self.number_robot_per_player >= 4:
-                        chosen_player.chosen_robot = chosen_player.robots[3]
-
-                    if event.key == pygame.K_5 and self.number_robot_per_player >= 5:
-                        chosen_player.chosen_robot = chosen_player.robots[4]
-
-                    if event.key == pygame.K_UP:
-                        if chosen_player.chosen_robot.move_up():
-                            for blue_cell in self.board.blue_cells:
-                                if blue_cell.robot:
-                                    if blue_cell.robot is not chosen_player.chosen_robot:
-                                        blue_cell.robot.charge() 
-
-                    if event.key == pygame.K_DOWN:
-                        if chosen_player.chosen_robot.move_down():
-                            for blue_cell in self.board.blue_cells:
-                                if blue_cell.robot:
-                                    if blue_cell.robot is not chosen_player.chosen_robot:
-                                        blue_cell.robot.charge() 
-
-                    if event.key == pygame.K_RIGHT:
-                        if chosen_player.chosen_robot.move_right():
-                            for blue_cell in self.board.blue_cells:
-                                if blue_cell.robot:
-                                    if blue_cell.robot is not chosen_player.chosen_robot:
-                                        blue_cell.robot.charge() 
-
-                    if event.key == pygame.K_LEFT:
-                        if chosen_player.chosen_robot.move_left():
-                            for blue_cell in self.board.blue_cells:
-                                if blue_cell.robot:
-                                    if blue_cell.robot is not chosen_player.chosen_robot:
-                                        blue_cell.robot.charge() 
-
+            #chosen player movement
             if not game_over: chosen_player.move(self.board)
 
+            #computer finish turn
             if not game_over and type(chosen_player) != Player:
                 if chosen_player.frame_count == self.number_robot_per_player*FRAME_PER_MOVE:
                     chosen_player = self.players[(self.players.index(chosen_player)+1)%self.number_players]
                     for robot in chosen_player.robots:
                         robot.allowed_step_per_turn = 1
-
+            
+            #game over checking 
             if chosen_player.count_mail == self.required_mail:
                 game_over = True
                 img = self.font1.render(f"Player {Robot.colors_map[chosen_player.color]} win", True, Cell.colors[chosen_player.color])
                 self.screen.blit(img, (9*DEFAULT_IMAGE_SIZE[0]+(18*DEFAULT_IMAGE_SIZE[0]-img.get_width())/2, 0))
-
-            for i in range(self.board.size):
-                for j in range(self.board.size):
-                    self.board[i][j].display(self.screen)
-
-            for i in range(self.board.size):     
-                    self.screen.blit(self.images_for_cell_coordinate[i], ((i+1)*DEFAULT_IMAGE_SIZE[0]+(DEFAULT_IMAGE_SIZE[0]-self.images_for_cell_coordinate[i].get_width())/2, 
-                                                                          (DEFAULT_IMAGE_SIZE[1]-self.images_for_cell_coordinate[i].get_height())/2))
-                    self.screen.blit(self.images_for_cell_coordinate[i], ((DEFAULT_IMAGE_SIZE[0]-self.images_for_cell_coordinate[i].get_width())/2, 
-                                                                          (i+1)*DEFAULT_IMAGE_SIZE[1]+(DEFAULT_IMAGE_SIZE[1]-self.images_for_cell_coordinate[i].get_height())/2))
-
-            for j in range(self.number_players*self.number_robot_per_player):
-                for i in range(MAXIMUM_ROBOT_BATTERY+1):
-                    rect = pygame.Rect(11*DEFAULT_IMAGE_SIZE[0]+i*CELL_BATTERY_SIZE[0], 
-                                      (DEFAULT_IMAGE_SIZE[1]*11 - CELL_BATTERY_SIZE[1]*self.number_robot_per_player*self.number_players)/2 +j*CELL_BATTERY_SIZE[1], 
-                                      CELL_BATTERY_SIZE[0], 
-                                      CELL_BATTERY_SIZE[1])   
-                    pygame.draw.rect(self.screen, (255,255,255), rect) 
-                    pygame.draw.rect(self.screen, (0,0,0), rect, 1) 
             
+            #draw all sprites
+            self.sprites.draw(self.screen)
+
             for i, player in enumerate(self.players):
                 for robot in player.robots:
                     pygame.draw.circle(self.screen, Cell.colors[robot.color], 
-                                       (11*DEFAULT_IMAGE_SIZE[0]+(robot.battery)*CELL_BATTERY_SIZE[0]+CELL_BATTERY_SIZE[0]/2,
+                                       (10.5*DEFAULT_IMAGE_SIZE[0]+(robot.battery)*CELL_BATTERY_SIZE[0]+CELL_BATTERY_SIZE[0]/2,
                                        (DEFAULT_IMAGE_SIZE[1]*11 - CELL_BATTERY_SIZE[1]*self.number_robot_per_player*self.number_players)/2+(i*self.number_robot_per_player+robot.index-1)*CELL_BATTERY_SIZE[1]+CELL_BATTERY_SIZE[1]/2), 
                                        CELL_BATTERY_SIZE[0]/2*0.8, 0)
             
