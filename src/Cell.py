@@ -4,7 +4,7 @@ pygame.init()
 
 class Cell:
 
-    colors = {'w': (255,255,255), 'b':(0,0,255), 'r':(255,0,0), 'y':(255,255,0), 'gr':(0,255,0), 'g':(128, 128, 128)}
+    colors = {'w': (255,255,255), 'b':(0,0,255), 'r':(255,0,0), 'y':(255,255,0), 'gr':(0,255,0), 'g':(128, 128, 128), 'o':(255,165,0)}
 
     def __init__(self, y, x, color='w', target=0, robot=None, *,
                  front=None, back=None, left=None, right=None ) -> None:
@@ -14,6 +14,8 @@ class Cell:
         self.color = color
         self.target = target
         self.robot = robot
+
+        self.number_appoaching_robots = 0
 
         self.front = front
         self.back = back
@@ -63,8 +65,14 @@ class Cell:
         return [cell for cell in [self.front, self.back, self.left, self.right] if cell]
     
     @property
-    def priority(self):
-        return sum([cell.robot != None for cell in self.neighbors])
+    def is_blocked(self):
+        if self.color == 'b':
+            return len([cell for cell in self.neighbors if (cell.robot and cell.robot.dest == self)]) == 1 and self.robot
+        if self.color == 'gr':
+            return len([cell for cell in self.neighbors if (cell.robot and cell.robot.dest == self)]) == 2 and self.robot
+        if self.color == 'y':
+            return len([cell for cell in self.neighbors if (cell.robot and cell.robot.dest == self)]) == 2 and self.robot
+        return False
 
     def display(self, surface):
         pygame.draw.rect(surface, self.colors[self.color], ((self.x+1)*DEFAULT_IMAGE_SIZE[0], 

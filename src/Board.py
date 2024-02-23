@@ -89,5 +89,10 @@ class Board:
                     came_from[next] = current
             i += 1
         return []
+    
+    def reset(self):
+        for cells in self:
+            for cell in cells:
+                cell.robot = None
 
     

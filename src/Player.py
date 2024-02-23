@@ -1,8 +1,8 @@
 from src.Robot import Robot
 import pygame
 class Player:
-    def __init__(self, robot_cells_init, color, sprites_group, board) -> None:
-        self.robots = [Robot(robot_cells_init[i], i+1, color, sprites_group) for i in range(len(robot_cells_init))]
+    def __init__(self, robot_cells_init, color, sprites_group, clock, board) -> None:
+        self.robots = [Robot(robot_cells_init[i], i+1, color, sprites_group, clock) for i in range(len(robot_cells_init))]
         self.number_robot = len(self.robots)
         self.color = color
         self.chosen_robot = self.robots[0]
