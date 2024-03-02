@@ -1,5 +1,6 @@
-2: 1650.7821782178219
-3: 2463.4653465346537
-4: 3343.841584158416
-5: 4300.445544554455
-6: 5273.257425742574
+2 robot for each player and 2 players: t=1654.13±05.71 
+2 robot for each player and 3 players: t=2472.78±08.09 
+2 robot for each player and 4 players: t=3359.87±10.68 
+3 robot for each player and 2 players: t=1657.86±05.10 
+3 robot for each player and 3 players: t=2567.60±09.54 
+3 robot for each player and 4 players: t=3564.84±13.18 

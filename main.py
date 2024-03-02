@@ -31,11 +31,10 @@ parser.add_argument("--player6_color", help="chose player 6 color",  choices=['r
 parser.add_argument("--player6_type", help="chose player 6 type", choices=['player', 'computer'])
 args = parser.parse_args()
 
-# log.basicConfig(level=log.INFO, 
-#                 filename="events.log", 
-#                 filemode="w", 
-#                 format="%(levelname)s: At %(asctime)s %(message)s", 
-#                 datefmt='%m/%d/%Y %I:%M:%S %p')
+log.basicConfig(level=log.INFO, 
+                filename="events.log", 
+                filemode="w", 
+                format="%(levelname)s: %(message)s")
 
 player_colors = [color for color in [args.player1_color, args.player2_color, args.player3_color, args.player4_color, args.player4_color, args.player5_color] if color]
 player_types = [type for type in [args.player1_type, args.player2_type, args.player3_type, args.player4_type, args.player4_type, args.player5_type] if type]

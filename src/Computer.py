@@ -49,7 +49,7 @@ class Computer:
                     robot.pos.robot = robot
                     robot.allowed_step_per_turn -= 1
                     robot.battery -= 1
-                    # log.info(f'{Robot.colors_map[robot.color]} robot {robot.index} go to position ({robot.pos.x},{robot.pos.y})')
+                    log.info(f'At t={robot.clock.now:04} {Robot.colors_map[robot.color]:>5} robot {robot.index} go to position ({robot.pos.x},{robot.pos.y}) | code:{robot.color:>2}{robot.index}-({robot.pos.x},{robot.pos.y})')
                     if robot.pick_up(): robot.set_destination(board,[])
                     if robot.drop_off(): robot.set_destination(board,[]) 
                     #charge robot in blue cells
@@ -62,12 +62,11 @@ class Computer:
             return False
 
     def move(self, board):
+        return any([self.move_robot(robot, board) for robot in self.robots])
         # if self.frame_count == self.number_robot*FRAME_PER_MOVE:
         #     self.frame_count = 0
         # if self.frame_count % FRAME_PER_MOVE == 0:
         #     self.chosen_robot = self.robots[int(self.frame_count/10)]
-        # if self.frame_count % FRAME_PER_MOVE == int(FRAME_PER_MOVE/2):
-        # for robot in self.robots:    
-        #     self.move_robot(robot, board)
-        return any([self.move_robot(robot, board) for robot in self.robots])
-        # self.frame_count += 1
+        # if self.frame_count % FRAME_PER_MOVE == int(FRAME_PER_MOVE/2): 
+        #     self.move_robot(self.chosen_robot, board)
+        # self.frame_count += 1 

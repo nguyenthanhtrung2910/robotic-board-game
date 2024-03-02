@@ -1,6 +1,7 @@
 import random
 import pygame
 import src
+import logging as log
 from src.Cell import Cell
 from src.Board import Board
 from src.Robot import Robot
@@ -94,6 +95,7 @@ class App:
             if chosen_player.count_mail == self.required_mail:
                 game_over = True
                 winner = self.players.index(chosen_player)
+                log.info(f'At t={self.game_clock.now:04} Player {winner} win')
                 return winner, self.game_clock.now
 
                 # img = self.font1.render(f"Player {Robot.colors_map[chosen_player.color]} win", True, Cell.colors[chosen_player.color])
@@ -121,6 +123,8 @@ class App:
             #                                         (chosen_player.chosen_robot.pos.y+1)*DEFAULT_IMAGE_SIZE[1], 
             #                                         DEFAULT_IMAGE_SIZE[0], 
             #                                         DEFAULT_IMAGE_SIZE[1]), 2) 
-            pygame.display.update()
             # clock.tick(FRAME_PER_SECOND)
+    
+            pygame.display.update()
+
         return winner, self.game_clock.now

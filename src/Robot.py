@@ -31,7 +31,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1
-                    # log.info(f'{self.colors_map[self.color]} robot {self.index} go up to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'{self.colors_map[self.color]} robot {self.index} go up to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -47,7 +47,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1
-                    # log.info(f'{self.colors_map[self.color]} robot {self.index} go down to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'{self.colors_map[self.color]} robot {self.index} go down to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -63,7 +63,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1
-                    # log.info(f'{self.colors_map[self.color]} robot {self.index} go left to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'{self.colors_map[self.color]} robot {self.index} go left to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -79,7 +79,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1 
-                    # log.info(f'{self.colors_map[self.color]} robot {self.index} go right to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'{self.colors_map[self.color]} robot {self.index} go right to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -90,7 +90,7 @@ class Robot(pygame.sprite.Sprite):
         if not self.mail and self.pos.color == 'gr':
             self.mail = Mail(random.choice(range(1,10)), self)
             self.sprites_group.add(self.mail)
-            # log.info(f'{self.colors_map[self.color]} robot {self.index} pick up mail {self.mail.mail_number}')
+            log.info(f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}')
             return True
         return False
 
@@ -100,7 +100,7 @@ class Robot(pygame.sprite.Sprite):
             self.mail.kill() 
             self.mail = None
             self.count_mail += 1
-            # log.info(f'{self.colors_map[self.color]} robot {self.index} drop off mail {deliveried_mail.mail_number}')
+            log.info(f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} drop off mail {deliveried_mail.mail_number}')
             return deliveried_mail
         return False
 
