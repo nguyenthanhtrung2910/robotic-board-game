@@ -7,7 +7,7 @@ from statistics import mean
 from src.Board import Board
 from src.Cell import Cell
 from src.Robot import Robot
-from src.App import App
+from src.Game import App
 pygame.init()
 
 parser = argparse.ArgumentParser()

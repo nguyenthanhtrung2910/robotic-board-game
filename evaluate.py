@@ -8,7 +8,7 @@ from statistics import mean, stdev
 from src.Board import Board
 from src.Cell import Cell
 from src.Robot import Robot
-from src.App import App
+from src.Game import Game
 pygame.init()
 
 parser = argparse.ArgumentParser()
@@ -35,7 +35,7 @@ for j in range(2,4,1):
             new_file_handler.setFormatter(log.Formatter("%(levelname)s: %(message)s"))
             root_logger.addHandler(new_file_handler)
 
-            app = App(board, 50, j, ['computer']*k, colors[:k])
+            app = Game(board, 50, j, ['computer']*k, colors[:k])
             winner, time = app.run()
             print(f'winner: {winner}, time: {time}')
             board.reset()

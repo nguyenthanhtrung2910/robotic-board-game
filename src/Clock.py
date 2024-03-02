@@ -5,3 +5,6 @@ class Clock:
     
     def up(self):
         self.now += DELTA_T
+
+    def reset(self):
+        self.now = 0
