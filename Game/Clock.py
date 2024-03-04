@@ -1,4 +1,4 @@
-from src.consts import *
+from Game.consts import *
 class Clock:
     def __init__(self) -> None:
         self.now = 0

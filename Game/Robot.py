@@ -2,11 +2,12 @@
 import pygame
 import random
 import logging as log
-from src.consts import *
-from src.Mail import Mail
-from src.Board import heuristic
+from Game.consts import *
+from Game.Mail import Mail
 class Robot(pygame.sprite.Sprite):
-    colors_map = {'r':'Red', 'w': 'White', 'b':'Blue', 'gr':'Green', 'y':'Yellow', 'g':'Gray', 'o':'Orange'}
+
+    colors_map = {'r':'Red', 'b':'Blue', 'g':'Green', 'y':'Yellow', 'o':'Orange'}
+
     def __init__(self, pos, index, color, sprites_group, clock, mail=None, count_mail=0, battery=MAXIMUM_ROBOT_BATTERY, allowed_step_per_turn=1):
         super().__init__()
         self.pos = pos
@@ -19,8 +20,47 @@ class Robot(pygame.sprite.Sprite):
         self.count_mail = count_mail
         self.battery = battery
         self.allowed_step_per_turn = allowed_step_per_turn
-        self.set_image()
-        self.set_number_image()
+        self.__set_image()
+        self.__set_number_image()
+    
+    def __set_image(self):
+        if self.color == 'b':
+            self.image = pygame.image.load('images/blue_robot.png')
+        if self.color == 'r':        
+            self.image = pygame.image.load('images/red_robot.png')
+        if self.color == 'y':        
+            self.image = pygame.image.load('images/yellow_robot.png')
+        if self.color == 'g':        
+            self.image = pygame.image.load('images/green_robot.png')
+        if self.color == 'o':        
+            self.image = pygame.image.load('images/orange_robot.png')    
+        self.image = pygame.transform.scale(self.image, CELL_SIZE)
+
+    def __set_number_image(self):
+        robot_number_font = pygame.font.SysFont(None, 16)
+        number_img = robot_number_font.render(str(self.index), True, (0,0,0))
+        self.image.blit(number_img, (0.5*CELL_SIZE[0] - number_img.get_width()/2, 
+                                     0.7*CELL_SIZE[1] - number_img.get_height()/2))
+    
+    @property
+    def state(self):
+        state = {'color': self.color,
+                'index': self.index,
+                'pos': (self.pos.x, self.pos.y),
+                'mail': self.mail.mail_number if self.mail else 0,
+                'count_mail': self.count_mail,
+                'battery': self.battery}
+        return state
+
+    @property
+    def is_charged(self):
+        return self.pos.color == 'b'
+    
+    @property
+    def rect(self):
+        rect = self.image.get_rect()
+        rect.topleft = ((self.pos.x+1)*CELL_SIZE[0], (self.pos.y+1)*CELL_SIZE[1])
+        return rect
 
     def move_up(self):
         if self.allowed_step_per_turn and self.battery:
@@ -108,52 +148,15 @@ class Robot(pygame.sprite.Sprite):
         self.battery += BATERRY_UP_PER_STEP
         if self.battery > MAXIMUM_ROBOT_BATTERY:
             self.battery = MAXIMUM_ROBOT_BATTERY
-    
-    @property
-    def is_charged(self):
-        return self.pos.color == 'b'
-    
-    @property
-    def rect(self):
-        rect = self.image.get_rect()
-        rect.topleft = ((self.pos.x+1)*DEFAULT_IMAGE_SIZE[0], (self.pos.y+1)*DEFAULT_IMAGE_SIZE[1])
-        return rect
-
-    def set_image(self):
-        if self.color == 'b':
-            self.image = pygame.image.load('images/blue_robot.png')
-        if self.color == 'r':        
-            self.image = pygame.image.load('images/red_robot.png')
-        if self.color == 'y':        
-            self.image = pygame.image.load('images/yellow_robot.png')
-        if self.color == 'gr':        
-            self.image = pygame.image.load('images/green_robot.png')
-        if self.color == 'w':        
-            self.image = pygame.image.load('images/white_robot.png')
-        if self.color == 'o':        
-            self.image = pygame.image.load('images/orange_robot.png')    
-        self.image = pygame.transform.scale(self.image, DEFAULT_IMAGE_SIZE)
-
-    def set_number_image(self):
-        robot_number_font = pygame.font.SysFont(None, 16)
-        number_img = robot_number_font.render(str(self.index), True, (0,0,0))
-        self.image.blit(number_img, (0.5*DEFAULT_IMAGE_SIZE[0] - number_img.get_width()/2, 
-                                     0.7*DEFAULT_IMAGE_SIZE[1] - number_img.get_height()/2))
-
-    def set_destination(self, board, blocked):
-        if self.battery <= 30:
-            min_appoaching_robot = min([cell.number_appoaching_robots for cell in board.blue_cells if cell not in blocked])
-            self.dest = min([cell for cell in board.blue_cells if cell.number_appoaching_robots == min_appoaching_robot and cell not in blocked], 
-                             key=lambda blue_cell :heuristic(self.pos, blue_cell))
-        else:
-            if self.mail:
-                for yellow_cell in board.yellow_cells:
-                    if yellow_cell.target == self.mail.mail_number: 
-                        self.dest = yellow_cell
-                        break
-            else:
-                min_appoaching_robot = min([cell.number_appoaching_robots for cell in board.green_cells if cell not in blocked])
-                self.dest = min([cell for cell in board.green_cells if cell.number_appoaching_robots == min_appoaching_robot and cell not in blocked], 
-                                 key=lambda green_cell : heuristic(self.pos, green_cell))
-                
-        self.dest.number_appoaching_robots += 1
+        
+    def move(self, action):
+        if action == 's':
+            return False
+        if action == 'u':
+            return self.move_up()
+        if action == 'd':
+            return self.move_down()
+        if action == 'l':
+            return self.move_left()
+        if action == 'r':
+            return self.move_right()

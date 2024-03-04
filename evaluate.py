@@ -5,10 +5,10 @@ import math
 import logging as log
 import argparse
 from statistics import mean, stdev
-from src.Board import Board
-from src.Cell import Cell
-from src.Robot import Robot
-from src.Game import Game
+from Game.Board import Board
+from Game.Cell import Cell
+from Game.Robot import Robot
+from Game.Game import Game
 pygame.init()
 
 parser = argparse.ArgumentParser()

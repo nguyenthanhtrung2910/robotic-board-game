@@ -1,11 +1,9 @@
 import csv
 import queue
-from src.Cell import Cell
+from DefaultAgent.CellSimulator import CellSimulator
 
-def heuristic(a: Cell, b: Cell) -> float:
-    return abs(a.x - b.x) + abs(a.y - b.y)
+class BoardSimulator:
 
-class Board:
     def __init__(self, colors_map, targets_map) -> None:
         self.__load_from_file(colors_map, targets_map)
         self.size = len(self.cells[0])
@@ -16,9 +14,9 @@ class Board:
         self.blue_cells = self.__get_cells_by_color('b')
         self.white_cells = self.__get_cells_by_color('w')
 
-    # allow us iterate through cells of boards               
-    def __getitem__(self, index):
-        return self.cells[index]
+    # allow us access cell by coordinate            
+    def __getitem__(self, coordinate):
+        return self.cells[coordinate[1]][coordinate[0]]
 
     def __get_cells_by_color(self, color):
         return [cell for row_cell in self.cells for cell in row_cell if cell.color == color]
@@ -38,7 +36,7 @@ class Board:
         for i, (color_row, target_row) in enumerate(zip(color_matrix, target_matrix)):
             self.cells.append([])
             for j, (color, target) in enumerate(zip(color_row, target_row)):
-                self.cells[-1].append(Cell(i, j, color=color, target=int(target)))
+                self.cells[-1].append(CellSimulator(i, j, color=color, target=int(target)))
 
         colors_map_file.close()
         targets_map_file.close()
@@ -53,8 +51,17 @@ class Board:
 
     @property
     def cannot_step(self):
-        return [cell for cells in self for cell in cells if (cell.robot or cell.color == 'r' or cell.color == 'y')] 
+        return [cell for cells in self.cells for cell in cells if (cell.robot or cell.color == 'r' or cell.color == 'y')] 
     
+    @staticmethod
+    def heuristic(a: CellSimulator, b: CellSimulator) -> float:
+        return abs(a.x - b.x) + abs(a.y - b.y)
+    
+    def reset(self):
+        for cells in self.cells:
+            for cell in cells:
+                cell.robot = None
+                
     def a_star_search(self, start, goal):
         open_set = queue.PriorityQueue()
         open_set.put((0, start))
@@ -84,15 +91,9 @@ class Board:
                 new_cost = cost_so_far[current] + 1
                 if (next not in cost_so_far or new_cost < cost_so_far[next]) and (next not in self.cannot_step or next == start or next == goal):
                     cost_so_far[next] = new_cost
-                    priority = new_cost + heuristic(next, goal)
+                    priority = new_cost + self.heuristic(next, goal)
                     open_set.put((priority, next))
                     came_from[next] = current
             i += 1
         return []
-    
-    def reset(self):
-        for cells in self:
-            for cell in cells:
-                cell.robot = None
-
     
