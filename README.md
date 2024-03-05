@@ -15,6 +15,20 @@ After all the pieces have been placed, each player takes turns
 performs a move, moving each of his robots 1 space.
 If a robot is blocked (all neighboring cells are taken by other robots), it skips this move. Only robots with mail, whose numbers correspond to the field number are allowed to enter the yellow field. As soon as the robot with the package leaves the green cell, the player who owns the robot rolls two dices and places a mail with a number corresponding to the rolled sum of points on the vacated green cell. If the corresponding number is not on the playing field, the dice are re-rolled. The game ends as soon as one of the players collects the required number of mails. If all player don't want to move anymore or no legal move so Draw. 
 ## How to run:
+Create virtual enviroment:
+```
+python3 -m venv .env
+```
+Activate it:
+```
+source .env/bin/activate
+``` 
+Install required library by command:
+
+```
+pip install -r requirements.txt
+```
+Run python file main.py with followed arguments: 
 ### Arguments:
 ``--color_map``: path for csv color map file. <br/>
 ``--targte_map``: path for csv target map file. <br/>
