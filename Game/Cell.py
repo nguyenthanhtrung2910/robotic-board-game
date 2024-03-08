@@ -23,11 +23,14 @@ class Cell:
     def __repr__(self) -> str:
         return f'Cell({self.x}, {self.y})'
     
+    #equal and hash dunder method for using a Cell as dictionary's key
     def __eq__(self, cell):
         if isinstance(cell, Cell):
             return self.x == cell.x and self.y == cell.y 
         return NotImplemented
 
+    def __hash__(self):
+        return hash((self.x, self.y))    
     @property
     def x(self):
         return self.__x

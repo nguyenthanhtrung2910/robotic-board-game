@@ -1,6 +1,6 @@
 import csv
 import queue
-from DefaultAgent.CellSimulator import CellSimulator
+from Agents.CellSimulator import CellSimulator
 
 class BoardSimulator:
 

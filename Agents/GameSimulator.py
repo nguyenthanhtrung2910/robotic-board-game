@@ -1,6 +1,6 @@
-from DefaultAgent.BoardSimulator import BoardSimulator
-from DefaultAgent.CellSimulator import CellSimulator
-from DefaultAgent.RobotSimulator import RobotSimulator
+from Agents.BoardSimulator import BoardSimulator
+from Agents.CellSimulator import CellSimulator
+from Agents.RobotSimulator import RobotSimulator
 
 from Game.consts import *
 

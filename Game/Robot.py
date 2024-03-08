@@ -71,7 +71,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1
-                    log.info(f'{self.colors_map[self.color]} robot {self.index} go up to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -87,7 +87,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1
-                    log.info(f'{self.colors_map[self.color]} robot {self.index} go down to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -103,7 +103,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1
-                    log.info(f'{self.colors_map[self.color]} robot {self.index} go left to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -119,7 +119,7 @@ class Robot(pygame.sprite.Sprite):
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
                     self.battery -= 1 
-                    log.info(f'{self.colors_map[self.color]} robot {self.index} go right to position ({self.pos.x},{self.pos.y})')
+                    log.info(f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})')
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()

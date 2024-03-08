@@ -5,11 +5,11 @@ from Game.Board import Board
 from Game.Cell import Cell
 from Game.Robot import Robot
 from Game.Game import Game
-from DefaultAgent.DefaultAgent import DefaultAgent
-from DefaultAgent.BoardSimulator import BoardSimulator
-from DefaultAgent.CellSimulator import CellSimulator
-from DefaultAgent.RobotSimulator import RobotSimulator
-from DefaultAgent.GameSimulator import GameSimulator
+from Agents.DefaultAgent import DefaultAgent
+from Agents.BoardSimulator import BoardSimulator
+from Agents.CellSimulator import CellSimulator
+from Agents.RobotSimulator import RobotSimulator
+from Agents.GameSimulator import GameSimulator
 
 pygame.init()
 
@@ -27,7 +27,7 @@ parser.add_argument("--number_auto_players", help="chose number auto-players", t
 args = parser.parse_args()
 
 log.basicConfig(level=log.INFO, 
-                filename="events.log", 
+                filename="events1.log", 
                 filemode="w", 
                 format="%(levelname)s: %(message)s")
 number_human_players = len(args.robot_colors) - args.number_auto_players
