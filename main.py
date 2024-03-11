@@ -27,7 +27,7 @@ parser.add_argument("--number_auto_players", help="chose number auto-players", t
 args = parser.parse_args()
 
 log.basicConfig(level=log.INFO, 
-                filename="events1.log", 
+                filename="events.log", 
                 filemode="w", 
                 format="%(levelname)s: %(message)s")
 number_human_players = len(args.robot_colors) - args.number_auto_players
