@@ -91,7 +91,7 @@ class Game:
         self.robot_sprites.add([robot for color in self.robots for robot in self.robots[color]])
             
     def run(self, agents):
-        clock = pygame.time.Clock()
+        # clock = pygame.time.Clock()
         nomove_count = 0
         winner = None
         running = True
@@ -171,10 +171,10 @@ class Game:
                     acting_player_color = next(self.cycle_robot_colors)
                     for robot in self.robots[acting_player_color]:
                         robot.allowed_step_per_turn = 1
-                
+                    break     
             #game over checking 
             if self.sum_count_mail(acting_player_color) == self.required_mail:
-                winner = agents.index(agent)
+                winner = acting_player_color
                 log.info(f'At t={self.game_clock.now:04} Player {winner} win')
                 return winner, self.game_clock.now
 
@@ -193,7 +193,7 @@ class Game:
                                        (CELL_SIZE[1]*11 - CELL_BATTERY_SIZE[1]*self.number_robots)/2+(i*self.number_robots_with_same_color+robot.index-1)*CELL_BATTERY_SIZE[1]+CELL_BATTERY_SIZE[1]/2), 
                                        CELL_BATTERY_SIZE[0]/2*0.8, 0) 
                     
-            clock.tick(FRAME_PER_SECOND)
+            # clock.tick(FRAME_PER_SECOND)
             pygame.display.update()
 
         return winner, self.game_clock.now

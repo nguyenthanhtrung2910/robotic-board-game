@@ -87,5 +87,6 @@ class DefaultAgent:
     
     def reset(self, state):
         self.simulator.reset(state)
+        self.dests = []
         for robot in self.simulator.robots[self.color]:
             self.dests.append(robot.get_destination(self.simulator.board))

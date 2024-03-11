@@ -1,48 +1,64 @@
 import csv
 import random
 import pygame
-import math
+import math, time, os
 import logging as log
 import argparse
-from statistics import mean, stdev
 from Game.Board import Board
 from Game.Cell import Cell
 from Game.Robot import Robot
 from Game.Game import Game
+from Agents.BoardSimulator import BoardSimulator
+from Agents.CellSimulator import CellSimulator
+from Agents.RobotSimulator import RobotSimulator
+from Agents.GameSimulator import GameSimulator
+from Agents.DefaultAgent import DefaultAgent
 pygame.init()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--color_map", help="chose colors map")
 parser.add_argument("--target_map", help="chose targets map")
-args = parser.parse_args()
+parser.add_argument("--required_mail", help="chose required mail to win", type=int)
+parser.add_argument("--number_robots_with_same_color", 
+                    help="chose number robots with same color. It shouldn't more than 6",
+                    default=3,
+                    type=int,
+                    choices=[1,2,3,4,5,6,7,8])
+parser.add_argument("--robot_colors", help="chose robot colors", nargs="+", choices=['r','b','o','g','y'])
+parser.add_argument("--number_auto_players", help="chose number auto-players", type = int)
 
-board = Board(args.color_map, args.target_map)
-file = open('game_time_by_number_player.txt', 'a')
-colors = ['r', 'w', 'b', 'gr', 'y', 'o']
+args = parser.parse_args()
 log.basicConfig(level=log.INFO)
 root_logger = log.getLogger()
-for j in range(2,4,1):
-    for k in range(2,5,1):
-        i = 0
-        result = []
-        while i <= 99:
-            print('sample {}'.format(i))
 
-            for handler in root_logger.handlers:
-                root_logger.removeHandler(handler)
-            new_file_handler = log.FileHandler('log_files/events for {} robots per player and {} players (sample {}).log'.format(j, k, i), mode='w')
-            new_file_handler.setLevel(log.INFO)
-            new_file_handler.setFormatter(log.Formatter("%(levelname)s: %(message)s"))
-            root_logger.addHandler(new_file_handler)
+board = Board(args.color_map, args.target_map)
+number_human_players = len(args.robot_colors) - args.number_auto_players
+agents = []
+game = Game(board, args.required_mail, args.number_robots_with_same_color, args.robot_colors)
+for i in range(args.number_auto_players):
+    agents.append(DefaultAgent(args.robot_colors[i+number_human_players],
+                               BoardSimulator(args.color_map, args.target_map),
+                               args.required_mail,
+                               game.state))
 
-            app = Game(board, 50, j, ['computer']*k, colors[:k])
-            winner, time = app.run()
-            print(f'winner: {winner}, time: {time}')
-            board.reset()
-            if winner != None:
-                result.append(time)
-                i += 1 
-        file.write('{} robot for each player and {} players: t={:.2f}\u00B1{:05.2f} \n'.format(j, k, mean(result), math.sqrt(1/len(result))*stdev(result)))   
-        print('for {} player done !'.format(k))
+i=0
+while i <= 99:
+    print('sample {}'.format(i))
+    for handler in root_logger.handlers:
+        root_logger.removeHandler(handler)
+    filename = 'log_files_for_{}x{}/events(sample {}).log'.format(len(args.robot_colors), args.number_robots_with_same_color, i)
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    new_file_handler = log.FileHandler(filename, mode='w')
+    new_file_handler.setLevel(log.INFO)
+    new_file_handler.setFormatter(log.Formatter("%(levelname)s: %(message)s"))
+    root_logger.addHandler(new_file_handler)
 
-file.close()
+    winner, t = game.run(agents)
+    print(f'winner: {winner}, time: {t}')
+
+    game.reset(args.number_robots_with_same_color, args.robot_colors)
+    for agent in agents:
+        agent.reset(game.state)
+
+    if winner != None:
+        i += 1 
