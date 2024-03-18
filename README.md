@@ -56,8 +56,6 @@ When all your robots have done their moves, keyboard is blocked. You must press 
 ``1``,``2``,``3``,... : Chose your robot to move.<br/>
 
 Game's process is writen in file ``events.log``. 
-## Classes Diagram:
-![Classes Diagram](images/classes.png "Classes Diagram")
 
 ## About First Policy:
 In fact, player and game are isolated objects so Agent class can not have reference to Game's object. Agent receive state from Game, simulate next state and from that generate action.

@@ -1,8 +1,8 @@
 import csv
 import queue
-from Agents.CellSimulator import CellSimulator
+from Agents.VirtualCell import VirtualCell
 
-class BoardSimulator:
+class VirtualBoard:
 
     def __init__(self, colors_map, targets_map) -> None:
         self.__load_from_file(colors_map, targets_map)
@@ -36,7 +36,7 @@ class BoardSimulator:
         for i, (color_row, target_row) in enumerate(zip(color_matrix, target_matrix)):
             self.cells.append([])
             for j, (color, target) in enumerate(zip(color_row, target_row)):
-                self.cells[-1].append(CellSimulator(i, j, color=color, target=int(target)))
+                self.cells[-1].append(VirtualCell(i, j, color=color, target=int(target)))
 
         colors_map_file.close()
         targets_map_file.close()
@@ -54,7 +54,7 @@ class BoardSimulator:
         return [cell for cells in self.cells for cell in cells if (cell.robot or cell.color == 'r' or cell.color == 'y')] 
     
     @staticmethod
-    def heuristic(a: CellSimulator, b: CellSimulator) -> float:
+    def heuristic(a: VirtualCell, b: VirtualCell) -> float:
         return abs(a.x - b.x) + abs(a.y - b.y)
     
     def reset(self):

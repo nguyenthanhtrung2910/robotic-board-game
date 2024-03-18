@@ -1,24 +1,24 @@
 import random
 import logging as log
 
-from Agents.BoardSimulator import BoardSimulator
-from Agents.CellSimulator import CellSimulator
-from Agents.RobotSimulator import RobotSimulator
-from Agents.GameSimulator import GameSimulator
+from Agents.VirtualBoard import VirtualBoard
+from Agents.VirtualCell import VirtualCell
+from Agents.VirtualRobot import VirtualRobot
+from Agents.VirtualGame import VirtualGame
 
 from Game.consts import *
 
 class DefaultAgent:
     
-    def __init__(self, color:str, board: BoardSimulator, required_mail: int, state) -> None:
+    def __init__(self, color:str, board: VirtualBoard, required_mail: int, state) -> None:
 
         self.color = color
-        self.simulator = GameSimulator(board, required_mail, state)
+        self.simulator = VirtualGame(board, required_mail, state)
         self.dests = []
         for robot in self.simulator.robots[self.color]:
             self.dests.append(robot.get_destination(board))
 
-    def get_action_for_one_robot(self, robot: RobotSimulator, board: BoardSimulator):
+    def __get_action_for_one_robot(self, robot: VirtualRobot, board: VirtualBoard):
             if robot.is_charged:
                 if robot.battery < 70:
                     return self.color+str(robot.index)+'s'
@@ -81,7 +81,7 @@ class DefaultAgent:
         self.simulator.update(state)
          
         #simulation
-        action = [self.get_action_for_one_robot(robot, self.simulator.board) for robot in self.simulator.robots[self.color]]
+        action = [self.__get_action_for_one_robot(robot, self.simulator.board) for robot in self.simulator.robots[self.color]]
 
         return action
     

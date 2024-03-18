@@ -1,9 +1,9 @@
 import pygame
 import random
 from Game.consts import *
-from Agents import BoardSimulator
+from Agents import VirtualBoard
 
-class RobotSimulator:
+class VirtualRobot:
 
     def __init__(self, pos, index, color, mail=0, count_mail=0, battery=MAXIMUM_ROBOT_BATTERY):
         self.pos = pos
@@ -93,7 +93,7 @@ class RobotSimulator:
     def get_destination(self, board, blocked=[]):
         if self.battery <= 30:
             return min([cell for cell in board.blue_cells if cell not in blocked], 
-                                key=lambda blue_cell :BoardSimulator.heuristic(self.pos, blue_cell))
+                                key=lambda blue_cell :VirtualBoard.heuristic(self.pos, blue_cell))
         else:
             if self.mail:
                 for yellow_cell in board.yellow_cells:
@@ -101,4 +101,4 @@ class RobotSimulator:
                         return yellow_cell
             else:
                 return min([cell for cell in board.green_cells if cell not in blocked], 
-                                    key=lambda green_cell : BoardSimulator.heuristic(self.pos, green_cell))
+                                    key=lambda green_cell : VirtualBoard.heuristic(self.pos, green_cell))

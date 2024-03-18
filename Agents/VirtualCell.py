@@ -1,4 +1,4 @@
-class CellSimulator:
+class VirtualCell:
 
     def __init__(self, y, x, color='w', target=0, robot=None, *,
                  front=None, back=None, left=None, right=None ) -> None:
@@ -19,7 +19,7 @@ class CellSimulator:
     
     #equal and hash dunder method for using a Cell as dictionary's key
     def __eq__(self, cell):
-        if isinstance(cell, CellSimulator):
+        if isinstance(cell, VirtualCell):
             return self.x == cell.x and self.y == cell.y 
         return NotImplemented
 
@@ -28,7 +28,7 @@ class CellSimulator:
     
     #less than dunder method for puttting a Cell in priority queue
     def __lt__(self, cell):
-        if isinstance(cell, CellSimulator):
+        if isinstance(cell, VirtualCell):
             return True
         return NotImplemented
 

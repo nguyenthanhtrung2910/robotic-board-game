@@ -6,10 +6,10 @@ from Game.Cell import Cell
 from Game.Robot import Robot
 from Game.Game import Game
 from Agents.DefaultAgent import DefaultAgent
-from Agents.BoardSimulator import BoardSimulator
-from Agents.CellSimulator import CellSimulator
-from Agents.RobotSimulator import RobotSimulator
-from Agents.GameSimulator import GameSimulator
+from Agents.VirtualBoard import VirtualBoard
+from Agents.VirtualCell import VirtualCell
+from Agents.VirtualRobot import VirtualRobot
+from Agents.VirtualGame import VirtualGame
 
 pygame.init()
 
@@ -37,7 +37,7 @@ game = Game(board, args.required_mail, args.number_robots_with_same_color, args.
 
 for i in range(args.number_auto_players):
     agents.append(DefaultAgent(args.robot_colors[i+number_human_players],
-                               BoardSimulator(args.color_map, args.target_map),
+                               VirtualBoard(args.color_map, args.target_map),
                                args.required_mail,
                                game.state))
     

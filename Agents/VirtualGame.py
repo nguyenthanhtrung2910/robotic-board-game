@@ -1,12 +1,12 @@
-from Agents.BoardSimulator import BoardSimulator
-from Agents.CellSimulator import CellSimulator
-from Agents.RobotSimulator import RobotSimulator
+from Agents.VirtualBoard import VirtualBoard
+from Agents.VirtualCell import VirtualCell
+from Agents.VirtualRobot import VirtualRobot
 
 from Game.consts import *
 
-class GameSimulator:
+class VirtualGame:
 
-    def __init__(self, board: BoardSimulator, required_mail: int, state) -> None:
+    def __init__(self, board: VirtualBoard, required_mail: int, state) -> None:
 
         self.board = board
         self.required_mail = required_mail
@@ -14,7 +14,7 @@ class GameSimulator:
         for robot_state in state:
             self.robots[robot_state['color']] = []
         for robot_state in state:
-            robot = RobotSimulator(self.board[robot_state['pos'][0], robot_state['pos'][1]], 
+            robot = VirtualRobot(self.board[robot_state['pos'][0], robot_state['pos'][1]], 
                           robot_state['index'], 
                           robot_state['color'],
                           robot_state['mail'],
@@ -27,7 +27,7 @@ class GameSimulator:
             
     def update(self, state):
         for robot_state in state:
-            robot: RobotSimulator = self.robots[robot_state['color']][robot_state['index']-1]
+            robot: VirtualRobot = self.robots[robot_state['color']][robot_state['index']-1]
             robot.pos.robot = None
             robot.pos = self.board[robot_state['pos'][0], robot_state['pos'][1]]
             robot.pos.robot = robot
@@ -41,7 +41,7 @@ class GameSimulator:
         for robot_state in state:
             self.robots[robot_state['color']] = []
         for robot_state in state:
-            robot = RobotSimulator(self.board[robot_state['pos'][0], robot_state['pos'][1]], 
+            robot = VirtualRobot(self.board[robot_state['pos'][0], robot_state['pos'][1]], 
                           robot_state['index'], 
                           robot_state['color'],
                           robot_state['mail'],
