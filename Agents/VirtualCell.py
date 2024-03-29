@@ -1,8 +1,20 @@
+from Agents import VirtualRobot
+
+
 class VirtualCell:
 
-    def __init__(self, y, x, color='w', target=0, robot=None, *,
-                 front=None, back=None, left=None, right=None ) -> None:
-        
+    def __init__(self,
+                 y: int,
+                 x: int,
+                 color: str = 'w',
+                 target: int = 0,
+                 robot: VirtualRobot.VirtualRobot | None = None,
+                 *,
+                 front: 'VirtualCell | None' = None,
+                 back: 'VirtualCell | None' = None,
+                 left: 'VirtualCell | None' = None,
+                 right: 'VirtualCell | None' = None) -> None:
+
         self.__x = x
         self.__y = y
         self.__color = color
@@ -18,62 +30,74 @@ class VirtualCell:
         return f'Cell({self.x}, {self.y})'
     
     #equal and hash dunder method for using a Cell as dictionary's key
-    def __eq__(self, cell):
+    def __eq__(self, cell: object) -> bool:
         if isinstance(cell, VirtualCell):
-            return self.x == cell.x and self.y == cell.y 
+            return self.x == cell.x and self.y == cell.y
         return NotImplemented
 
-    def __hash__(self):
-        return hash((self.x, self.y))    
-    
+    def __hash__(self) -> int:
+        return hash((self.x, self.y))
+
     #less than dunder method for puttting a Cell in priority queue
-    def __lt__(self, cell):
+    def __lt__(self, cell: object) -> bool:
         if isinstance(cell, VirtualCell):
             return True
         return NotImplemented
 
     @property
-    def x(self):
+    def x(self) -> int:
         return self.__x
-    
+
     @x.setter
-    def x(self, x):
-        raise ValueError('Don\'t change x')    
-    
+    def x(self, x: int) -> None:
+        raise ValueError('Don\'t change x')
+
     @property
-    def y(self):
+    def y(self) -> int:
         return self.__y
-    
+
     @y.setter
-    def y(self, y):
-        raise ValueError('Don\'t change y')  
+    def y(self, y: int) -> None:
+        raise ValueError('Don\'t change y')
 
     @property
-    def color(self):
+    def color(self) -> str:
         return self.__color
-    
+
     @color.setter
-    def color(self, color):
-        raise ValueError('You can\'t change cell color')    
-    
-    @property
-    def target(self):
-        return self.__target
-    
-    @target.setter
-    def target(self, target):
-        raise ValueError('You can\'t change cell target')   
+    def color(self, color: str) -> None:
+        raise ValueError('You can\'t change cell color')
 
     @property
-    def neighbors(self):
-        return [cell for cell in [self.front, self.back, self.left, self.right] if cell]
-    
+    def target(self) -> int:
+        return self.__target
+
+    @target.setter
+    def target(self, target: int) -> None:
+        raise ValueError('You can\'t change cell target')
+
     @property
-    def is_blocked(self):
+    def neighbors(self) -> list['VirtualCell']:
+        return [
+            cell for cell in [self.front, self.back, self.left, self.right]
+            if cell
+        ]
+
+    @property
+    def is_blocked(self) -> bool:
         if self.color == 'b':
-            return len([cell for cell in self.neighbors if (cell.robot and cell.robot.battery <= 30)]) == 1 and self.robot
+            return len([
+                cell for cell in self.neighbors
+                if (cell.robot and cell.robot.battery <= 30)
+            ]) == 1 and self.robot is not None
         if self.color == 'gr':
-            return len([cell for cell in self.neighbors if (cell.robot and not cell.robot.mail)]) == 2 and self.robot
+            return len([
+                cell for cell in self.neighbors
+                if (cell.robot and not cell.robot.mail)
+            ]) == 2 and self.robot is not None
         if self.color == 'y':
-            return len([cell for cell in self.neighbors if (cell.robot and cell.robot.mail)]) == 2 and self.robot
+            return len([
+                cell
+                for cell in self.neighbors if (cell.robot and cell.robot.mail)
+            ]) == 2 and self.robot is not None
         return False
