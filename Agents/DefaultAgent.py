@@ -65,6 +65,8 @@ class DefaultAgent:
             #simulation
             if not next.robot:
                 robot.pos.robot = None
+                if robot.pos.color == 'gr':
+                    robot.pos.generate_mail()
                 robot.pos = next
                 robot.pos.robot = robot
                 robot.battery -= 1

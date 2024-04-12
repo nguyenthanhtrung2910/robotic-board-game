@@ -32,8 +32,11 @@ class VirtualRobot:
             if self.pos.front:
                 if self.pos.front.color != 'r' and not self.pos.front.robot and (
                         self.pos.front.color != 'y' or
-                    (self.mail and self.pos.front.target == self.mail)):
+                    (self.mail and self.pos.front.target == self.mail)) and (
+                        self.pos.front.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail()
                     self.pos = self.pos.front
                     self.pos.robot = self
                     self.battery -= 1
@@ -47,8 +50,11 @@ class VirtualRobot:
             if self.pos.back:
                 if self.pos.back.color != 'r' and not self.pos.back.robot and (
                         self.pos.back.color != 'y' or
-                    (self.mail and self.pos.back.target == self.mail)):
+                    (self.mail and self.pos.back.target == self.mail)) and (
+                        self.pos.back.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail()
                     self.pos = self.pos.back
                     self.pos.robot = self
                     self.battery -= 1
@@ -62,8 +68,11 @@ class VirtualRobot:
             if self.pos.right:
                 if self.pos.right.color != 'r' and not self.pos.right.robot and (
                         self.pos.right.color != 'y' or
-                    (self.mail and self.pos.right.target == self.mail)):
+                    (self.mail and self.pos.right.target == self.mail)) and (
+                        self.pos.right.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail()
                     self.pos = self.pos.right
                     self.pos.robot = self
                     self.battery -= 1
@@ -77,8 +86,11 @@ class VirtualRobot:
             if self.pos.left:
                 if self.pos.left.color != 'r' and not self.pos.left.robot and (
                         self.pos.left.color != 'y' or
-                    (self.mail and self.pos.left.target == self.mail)):
+                    (self.mail and self.pos.left.target == self.mail)) and (
+                        self.pos.left.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail()
                     self.pos = self.pos.left
                     self.pos.robot = self
                     self.battery -= 1
@@ -89,7 +101,7 @@ class VirtualRobot:
 
     def pick_up(self) -> bool:
         if not self.mail and self.pos.color == 'gr':
-            self.mail = random.choice(range(1, 10))
+            self.mail = self.pos.mail
             return True
         return False
 

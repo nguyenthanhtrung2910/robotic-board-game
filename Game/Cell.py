@@ -1,7 +1,9 @@
 from __future__ import annotations
+import random
 import pygame
 
 from Game import Robot
+from Game import Mail
 from Game.consts import *
 
 pygame.init()
@@ -25,6 +27,7 @@ class Cell:
                  color: str = 'w',
                  target: int = 0,
                  robot: Robot.Robot | None = None,
+                 mail: Mail.Mail | None = None,
                  *,
                  front: 'Cell | None' = None,
                  back: 'Cell | None' = None,
@@ -36,6 +39,7 @@ class Cell:
         self.__color = color
         self.__target = target
         self.robot = robot
+        self.mail = mail
 
         self.front = front
         self.back = back
@@ -92,6 +96,11 @@ class Cell:
             cell for cell in [self.front, self.back, self.left, self.right]
             if cell
         ]
+
+    def generate_mail(self, sprites_mail: pygame.sprite.Group) -> None:
+        mail = Mail.Mail(random.choice(range(1, 10)), self)
+        self.mail = mail
+        sprites_mail.add(mail)
 
     def draw(self, surface: pygame.Surface) -> None:
         pygame.draw.rect(

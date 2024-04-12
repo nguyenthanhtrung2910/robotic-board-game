@@ -56,6 +56,9 @@ class Game:
             for j, robot_color in enumerate(robot_colors)
         }
 
+        for green_cell in self.board.green_cells:
+            green_cell.generate_mail(self.mail_sprites)
+
         #draw a background
         self.background = pygame.Surface(self.screen.get_size())
         self.background.fill((255, 255, 255))
@@ -94,11 +97,16 @@ class Game:
             [robot for color in self.robots for robot in self.robots[color]])
 
     @property
-    def state(self) -> list[dict[str, Any]]:
-        return [
+    def state(self) -> dict[str, list[dict[str, Any]] | list[int]]:
+        state = {}
+        state['robots_state'] = [
             robot.state for color in self.robots
             for robot in self.robots[color]
         ]
+        state['generated_mails'] = [
+            cell.mail.mail_number for cell in self.board.green_cells
+        ]
+        return state
 
     def sum_count_mail(self, color: str) -> int:
         return sum([robot.count_mail for robot in self.robots[color]])
@@ -139,11 +147,15 @@ class Game:
             for j, robot_color in enumerate(robot_colors)
         }
 
+        for green_cell in self.board.green_cells:
+            green_cell.generate_mail(self.mail_sprites)
+
         self.robot_sprites.add(
             [robot for color in self.robots for robot in self.robots[color]])
 
-    def run(self, agents: list[DefaultAgent.DefaultAgent]) -> tuple[str | None, int]:
-        # clock = pygame.time.Clock()
+    def run(self,
+            agents: list[DefaultAgent.DefaultAgent]) -> tuple[str | None, int]:
+        clock = pygame.time.Clock()
         nomove_count = 0
         winner = None
         running = True
@@ -212,6 +224,10 @@ class Game:
                                     if blue_cell.robot is not acting_robot:
                                         blue_cell.robot.charge()
 
+                    if event.key == pygame.K_r:
+                        self.reset(self.number_robots_with_same_color,
+                                   list(self.robots.keys()))
+
             for agent in agents:
                 if agent.color == acting_player_color:
                     action = agent.policy(self.state)
@@ -251,7 +267,7 @@ class Game:
                          CELL_BATTERY_SIZE[1] / 2),
                         CELL_BATTERY_SIZE[0] / 2 * 0.8, 0)
 
-            # clock.tick(FRAME_PER_SECOND)
+            clock.tick(FRAME_PER_SECOND)
             pygame.display.update()
 
         return winner, self.game_clock.now

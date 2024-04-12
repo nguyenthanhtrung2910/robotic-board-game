@@ -63,10 +63,12 @@ class Board:
     def cannot_step(self) -> list[Cell.Cell]:
         return [
             cell for cells in self.cells for cell in cells
-            if (cell.robot or cell.color == 'r' or cell.color == 'y')
+            if (cell.robot or cell.color == 'r' or cell.color == 'y'
+                or cell.color == 'gr')
         ]
 
     def reset(self) -> None:
         for cells in self.cells:
             for cell in cells:
                 cell.robot = None
+                cell.mail = None

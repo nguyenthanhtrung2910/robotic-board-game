@@ -93,8 +93,11 @@ class Robot(pygame.sprite.Sprite):
                 if self.pos.front.color != 'r' and not self.pos.front.robot and (
                         self.pos.front.color != 'y' or
                     (self.mail
-                     and self.pos.front.target == self.mail.mail_number)):
+                     and self.pos.front.target == self.mail.mail_number)) and (
+                         self.pos.front.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail(self.sprites_group)
                     self.pos = self.pos.front
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
@@ -102,6 +105,8 @@ class Robot(pygame.sprite.Sprite):
                     log.info(
                         f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
                     )
+                    if self.mail:
+                        self.mail.pos = self.pos
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -114,8 +119,11 @@ class Robot(pygame.sprite.Sprite):
                 if self.pos.back.color != 'r' and not self.pos.back.robot and (
                         self.pos.back.color != 'y' or
                     (self.mail
-                     and self.pos.back.target == self.mail.mail_number)):
+                     and self.pos.back.target == self.mail.mail_number)) and (
+                         self.pos.back.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail(self.sprites_group)
                     self.pos = self.pos.back
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
@@ -123,6 +131,8 @@ class Robot(pygame.sprite.Sprite):
                     log.info(
                         f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
                     )
+                    if self.mail:
+                        self.mail.pos = self.pos
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -135,8 +145,11 @@ class Robot(pygame.sprite.Sprite):
                 if self.pos.right.color != 'r' and not self.pos.right.robot and (
                         self.pos.right.color != 'y' or
                     (self.mail
-                     and self.pos.right.target == self.mail.mail_number)):
+                     and self.pos.right.target == self.mail.mail_number)) and (
+                         self.pos.right.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail(self.sprites_group)
                     self.pos = self.pos.right
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
@@ -144,6 +157,8 @@ class Robot(pygame.sprite.Sprite):
                     log.info(
                         f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
                     )
+                    if self.mail:
+                        self.mail.pos = self.pos
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -156,8 +171,11 @@ class Robot(pygame.sprite.Sprite):
                 if self.pos.left.color != 'r' and not self.pos.left.robot and (
                         self.pos.left.color != 'y' or
                     (self.mail
-                     and self.pos.left.target == self.mail.mail_number)):
+                     and self.pos.left.target == self.mail.mail_number)) and (
+                         self.pos.left.color != 'gr' or self.mail is None):
                     self.pos.robot = None
+                    if self.pos.color == 'gr':
+                        self.pos.generate_mail(self.sprites_group)
                     self.pos = self.pos.left
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
@@ -165,6 +183,8 @@ class Robot(pygame.sprite.Sprite):
                     log.info(
                         f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
                     )
+                    if self.mail:
+                        self.mail.pos = self.pos
                     self.pick_up()
                     self.drop_off()
                     self.clock.up()
@@ -173,8 +193,7 @@ class Robot(pygame.sprite.Sprite):
 
     def pick_up(self) -> bool:
         if not self.mail and self.pos.color == 'gr':
-            self.mail = Mail.Mail(random.choice(range(1, 10)), self)
-            self.sprites_group.add(self.mail)
+            self.mail = self.pos.mail
             log.info(
                 f'At t={self.clock.now:04} {self.colors_map[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}'
             )

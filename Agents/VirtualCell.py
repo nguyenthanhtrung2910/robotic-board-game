@@ -1,3 +1,4 @@
+import random
 from Agents import VirtualRobot
 
 
@@ -9,6 +10,7 @@ class VirtualCell:
                  color: str = 'w',
                  target: int = 0,
                  robot: VirtualRobot.VirtualRobot | None = None,
+                 mail: int = 0,
                  *,
                  front: 'VirtualCell | None' = None,
                  back: 'VirtualCell | None' = None,
@@ -20,6 +22,7 @@ class VirtualCell:
         self.__color = color
         self.__target = target
         self.robot = robot
+        self.mail = mail
 
         self.front = front
         self.back = back
@@ -28,7 +31,7 @@ class VirtualCell:
 
     def __repr__(self) -> str:
         return f'Cell({self.x}, {self.y})'
-    
+
     #equal and hash dunder method for using a Cell as dictionary's key
     def __eq__(self, cell: object) -> bool:
         if isinstance(cell, VirtualCell):
@@ -101,3 +104,6 @@ class VirtualCell:
                 for cell in self.neighbors if (cell.robot and cell.robot.mail)
             ]) == 2 and self.robot is not None
         return False
+
+    def generate_mail(self) -> None:
+        self.mail = random.choice(range(1, 10))

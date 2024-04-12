@@ -17,7 +17,8 @@ class VirtualBoard:
         self.white_cells = self.__get_cells_by_color('w')
 
     # allow us access cell by coordinate
-    def __getitem__(self, coordinate: tuple[int, int]) -> VirtualCell.VirtualCell:
+    def __getitem__(self, coordinate: tuple[int,
+                                            int]) -> VirtualCell.VirtualCell:
         return self.cells[coordinate[1]][coordinate[0]]
 
     def __get_cells_by_color(self,
@@ -30,10 +31,10 @@ class VirtualBoard:
     def __load_from_file(self, colors_map: str, targets_map: str) -> None:
 
         #two dimension list of Cell
-        self.cells :list[list[VirtualCell.VirtualCell]]= []
+        self.cells: list[list[VirtualCell.VirtualCell]] = []
 
-        colors_map_file = open(colors_map, mode='r',encoding="utf-8")
-        targets_map_file = open(targets_map, mode='r',encoding="utf-8")
+        colors_map_file = open(colors_map, mode='r', encoding="utf-8")
+        targets_map_file = open(targets_map, mode='r', encoding="utf-8")
 
         color_matrix = csv.reader(colors_map_file)
         target_matrix = csv.reader(targets_map_file)
@@ -53,8 +54,8 @@ class VirtualBoard:
         targets_map_file.close()
 
         #set for each cell its adjacent
-        for i,_ in enumerate(self.cells):
-            for j,_ in enumerate(self.cells[i]):
+        for i, _ in enumerate(self.cells):
+            for j, _ in enumerate(self.cells[i]):
                 if (i - 1) >= 0:
                     self.cells[i][j].front = self.cells[i - 1][j]
                 if (i + 1) < len(self.cells[i]):
@@ -68,7 +69,8 @@ class VirtualBoard:
     def cannot_step(self) -> list[VirtualCell.VirtualCell]:
         return [
             cell for cells in self.cells for cell in cells
-            if (cell.robot or cell.color == 'r' or cell.color == 'y')
+            if (cell.robot or cell.color == 'r' or cell.color == 'y'
+                or cell.color == 'gr')
         ]
 
     @staticmethod
@@ -80,6 +82,7 @@ class VirtualBoard:
         for cells in self.cells:
             for cell in cells:
                 cell.robot = None
+                cell.mail = 0
 
     def a_star_search(
             self, start: VirtualCell.VirtualCell,
@@ -87,7 +90,8 @@ class VirtualBoard:
         open_set: queue.PriorityQueue = queue.PriorityQueue()
         open_set.put((0, start))
 
-        came_from: dict[VirtualCell.VirtualCell, VirtualCell.VirtualCell | None]= {}
+        came_from: dict[VirtualCell.VirtualCell,
+                        VirtualCell.VirtualCell | None] = {}
         cost_so_far = {}
         came_from[start] = None
         cost_so_far[start] = 0
@@ -113,10 +117,10 @@ class VirtualBoard:
                 neighbors.reverse()
             for next_cell in neighbors:
                 new_cost = cost_so_far[current] + 1
-                if (next_cell not in cost_so_far or new_cost
-                        < cost_so_far[next_cell]) and (next_cell not in self.cannot_step
-                                                  or next_cell == start
-                                                  or next_cell == goal):
+                if (next_cell not in cost_so_far
+                        or new_cost < cost_so_far[next_cell]) and (
+                            next_cell not in self.cannot_step
+                            or next_cell == start or next_cell == goal):
                     cost_so_far[next_cell] = new_cost
                     priority = new_cost + self.heuristic(next_cell, goal)
                     open_set.put((priority, next_cell))
