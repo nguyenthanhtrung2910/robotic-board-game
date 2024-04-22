@@ -117,6 +117,13 @@ class VirtualRobot:
         self.battery += BATERRY_UP_PER_STEP
         if self.battery > MAXIMUM_ROBOT_BATTERY:
             self.battery = MAXIMUM_ROBOT_BATTERY
+    
+    def reset(self, pos: VirtualCell.VirtualCell) -> None:
+        self.pos = pos
+        self.pos.robot = self
+        self.mail = 0
+        self.count_mail = 0
+        self.battery = MAXIMUM_ROBOT_BATTERY
 
     def get_destination(
         self,

@@ -1,3 +1,7 @@
+import math
+
+import numpy as np
+
 from Agents import VirtualBoard
 from Agents import VirtualRobot
 from Agents import VirtualGame
@@ -17,10 +21,10 @@ class DefaultAgent:
             self.dests.append(robot.get_destination(board))
 
     def __get_action_for_one_robot(self, robot: VirtualRobot.VirtualRobot,
-                                   board: VirtualBoard.VirtualBoard):
+                                   board: VirtualBoard.VirtualBoard) -> int:
         if robot.is_charged:
             if robot.battery < 70:
-                return self.color + str(robot.index) + 's'
+                return 0
 
         if robot.pos is self.dests[robot.index - 1]:
             self.dests[robot.index - 1] = robot.get_destination(board)
@@ -32,16 +36,16 @@ class DefaultAgent:
                       1].is_blocked and robot.pos not in self.dests[
                           robot.index - 1].neighbors:
             if self.dests[robot.index - 1].color == 'y':
-                return self.color + str(robot.index) + 's'
+                return 0
             if self.dests[robot.index - 1].color == 'b':
                 if all([cell.is_blocked for cell in board.blue_cells]):
-                    return self.color + str(robot.index) + 's'
+                    return 0
                 self.dests[robot.index - 1] = robot.get_destination(
                     board,
                     [cell for cell in board.blue_cells if cell.is_blocked])
             if self.dests[robot.index - 1].color == 'gr':
                 if all([cell.is_blocked for cell in board.green_cells]):
-                    return self.color + str(robot.index) + 's'
+                    return 0
                 self.dests[robot.index - 1] = robot.get_destination(
                     board,
                     [cell for cell in board.green_cells if cell.is_blocked])
@@ -54,13 +58,13 @@ class DefaultAgent:
 
             #get the action
             if next is robot.pos.front:
-                action = self.color + str(robot.index) + 'u'
+                action = 1
             if next is robot.pos.back:
-                action = self.color + str(robot.index) + 'd'
+                action = 2
             if next is robot.pos.left:
-                action = self.color + str(robot.index) + 'l'
+                action = 3
             if next is robot.pos.right:
-                action = self.color + str(robot.index) + 'r'
+                action = 4
 
             #simulation
             if not next.robot:
@@ -81,9 +85,9 @@ class DefaultAgent:
 
             return action
 
-        return self.color + str(robot.index) + 's'
+        return 0
 
-    def policy(self, state):
+    def policy(self, state) -> int:
         #update the game state for simulator
         self.simulator.update(state)
 
@@ -91,11 +95,14 @@ class DefaultAgent:
         action = [
             self.__get_action_for_one_robot(robot, self.simulator.board)
             for robot in self.simulator.robots[self.color]
-        ]
+        ] + [0]
 
+        number_robots_per_agent = len(list(self.simulator.robots.values())[0])
+        action = np.ravel_multi_index(action, [5]*number_robots_per_agent+[math.factorial(number_robots_per_agent)])
+        
         return action
 
-    def reset(self, state):
+    def reset(self, state) -> None:
         self.simulator.reset(state)
         self.dests = []
         for robot in self.simulator.robots[self.color]:

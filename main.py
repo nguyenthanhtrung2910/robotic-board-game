@@ -1,6 +1,7 @@
 import pygame
 import logging as log
 import argparse
+
 from Game.Board import Board
 from Game.Game import Game
 from Agents.DefaultAgent import DefaultAgent
@@ -38,7 +39,7 @@ number_human_players = len(args.robot_colors) - args.number_auto_players
 agents = []
 board = Board(args.color_map, args.target_map)
 game = Game(board, args.required_mail, args.number_robots_with_same_color,
-            args.robot_colors)
+            args.robot_colors, render_mode='human')
 
 for i in range(args.number_auto_players):
     agents.append(

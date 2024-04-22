@@ -2,7 +2,9 @@ from __future__ import annotations
 import random
 import logging as log
 from typing import Any
+
 import pygame
+import numpy as np
 
 from Game import Cell
 from Game import Clock
@@ -76,6 +78,16 @@ class Robot(pygame.sprite.Sprite):
         }
         return state
 
+    @staticmethod
+    def normalize(x, min_val, max_val):
+        return (x - min_val) / (max_val - min_val)
+
+    @property
+    def observation(self):
+        mail = self.mail.mail_number if self.mail else 0
+        return np.array([self.normalize(self.pos.x,0,8), self.normalize(self.pos.y,0,8), self.normalize(mail,0,10), 
+                         self.normalize(self.battery,0,MAXIMUM_ROBOT_BATTERY)], dtype=np.float64)
+    
     @property
     def is_charged(self) -> bool:
         return self.pos.color == 'b'
@@ -216,16 +228,86 @@ class Robot(pygame.sprite.Sprite):
         self.battery += BATERRY_UP_PER_STEP
         if self.battery > MAXIMUM_ROBOT_BATTERY:
             self.battery = MAXIMUM_ROBOT_BATTERY
+    
+    def reset(self, pos: Cell.Cell) -> None:
+        self.pos = pos
+        self.pos.robot = self
+        self.mail = None
+        self.count_mail = 0
+        self.battery = MAXIMUM_ROBOT_BATTERY
+        self.allowed_step_per_turn = 1
 
-    def move(self, action: str) -> bool:
-        if action == 's':
+    def step(self, action: int) -> bool:
+        if action == 0:
             return False
-        if action == 'u':
+        if action == 1:
             return self.move_up()
-        if action == 'd':
+        if action == 2:
             return self.move_down()
-        if action == 'l':
+        if action == 3:
             return self.move_left()
-        if action == 'r':
+        if action == 4:
             return self.move_right()
+        return False
+    
+    def reward(self, action):
+        reward = -0.1
+        if action == 1 and self.mail is not None and self.pos.front and self.pos.front.target == self.mail.mail_number:
+            reward = 20
+        if action == 2 and self.mail is not None and self.pos.back and self.pos.back.target == self.mail.mail_number:
+            reward = 20
+        if action == 3 and self.mail is not None and self.pos.left and self.pos.left.target == self.mail.mail_number:
+            reward = 20
+        if action == 4 and self.mail is not None and self.pos.right and self.pos.right.target == self.mail.mail_number:
+            reward = 20
+
+        if action == 1 and self.mail is None and self.pos.front and self.pos.front.color == 'gr':
+            reward = 20
+        if action == 2 and self.mail is None and self.pos.back and self.pos.back.color == 'gr':
+            reward = 20
+        if action == 3 and self.mail is None and self.pos.left and self.pos.left.color == 'gr':
+            reward = 20
+        if action == 4 and self.mail is None and self.pos.right and self.pos.right.color == 'gr':
+            reward = 20
+        return reward
+        
+    def is_legal_moves(self, action: int) -> bool:
+        if action == 0:
+            return True
+        if action == 1:
+            if self.pos.front:
+                if self.pos.front.color != 'r' and self.pos.front.robot is None and (
+                        self.pos.front.color != 'y' or
+                    (self.mail
+                     and self.pos.front.target == self.mail.mail_number)) and (
+                         self.pos.front.color != 'gr' or self.mail is None):
+                    return True
+            
+        if action == 2:
+            if self.pos.back:
+                if self.pos.back.color != 'r' and self.pos.back.robot is None and (
+                        self.pos.back.color != 'y' or
+                    (self.mail
+                     and self.pos.back.target == self.mail.mail_number)) and (
+                         self.pos.back.color != 'gr' or self.mail is None):
+                    return True
+                
+        if action == 3:
+            if self.pos.left:
+                if self.pos.left.color != 'r' and self.pos.left.robot is None and (
+                        self.pos.left.color != 'y' or
+                    (self.mail
+                     and self.pos.left.target == self.mail.mail_number)) and (
+                         self.pos.left.color != 'gr' or self.mail is None):
+                    return True
+                
+        if action == 4:
+            if self.pos.right:
+                if self.pos.right.color != 'r' and self.pos.right.robot is None and (
+                        self.pos.right.color != 'y' or
+                    (self.mail
+                     and self.pos.right.target == self.mail.mail_number)) and (
+                         self.pos.right.color != 'gr' or self.mail is None):
+                    return True
+                
         return False
