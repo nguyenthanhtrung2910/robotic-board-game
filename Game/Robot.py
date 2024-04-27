@@ -31,7 +31,8 @@ class Robot(pygame.sprite.Sprite):
                  mail: Mail.Mail | None = None,
                  count_mail: int = 0,
                  battery: int = MAXIMUM_ROBOT_BATTERY,
-                 allowed_step_per_turn: int = 1) -> None:
+                 allowed_step_per_turn: int = 1,
+                 render_mode = None) -> None:
         super().__init__()
         self.pos = pos
         self.pos.robot = self
@@ -43,8 +44,10 @@ class Robot(pygame.sprite.Sprite):
         self.count_mail = count_mail
         self.battery = battery
         self.allowed_step_per_turn = allowed_step_per_turn
-        self.__set_image()
-        self.__set_number_image()
+        self.render_mode = render_mode
+        if self.render_mode == 'human':
+            self.__set_image()
+            self.__set_number_image()
 
     def __set_image(self) -> None:
         if self.color == 'b':
@@ -78,15 +81,10 @@ class Robot(pygame.sprite.Sprite):
         }
         return state
 
-    @staticmethod
-    def normalize(x, min_val, max_val):
-        return (x - min_val) / (max_val - min_val)
-
     @property
     def observation(self):
         mail = self.mail.mail_number if self.mail else 0
-        return np.array([self.normalize(self.pos.x,0,8), self.normalize(self.pos.y,0,8), self.normalize(mail,0,10), 
-                         self.normalize(self.battery,0,MAXIMUM_ROBOT_BATTERY)], dtype=np.float64)
+        return (self.pos.x*9 + self.pos.y)*10+mail
     
     @property
     def is_charged(self) -> bool:
@@ -109,7 +107,7 @@ class Robot(pygame.sprite.Sprite):
                          self.pos.front.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
-                        self.pos.generate_mail(self.sprites_group)
+                        self.pos.generate_mail(self.sprites_group, self.render_mode)
                     self.pos = self.pos.front
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
@@ -135,7 +133,7 @@ class Robot(pygame.sprite.Sprite):
                          self.pos.back.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
-                        self.pos.generate_mail(self.sprites_group)
+                        self.pos.generate_mail(self.sprites_group, self.render_mode)
                     self.pos = self.pos.back
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
@@ -161,7 +159,7 @@ class Robot(pygame.sprite.Sprite):
                          self.pos.right.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
-                        self.pos.generate_mail(self.sprites_group)
+                        self.pos.generate_mail(self.sprites_group, self.render_mode)
                     self.pos = self.pos.right
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1
@@ -187,7 +185,7 @@ class Robot(pygame.sprite.Sprite):
                          self.pos.left.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
-                        self.pos.generate_mail(self.sprites_group)
+                        self.pos.generate_mail(self.sprites_group, self.render_mode)
                     self.pos = self.pos.left
                     self.pos.robot = self
                     self.allowed_step_per_turn -= 1

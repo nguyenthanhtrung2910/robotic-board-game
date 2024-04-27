@@ -8,18 +8,12 @@ import pygame
 import numpy as np
 import pettingzoo
 import gymnasium
-import stable_baselines3
 from gymnasium import spaces
 from pettingzoo import utils
-import stable_baselines3.a2c
-import stable_baselines3.dqn
-import stable_baselines3.ppo
-
 
 from Game import Board
 from Game import Robot
 from Game import Clock
-from Agents import DefaultAgent
 from Game.consts import *
 
 pygame.init()
@@ -46,7 +40,8 @@ class Game(pettingzoo.AECEnv):
                  agent_colors: list[str], render_mode: str|None = None) -> None:
         
         super().__init__()
-
+        
+        self.render_mode = render_mode
         self.game_clock = Clock.Clock()
         self.robot_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.mail_sprites: pygame.sprite.Group = pygame.sprite.Group()
@@ -63,14 +58,14 @@ class Game(pettingzoo.AECEnv):
             robot_color: [
                 Robot.Robot(
                     robot_cells_init[number_robots_per_agent * j + i],
-                    i + 1, robot_color, self.mail_sprites, self.game_clock)
+                    i + 1, robot_color, self.mail_sprites, self.game_clock, render_mode=render_mode)
                 for i in range(number_robots_per_agent)
             ]
             for j, robot_color in enumerate(agent_colors)
         }
 
         for green_cell in self.board.green_cells:
-            green_cell.generate_mail(self.mail_sprites)
+            green_cell.generate_mail(self.mail_sprites, self.render_mode)
 
         #add all robots to sprites group
         self.robot_sprites.add(
@@ -81,11 +76,11 @@ class Game(pettingzoo.AECEnv):
         self.possible_orders_moving_robot = list(permutations(range(number_robots_per_agent)))
 
         self.action_spaces = {a: spaces.Discrete(5**(self.number_robots_per_agent)*math.factorial(number_robots_per_agent)) for a in self.agents}
-        self.observation_spaces = {
+        self.observation_spaces = {a: spaces.Discrete(810) for a in self.agents}
             # a: spaces.Box(low=0, high=1, shape=(9, 9, len(self.agents)), dtype=np.int8) for a in self.agents}
-            a: spaces.Box(low=np.array([0, 0, 0, 0]*self.number_robots), 
-                                                 high=np.array([1, 1, 1, 1]*self.number_robots),
-                                                 dtype=np.float64) for a in self.agents}
+            # a: spaces.Box(low=np.array([0, 0, 0, 0]*self.number_robots), 
+            #                                      high=np.array([1, 1, 1, 1]*self.number_robots),
+            #                                      dtype=np.float64) for a in self.agents}
         
         # self.observation_spaces = {
         #     i: spaces.Dict(
@@ -112,7 +107,7 @@ class Game(pettingzoo.AECEnv):
         self.winner = None
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
-        self.render_mode = render_mode
+        
         self.screen = None
         if self.render_mode == "human":
             #draw a background
@@ -173,7 +168,7 @@ class Game(pettingzoo.AECEnv):
 
         # generated_mails = np.array([cell.mail.mail_number for cell in self.board.green_cells], dtype=np.int8)
 
-        return robot_states
+        return np.array(self.robots['r'][0].observation, dtype=np.int32)
             
     def observation_space(self, agent):
         return self.observation_spaces[agent]
@@ -182,7 +177,7 @@ class Game(pettingzoo.AECEnv):
         return self.action_spaces[agent]
 
     def reset(self, seed=None, options=None) -> None:
-        
+        random.seed(seed)
         self.agents = self.possible_agents[:]
         self.rewards = {agent: 0 for agent in self.agents}
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
@@ -201,7 +196,7 @@ class Game(pettingzoo.AECEnv):
 
         self.mail_sprites.empty()
         for green_cell in self.board.green_cells:
-            green_cell.generate_mail(self.mail_sprites)
+            green_cell.generate_mail(self.mail_sprites, self.render_mode)
 
         self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.reset()
@@ -215,6 +210,7 @@ class Game(pettingzoo.AECEnv):
             self.render()
 
     def step(self, action: int|None) -> None:
+        # print(f'step called {self.num_moves} time')
         if (
             self.terminations[self.agent_selection]
             or self.truncations[self.agent_selection]
@@ -243,6 +239,8 @@ class Game(pettingzoo.AECEnv):
             self.nomove_count = 0
         for robot in self.robots[self.agent_selection]:
             robot.allowed_step_per_turn = 1
+            #we consider now infinite battery
+            robot.battery = 100
 
         self.num_moves += 1    
 
@@ -256,10 +254,10 @@ class Game(pettingzoo.AECEnv):
             self.winner = self.agent_selection
             log.info(f'At t={self.game_clock.now:04} Player {self.winner} win')
 
-        # if self.nomove_count == 5 * len(self.agents):
-        #     for a in self.agents:
-        #         self.rewards[a] = 0 
-        #     self.terminations = {a: True for a in self.agents}
+        if self.nomove_count == 3 * len(self.agents):
+            for a in self.agents:
+                self.rewards[a] = 0 
+            self.terminations = {a: True for a in self.agents}
 
         self.truncations = {a: self.num_moves >= NUM_ITERS for a in self.agents}
 
@@ -397,25 +395,10 @@ class Game(pettingzoo.AECEnv):
                         self.reset()
 
             if self.agents.index(self.agent_selection) - number_people >= 0:
-                if type(agents[self.agents.index(self.agent_selection) - number_people]) == DefaultAgent.DefaultAgent:  
-                    action = agents[self.agents.index(self.agent_selection) - number_people].policy(self.state)    
-                elif type(agents[self.agents.index(self.agent_selection) - number_people]) == stable_baselines3.a2c.A2C:
-                    action = agents[self.agents.index(self.agent_selection) - number_people].predict(self.observe(self.agent_selection), deterministic=True)[0]
-                elif type(agents[self.agents.index(self.agent_selection) - number_people]) == stable_baselines3.ppo.PPO:
-                    action = agents[self.agents.index(self.agent_selection) - number_people].predict(self.observe(self.agent_selection), deterministic=True)[0]
-                elif type(agents[self.agents.index(self.agent_selection) - number_people]) == stable_baselines3.dqn.DQN:
-                    action = agents[self.agents.index(self.agent_selection) - number_people].predict(self.observe(self.agent_selection))[0]
+                action = agents[self.agents.index(self.agent_selection) - number_people].policy(self.state)    
                 self.step(action)
             else:
                 if self.render_mode == "human":
                     self.render()
 
         return self.winner, self.game_clock.now
-
-    def watch(self):
-        running = True
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-            self.render()

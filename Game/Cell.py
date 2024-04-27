@@ -97,8 +97,8 @@ class Cell:
             if cell
         ]
 
-    def generate_mail(self, sprites_mail: pygame.sprite.Group) -> None:
-        mail = Mail.Mail(random.choice(range(1, 10)), self)
+    def generate_mail(self, sprites_mail: pygame.sprite.Group, render_mode) -> None:
+        mail = Mail.Mail(random.choice(range(1, 10)), self, render_mode)
         self.mail = mail
         sprites_mail.add(mail)
 

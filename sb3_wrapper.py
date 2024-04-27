@@ -1,4 +1,5 @@
 import pettingzoo
+import gymnasium as gym
 
 class SB3Wrapper(pettingzoo.utils.BaseWrapper):
 
