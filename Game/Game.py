@@ -21,10 +21,6 @@ pygame.init()
 
 class Game(pettingzoo.AECEnv):
 
-    images_for_cell_coordinate = [
-        pygame.font.SysFont(None, 48).render(str(i), True, (0, 0, 0))
-        for i in range(9)
-    ]
     color_map = {
         'b': (0, 0, 255),
         'r': (255, 0, 0),
@@ -33,15 +29,14 @@ class Game(pettingzoo.AECEnv):
         'o': (255, 165, 0)
     }
 
-    metadata = {"render_modes": ["human"], "name": "robotic_board_game", "is_parallelizable": False}
+    metadata = {"render_modes": ["human"], "name": "robotic_board_game", "is_parallelizable": False, "render_fps": 5}
 
     def __init__(self, board: Board.Board, required_mail: int,
                  number_robots_per_agent: int,
-                 agent_colors: list[str], render_mode: str|None = None) -> None:
+                 agent_colors: list[str], render_mode: str|None = None,
+                 battery_considered = False) -> None:
         
         super().__init__()
-        
-        self.render_mode = render_mode
         self.game_clock = Clock.Clock()
         self.robot_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.mail_sprites: pygame.sprite.Group = pygame.sprite.Group()
@@ -50,7 +45,9 @@ class Game(pettingzoo.AECEnv):
         self.required_mail = required_mail
         self.number_robots_per_agent = number_robots_per_agent
         self.number_robots = number_robots_per_agent * len(agent_colors)
-        self.nomove_count = 0
+        self.battery_considered = battery_considered
+        # self.nomove_count = 0
+
         
         robot_cells_init = random.sample(self.board.white_cells,
                                          k=self.number_robots)
@@ -65,7 +62,7 @@ class Game(pettingzoo.AECEnv):
         }
 
         for green_cell in self.board.green_cells:
-            green_cell.generate_mail(self.mail_sprites, self.render_mode)
+            green_cell.generate_mail(self.mail_sprites, render_mode)
 
         #add all robots to sprites group
         self.robot_sprites.add(
@@ -76,23 +73,17 @@ class Game(pettingzoo.AECEnv):
         self.possible_orders_moving_robot = list(permutations(range(number_robots_per_agent)))
 
         self.action_spaces = {a: spaces.Discrete(5**(self.number_robots_per_agent)*math.factorial(number_robots_per_agent)) for a in self.agents}
-        self.observation_spaces = {a: spaces.Discrete(810) for a in self.agents}
-            # a: spaces.Box(low=0, high=1, shape=(9, 9, len(self.agents)), dtype=np.int8) for a in self.agents}
-            # a: spaces.Box(low=np.array([0, 0, 0, 0]*self.number_robots), 
-            #                                      high=np.array([1, 1, 1, 1]*self.number_robots),
-            #                                      dtype=np.float64) for a in self.agents}
-        
-        # self.observation_spaces = {
-        #     i: spaces.Dict(
-        #         {
-        #             "robot_states": spaces.Box(low=np.array([0, 0, 0, 0]*(self.number_robots)), 
-        #                                          high=np.array([8, 8, 9, MAXIMUM_ROBOT_BATTERY]*(self.number_robots)),
-        #                                          dtype=np.int16),
-        #             "generated_mails": spaces.Box(low=np.array([1, 1, 1]), high=np.array([9,9,9]), dtype=np.int8),
-        #         }
-        #     )
-        #     for i in self.agents
-        # }
+        self.observation_spaces = {
+            i: spaces.Dict(
+                {
+                    "observation": spaces.Box(
+                        low=0, high=1, shape=(28*self.number_robots,), dtype=np.int8
+                    ),
+                    "action_mask": spaces.Box(low=0, high=1, shape=(5,), dtype=np.int8),
+                }
+            )
+            for i in self.agents
+        }
         
         self.rewards = {a: 0 for a in self.agents}
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
@@ -107,6 +98,7 @@ class Game(pettingzoo.AECEnv):
         self.winner = None
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
+        self.render_mode = render_mode
         
         self.screen = None
         if self.render_mode == "human":
@@ -118,21 +110,25 @@ class Game(pettingzoo.AECEnv):
                 for j in range(self.board.size):
                     self.board[i, j].draw(self.background)
             #draw axes
+            images_for_cell_coordinate = [
+            pygame.font.SysFont(None, 48).render(str(i), True, (0, 0, 0))
+            for i in range(9)
+            ]
             for i in range(self.board.size):
                 self.background.blit(
-                    self.images_for_cell_coordinate[i],
+                    images_for_cell_coordinate[i],
                     ((i + 1) * CELL_SIZE[0] +
                     (CELL_SIZE[0] -
-                    self.images_for_cell_coordinate[i].get_width()) / 2,
+                    images_for_cell_coordinate[i].get_width()) / 2,
                     (CELL_SIZE[1] -
-                    self.images_for_cell_coordinate[i].get_height()) / 2))
+                    images_for_cell_coordinate[i].get_height()) / 2))
                 self.background.blit(
-                    self.images_for_cell_coordinate[i],
+                    images_for_cell_coordinate[i],
                     ((CELL_SIZE[0] -
-                    self.images_for_cell_coordinate[i].get_width()) / 2,
+                    images_for_cell_coordinate[i].get_width()) / 2,
                     (i + 1) * CELL_SIZE[1] +
                     (CELL_SIZE[1] -
-                    self.images_for_cell_coordinate[i].get_height()) / 2))
+                    images_for_cell_coordinate[i].get_height()) / 2))
             #draw baterry bar
             for j in range(self.number_robots):
                 for i in range(MAXIMUM_ROBOT_BATTERY + 1):
@@ -162,13 +158,11 @@ class Game(pettingzoo.AECEnv):
         return sum([robot.count_mail for robot in self.robots[agent]])
     
     def observe(self, agent: str):
-        # robot_states = np.array([[[int(cell.robot.color == agent)] if cell.robot else [0] for cell in row]for row in self.board.cells], dtype=np.int8)
-        robot_states = np.hstack([robot.observation for a in self.robots for robot in self.robots[a]])
-        # robot_states = np.hstack((np.hstack([robot.observation for robot in self.robots[agent]]), robot_states))
-
-        # generated_mails = np.array([cell.mail.mail_number for cell in self.board.green_cells], dtype=np.int8)
-
-        return np.array(self.robots['r'][0].observation, dtype=np.int32)
+        robot_states = np.hstack([robot.observation for a in self.robots for robot in self.robots[a] if a != agent])
+        robot_states = np.hstack((np.hstack([robot.observation for robot in self.robots[agent]]), robot_states))
+        #action mask here only for one robot
+        mask = self.robots[agent][0].mask
+        return {'observation':robot_states, 'action_mask':mask}
             
     def observation_space(self, agent):
         return self.observation_spaces[agent]
@@ -204,60 +198,56 @@ class Game(pettingzoo.AECEnv):
 
         self.num_moves = 0
         self.winner = None
-        self.nomove_count = 0
+        # self.nomove_count = 0
 
         if self.render_mode == "human":
             self.render()
 
     def step(self, action: int|None) -> None:
-        # print(f'step called {self.num_moves} time')
         if (
             self.terminations[self.agent_selection]
             or self.truncations[self.agent_selection]
         ):
             return self._was_dead_step(action)
         
-        self._cumulative_rewards[self.agent_selection] = 0
+        self._cumulative_rewards = {agent: 0 for agent in self.agents}
         self.rewards = {agent: 0 for agent in self.agents}
 
         action = np.unravel_index(action, [5]*self.number_robots_per_agent+[math.factorial(self.number_robots_per_agent)])
         for r in self.possible_orders_moving_robot[action[-1]]:
             acting_robot = self.robots[self.agent_selection][r]
-            #r(s,a)
-            self.rewards[self.agent_selection] = acting_robot.reward(action[r])
+            #r(s,a) and s'(s,a)
+            is_moved, reward = acting_robot.step(action[r])
+            self.rewards[self.agent_selection] = reward
             self._accumulate_rewards()
-            #s'(s,a)
-            if acting_robot.step(action[r]):
+            if is_moved:
                 for blue_cell in self.board.blue_cells:
                     if blue_cell.robot:
                         if blue_cell.robot is not self.robots[self.agent_selection][r]:
                             blue_cell.robot.charge()
 
-        if not any(action[:-1]):
-            self.nomove_count += 1
-        else:
-            self.nomove_count = 0
+        # if not any(action[:-1]):
+        #     self.nomove_count += 1
+        # else:
+        #     self.nomove_count = 0
+
         for robot in self.robots[self.agent_selection]:
             robot.allowed_step_per_turn = 1
-            #we consider now infinite battery
-            robot.battery = 100
+            #we can consider now infinite battery
+            if not self.battery_considered:
+                robot.battery = MAXIMUM_ROBOT_BATTERY
 
         self.num_moves += 1    
 
         if self.sum_count_mail(self.agent_selection) == self.required_mail:
-            self.rewards[self.agent_selection] = 200
-            for a in self.agents:
-                if a != self.agent_selection: 
-                    self.rewards[a] = -200
-            self._accumulate_rewards()
             self.terminations = {a: True for a in self.agents}
             self.winner = self.agent_selection
             log.info(f'At t={self.game_clock.now:04} Player {self.winner} win')
 
-        if self.nomove_count == 3 * len(self.agents):
-            for a in self.agents:
-                self.rewards[a] = 0 
-            self.terminations = {a: True for a in self.agents}
+        # if self.nomove_count == 3 * len(self.agents):
+        #     for a in self.agents:
+        #         self.rewards[a] = 0 
+        #     self.terminations = {a: True for a in self.agents}
 
         self.truncations = {a: self.num_moves >= NUM_ITERS for a in self.agents}
 
@@ -304,18 +294,34 @@ class Game(pettingzoo.AECEnv):
                         CELL_BATTERY_SIZE[1] / 2),
                     CELL_BATTERY_SIZE[0] / 2 * 0.8, 0)
 
-        self.clock.tick(FRAME_PER_SECOND)
+        self.clock.tick(self.metadata["render_fps"])
         pygame.display.update()
     
     def close(self) -> None:
         pass
 
+    def watch(self):
+        running = True
+        while running :
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+            self.render()
+
     def run(self,
             agents: list[Any]) -> tuple[str | None, int]:
+        
+        assert len(agents) <= len(self.agents)
+        if self.render_mode is None:
+            raise ValueError('If you want to play yourself, create enviroment with human render mode ')
+
         self.reset()
+
         number_people = len(self.agents) - len(agents)
+        agents = {c: a for c, a in zip(self.agents[number_people:], agents)}
         acting_robot = self.robots[self.agent_selection][0]
         running = True
+
         while running and not self.terminations[self.agent_selection] and not self.truncations[self.agent_selection]:
             #Human behavior
             for event in pygame.event.get():
@@ -323,11 +329,17 @@ class Game(pettingzoo.AECEnv):
                     running = False
 
                 if event.type == pygame.KEYDOWN:
+                    
+                    if event.key == pygame.K_r:
+                        self.reset()
 
                     if event.key == pygame.K_f:
-                        self.nomove_count += 1
+                        # self.nomove_count += 1
                         for robot in self.robots[self.agent_selection]:
                             robot.allowed_step_per_turn = 1
+                            #we can consider now infinite battery
+                            if not self.battery_considered:
+                                robot.battery = MAXIMUM_ROBOT_BATTERY
 
                         self.num_moves += 1    
 
@@ -336,8 +348,8 @@ class Game(pettingzoo.AECEnv):
                             self.winner = self.agent_selection
                             log.info(f'At t={self.game_clock.now:04} Player {self.winner} win')
 
-                        if self.nomove_count == 2 * len(self.agents):
-                            self.terminations = {a: True for a in self.agents}
+                        # if self.nomove_count == 3 * len(self.agents):
+                        #     self.terminations = {a: True for a in self.agents}
 
                         self.truncations = {a: self.num_moves >= NUM_ITERS for a in self.agents}
 
@@ -361,7 +373,7 @@ class Game(pettingzoo.AECEnv):
 
                     if event.key == pygame.K_UP:
                         if acting_robot.move_up():
-                            self.nomove_count = 0
+                            # self.nomove_count = 0
                             for blue_cell in self.board.blue_cells:
                                 if blue_cell.robot:
                                     if blue_cell.robot is not acting_robot:
@@ -369,7 +381,7 @@ class Game(pettingzoo.AECEnv):
 
                     if event.key == pygame.K_DOWN:
                         if acting_robot.move_down():
-                            self.nomove_count = 0
+                            # self.nomove_count = 0
                             for blue_cell in self.board.blue_cells:
                                 if blue_cell.robot:
                                     if blue_cell.robot is not acting_robot:
@@ -377,7 +389,7 @@ class Game(pettingzoo.AECEnv):
 
                     if event.key == pygame.K_RIGHT:
                         if acting_robot.move_right():
-                            self.nomove_count = 0
+                            # self.nomove_count = 0
                             for blue_cell in self.board.blue_cells:
                                 if blue_cell.robot:
                                     if blue_cell.robot is not acting_robot:
@@ -385,20 +397,16 @@ class Game(pettingzoo.AECEnv):
 
                     if event.key == pygame.K_LEFT:
                         if acting_robot.move_left():
-                            self.nomove_count = 0
+                            # self.nomove_count = 0
                             for blue_cell in self.board.blue_cells:
                                 if blue_cell.robot:
                                     if blue_cell.robot is not acting_robot:
                                         blue_cell.robot.charge()
 
-                    if event.key == pygame.K_r:
-                        self.reset()
-
             if self.agents.index(self.agent_selection) - number_people >= 0:
-                action = agents[self.agents.index(self.agent_selection) - number_people].policy(self.state)    
+                action = agents[self.agent_selection].policy(self.state)    
                 self.step(action)
             else:
-                if self.render_mode == "human":
-                    self.render()
+                self.render()
 
         return self.winner, self.game_clock.now

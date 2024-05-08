@@ -39,7 +39,7 @@ number_human_players = len(args.robot_colors) - args.number_auto_players
 agents = []
 board = Board(args.color_map, args.target_map)
 game = Game(board, args.required_mail, args.number_robots_with_same_color,
-            args.robot_colors, render_mode='human')
+            args.robot_colors, render_mode='human', battery_considered=True)
 
 for i in range(args.number_auto_players):
     agents.append(

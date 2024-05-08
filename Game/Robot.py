@@ -84,7 +84,7 @@ class Robot(pygame.sprite.Sprite):
     @property
     def observation(self):
         mail = self.mail.mail_number if self.mail else 0
-        return (self.pos.x*9 + self.pos.y)*10+mail
+        return np.hstack([np.eye(9, dtype=np.int8)[self.pos.x], np.eye(9, dtype=np.int8)[self.pos.y], np.eye(10, dtype=np.int8)[mail]])
     
     @property
     def is_charged(self) -> bool:
@@ -97,7 +97,8 @@ class Robot(pygame.sprite.Sprite):
                         (self.pos.y + 1) * CELL_SIZE[1])
         return rect
 
-    def move_up(self) -> bool:
+    def move_up(self) -> tuple[bool, float]:
+        reward = DEFAULT_REWARD
         if self.allowed_step_per_turn and self.battery:
             if self.pos.front:
                 if self.pos.front.color != 'r' and not self.pos.front.robot and (
@@ -117,13 +118,16 @@ class Robot(pygame.sprite.Sprite):
                     )
                     if self.mail:
                         self.mail.pos = self.pos
-                    self.pick_up()
-                    self.drop_off()
+                    if self.pick_up(): 
+                        reward = REWARD_FOR_MAIL
+                    if self.drop_off(): 
+                        reward = REWARD_FOR_MAIL
                     self.clock.up()
-                    return True
-        return False
+                    return True, reward
+        return False, reward
 
-    def move_down(self) -> bool:
+    def move_down(self) -> tuple[bool, float]:
+        reward = DEFAULT_REWARD
         if self.allowed_step_per_turn and self.battery:
             if self.pos.back:
                 if self.pos.back.color != 'r' and not self.pos.back.robot and (
@@ -143,13 +147,16 @@ class Robot(pygame.sprite.Sprite):
                     )
                     if self.mail:
                         self.mail.pos = self.pos
-                    self.pick_up()
-                    self.drop_off()
+                    if self.pick_up(): 
+                        reward = REWARD_FOR_MAIL
+                    if self.drop_off(): 
+                        reward = REWARD_FOR_MAIL
                     self.clock.up()
-                    return True
-        return False
+                    return True, reward
+        return False, reward
 
-    def move_right(self) -> bool:
+    def move_right(self) -> tuple[bool, float]:
+        reward = DEFAULT_REWARD
         if self.allowed_step_per_turn and self.battery:
             if self.pos.right:
                 if self.pos.right.color != 'r' and not self.pos.right.robot and (
@@ -169,13 +176,16 @@ class Robot(pygame.sprite.Sprite):
                     )
                     if self.mail:
                         self.mail.pos = self.pos
-                    self.pick_up()
-                    self.drop_off()
+                    if self.pick_up(): 
+                        reward = REWARD_FOR_MAIL
+                    if self.drop_off(): 
+                        reward = REWARD_FOR_MAIL
                     self.clock.up()
-                    return True
-        return False
+                    return True, reward
+        return False, reward
 
-    def move_left(self) -> bool:
+    def move_left(self) -> tuple[bool, float]:
+        reward = DEFAULT_REWARD
         if self.allowed_step_per_turn and self.battery:
             if self.pos.left:
                 if self.pos.left.color != 'r' and not self.pos.left.robot and (
@@ -195,11 +205,13 @@ class Robot(pygame.sprite.Sprite):
                     )
                     if self.mail:
                         self.mail.pos = self.pos
-                    self.pick_up()
-                    self.drop_off()
+                    if self.pick_up(): 
+                        reward = REWARD_FOR_MAIL
+                    if self.drop_off(): 
+                        reward = REWARD_FOR_MAIL
                     self.clock.up()
-                    return True
-        return False
+                    return True, reward
+        return False, reward
 
     def pick_up(self) -> bool:
         if not self.mail and self.pos.color == 'gr':
@@ -235,9 +247,9 @@ class Robot(pygame.sprite.Sprite):
         self.battery = MAXIMUM_ROBOT_BATTERY
         self.allowed_step_per_turn = 1
 
-    def step(self, action: int) -> bool:
+    def step(self, action: int) -> tuple[bool, float]:
         if action == 0:
-            return False
+            return False, DEFAULT_REWARD
         if action == 1:
             return self.move_up()
         if action == 2:
@@ -246,29 +258,8 @@ class Robot(pygame.sprite.Sprite):
             return self.move_left()
         if action == 4:
             return self.move_right()
-        return False
+        return False, DEFAULT_REWARD
     
-    def reward(self, action):
-        reward = -0.1
-        if action == 1 and self.mail is not None and self.pos.front and self.pos.front.target == self.mail.mail_number:
-            reward = 20
-        if action == 2 and self.mail is not None and self.pos.back and self.pos.back.target == self.mail.mail_number:
-            reward = 20
-        if action == 3 and self.mail is not None and self.pos.left and self.pos.left.target == self.mail.mail_number:
-            reward = 20
-        if action == 4 and self.mail is not None and self.pos.right and self.pos.right.target == self.mail.mail_number:
-            reward = 20
-
-        if action == 1 and self.mail is None and self.pos.front and self.pos.front.color == 'gr':
-            reward = 20
-        if action == 2 and self.mail is None and self.pos.back and self.pos.back.color == 'gr':
-            reward = 20
-        if action == 3 and self.mail is None and self.pos.left and self.pos.left.color == 'gr':
-            reward = 20
-        if action == 4 and self.mail is None and self.pos.right and self.pos.right.color == 'gr':
-            reward = 20
-        return reward
-        
     def is_legal_moves(self, action: int) -> bool:
         if action == 0:
             return True
@@ -309,3 +300,7 @@ class Robot(pygame.sprite.Sprite):
                     return True
                 
         return False
+    
+    @property
+    def mask(self):
+        return np.array([int(self.is_legal_moves(action)) for action in range(5)])

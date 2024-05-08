@@ -42,7 +42,7 @@ Allowed player's colors: ``r`` : red, ``b`` :blue, ``g`` :green, ``y`` :yellow, 
 Game can have less than 5 players.
 ### Example:
 ```
-python3 main.py --color_map csv_files/colors_map.csv --target_map csv_files/targets_map.csv --required_mail 50 --number_robots_with_same_color 3 --robot_colors r b --number_auto_players 2
+python3 main.py --color_map csv_files/colors_map.csv --target_map csv_files/targets_map.csv --required_mail 20 --number_robots_with_same_color 3 --robot_colors r b --number_auto_players 2
 
 ```
 ## Buttons detail:

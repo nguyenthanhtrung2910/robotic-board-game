@@ -1,5 +1,4 @@
 from __future__ import annotations
-import random
 
 from Agents import VirtualCell
 from Agents import VirtualBoard
