@@ -79,7 +79,7 @@ class Game(pettingzoo.AECEnv):
                     "observation": spaces.Box(
                         low=0, high=1, shape=(28*self.number_robots,), dtype=np.int8
                     ),
-                    "action_mask": spaces.Box(low=0, high=1, shape=(5,), dtype=np.int8),
+                    "action_mask": spaces.Box(low=0, high=1, shape=(self.action_spaces[i].n,), dtype=np.int8),
                 }
             )
             for i in self.agents
@@ -157,17 +157,21 @@ class Game(pettingzoo.AECEnv):
     def sum_count_mail(self, agent: str) -> int:
         return sum([robot.count_mail for robot in self.robots[agent]])
     
-    def observe(self, agent: str):
+    def observe(self, agent: str) -> dict[str, np.ndarray]:
         robot_states = np.hstack([robot.observation for a in self.robots for robot in self.robots[a] if a != agent])
         robot_states = np.hstack((np.hstack([robot.observation for robot in self.robots[agent]]), robot_states))
-        #action mask here only for one robot
+
         mask = self.robots[agent][0].mask
+        for i in range(1, self.number_robots_per_agent):
+            mask = np.outer(mask, self.robots[agent][i].mask)
+        mask = np.tile(mask.flatten(), math.factorial(self.number_robots_per_agent))
+        
         return {'observation':robot_states, 'action_mask':mask}
             
-    def observation_space(self, agent):
+    def observation_space(self, agent: str) -> spaces.Space:
         return self.observation_spaces[agent]
     
-    def action_space(self, agent):
+    def action_space(self, agent: str) -> spaces.Space:
         return self.action_spaces[agent]
 
     def reset(self, seed=None, options=None) -> None:
@@ -300,7 +304,7 @@ class Game(pettingzoo.AECEnv):
     def close(self) -> None:
         pass
 
-    def watch(self):
+    def watch(self) -> None:
         running = True
         while running :
             for event in pygame.event.get():
@@ -308,14 +312,13 @@ class Game(pettingzoo.AECEnv):
                     running = False
             self.render()
 
-    def run(self,
-            agents: list[Any]) -> tuple[str | None, int]:
+    def run(self, agents: list[Any]) -> tuple[str | None, int]:
         
         assert len(agents) <= len(self.agents)
-        if self.render_mode is None:
-            raise ValueError('If you want to play yourself, create enviroment with human render mode ')
 
         self.reset()
+        for agent in agents:
+            agent.reset(self.state)
 
         number_people = len(self.agents) - len(agents)
         agents = {c: a for c, a in zip(self.agents[number_people:], agents)}
@@ -407,6 +410,7 @@ class Game(pettingzoo.AECEnv):
                 action = agents[self.agent_selection].policy(self.state)    
                 self.step(action)
             else:
-                self.render()
+                if self.render_mode == "human":
+                    self.render()
 
         return self.winner, self.game_clock.now

@@ -1,21 +1,13 @@
 import os
-from copy import deepcopy 
-from typing import Optional, Tuple
-import stable_baselines3.common
-import stable_baselines3.common.env_checker
-from tianshou.data.batch import Batch
-import gymnasium as gym
 import numpy as np
 import torch
-import stable_baselines3
-import tianshou as ts
 from tianshou.data import Collector, VectorReplayBuffer
 from tianshou.env import DummyVectorEnv
 from tianshou.env.pettingzoo_env import PettingZooEnv
-from tianshou.policy import BasePolicy, DQNPolicy, MultiAgentPolicyManager, RandomPolicy
-from tianshou.trainer import OffpolicyTrainer
+from tianshou.policy import DQNPolicy, MultiAgentPolicyManager, RandomPolicy
 from tianshou.utils.net.common import Net
 from tianshou.trainer import offpolicy_trainer
+from Game.consts import *
 from Game import Game
 from Game import Board
 max_epsilon = 1.0             

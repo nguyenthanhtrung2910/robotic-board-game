@@ -3,3 +3,5 @@
 __pycache__
 events.log
 log_files*
+test.py
+evaluate.py

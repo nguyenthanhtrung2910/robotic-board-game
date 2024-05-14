@@ -82,7 +82,7 @@ class Robot(pygame.sprite.Sprite):
         return state
 
     @property
-    def observation(self):
+    def observation(self) -> np.ndarray:
         mail = self.mail.mail_number if self.mail else 0
         return np.hstack([np.eye(9, dtype=np.int8)[self.pos.x], np.eye(9, dtype=np.int8)[self.pos.y], np.eye(10, dtype=np.int8)[mail]])
     
@@ -102,10 +102,8 @@ class Robot(pygame.sprite.Sprite):
         if self.allowed_step_per_turn and self.battery:
             if self.pos.front:
                 if self.pos.front.color != 'r' and not self.pos.front.robot and (
-                        self.pos.front.color != 'y' or
-                    (self.mail
-                     and self.pos.front.target == self.mail.mail_number)) and (
-                         self.pos.front.color != 'gr' or self.mail is None):
+                    self.pos.front.color != 'y' or (self.mail and self.pos.front.target == self.mail.mail_number)) and (
+                    self.pos.front.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
                         self.pos.generate_mail(self.sprites_group, self.render_mode)
@@ -131,10 +129,8 @@ class Robot(pygame.sprite.Sprite):
         if self.allowed_step_per_turn and self.battery:
             if self.pos.back:
                 if self.pos.back.color != 'r' and not self.pos.back.robot and (
-                        self.pos.back.color != 'y' or
-                    (self.mail
-                     and self.pos.back.target == self.mail.mail_number)) and (
-                         self.pos.back.color != 'gr' or self.mail is None):
+                    self.pos.back.color != 'y' or (self.mail and self.pos.back.target == self.mail.mail_number)) and (
+                    self.pos.back.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
                         self.pos.generate_mail(self.sprites_group, self.render_mode)
@@ -160,10 +156,8 @@ class Robot(pygame.sprite.Sprite):
         if self.allowed_step_per_turn and self.battery:
             if self.pos.right:
                 if self.pos.right.color != 'r' and not self.pos.right.robot and (
-                        self.pos.right.color != 'y' or
-                    (self.mail
-                     and self.pos.right.target == self.mail.mail_number)) and (
-                         self.pos.right.color != 'gr' or self.mail is None):
+                    self.pos.right.color != 'y' or (self.mail and self.pos.right.target == self.mail.mail_number)) and (
+                    self.pos.right.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
                         self.pos.generate_mail(self.sprites_group, self.render_mode)
@@ -189,10 +183,8 @@ class Robot(pygame.sprite.Sprite):
         if self.allowed_step_per_turn and self.battery:
             if self.pos.left:
                 if self.pos.left.color != 'r' and not self.pos.left.robot and (
-                        self.pos.left.color != 'y' or
-                    (self.mail
-                     and self.pos.left.target == self.mail.mail_number)) and (
-                         self.pos.left.color != 'gr' or self.mail is None):
+                    self.pos.left.color != 'y' or (self.mail and self.pos.left.target == self.mail.mail_number)) and (
+                    self.pos.left.color != 'gr' or self.mail is None):
                     self.pos.robot = None
                     if self.pos.color == 'gr':
                         self.pos.generate_mail(self.sprites_group, self.render_mode)
@@ -266,41 +258,33 @@ class Robot(pygame.sprite.Sprite):
         if action == 1:
             if self.pos.front:
                 if self.pos.front.color != 'r' and self.pos.front.robot is None and (
-                        self.pos.front.color != 'y' or
-                    (self.mail
-                     and self.pos.front.target == self.mail.mail_number)) and (
-                         self.pos.front.color != 'gr' or self.mail is None):
+                    self.pos.front.color != 'y' or (self.mail and self.pos.front.target == self.mail.mail_number)) and (
+                    self.pos.front.color != 'gr' or self.mail is None):
                     return True
             
         if action == 2:
             if self.pos.back:
                 if self.pos.back.color != 'r' and self.pos.back.robot is None and (
-                        self.pos.back.color != 'y' or
-                    (self.mail
-                     and self.pos.back.target == self.mail.mail_number)) and (
-                         self.pos.back.color != 'gr' or self.mail is None):
+                    self.pos.back.color != 'y' or (self.mail and self.pos.back.target == self.mail.mail_number)) and (
+                    self.pos.back.color != 'gr' or self.mail is None):
                     return True
                 
         if action == 3:
             if self.pos.left:
                 if self.pos.left.color != 'r' and self.pos.left.robot is None and (
-                        self.pos.left.color != 'y' or
-                    (self.mail
-                     and self.pos.left.target == self.mail.mail_number)) and (
-                         self.pos.left.color != 'gr' or self.mail is None):
+                    self.pos.left.color != 'y' or (self.mail and self.pos.left.target == self.mail.mail_number)) and (
+                    self.pos.left.color != 'gr' or self.mail is None):
                     return True
                 
         if action == 4:
             if self.pos.right:
                 if self.pos.right.color != 'r' and self.pos.right.robot is None and (
-                        self.pos.right.color != 'y' or
-                    (self.mail
-                     and self.pos.right.target == self.mail.mail_number)) and (
-                         self.pos.right.color != 'gr' or self.mail is None):
+                    self.pos.right.color != 'y' or (self.mail and self.pos.right.target == self.mail.mail_number)) and (
+                    self.pos.right.color != 'gr' or self.mail is None):
                     return True
                 
         return False
     
     @property
-    def mask(self):
+    def mask(self) -> np.ndarray:
         return np.array([int(self.is_legal_moves(action)) for action in range(5)])
