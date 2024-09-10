@@ -150,7 +150,7 @@ Run python file main.py with followed arguments:
 - ``--number_robots_with_same_color``: number robots for each player. <br/>
 - ``--robot_colors``: colors for robots on board.<br/>
 - ``--number_auto_player``: number auto player.<br/>
-Allowed player's colors: ``r`` : red, ``b`` :blue, ``g`` :green, ``y`` :yellow, ``o`` : orange.<br/>
+Allowed player's colors: ``r`` : red, ``b`` :blue, ``gr`` :green, ``y`` :yellow, ``o`` : orange.<br/>
 
 Game can have less than 5 players.
 ### Example:

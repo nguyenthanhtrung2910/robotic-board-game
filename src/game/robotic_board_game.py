@@ -1,3 +1,6 @@
+"""
+Base class for our game
+"""
 import random
 import math
 import logging as log
@@ -11,37 +14,35 @@ import gymnasium
 from gymnasium import spaces
 from pettingzoo import utils
 
-from Game import Board
-from Game import Robot
-from Game import Clock
-from Game.consts import *
+from src.game import game_components
+from src.consts import *
 
 pygame.init()
 
 
 class Game(pettingzoo.AECEnv):
 
-    color_map = {
-        'b': (0, 0, 255),
-        'r': (255, 0, 0),
-        'y': (255, 255, 0),
-        'g': (0, 255, 0),
-        'o': (255, 165, 0)
-    }
+    """
+    A class representing our game. The game can be configured with difference parameters.
+    """
 
     metadata = {"render_modes": ["human"], "name": "robotic_board_game", "is_parallelizable": False, "render_fps": 5}
 
-    def __init__(self, board: Board.Board, required_mail: int,
+    def __init__(self, 
+                 colors_map: str, 
+                 targets_map: str,
+                 required_mail: int,
                  number_robots_per_agent: int,
-                 agent_colors: list[str], render_mode: str|None = None,
+                 agent_colors: list[str], 
+                 render_mode: str|None = None,
                  battery_considered = False) -> None:
         
         super().__init__()
-        self.game_clock = Clock.Clock()
+        self.game_clock = game_components.Clock()
         self.robot_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.mail_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
-        self.board = board
+        self.board = game_components.Board(colors_map=colors_map, targets_map=targets_map)
         self.required_mail = required_mail
         self.number_robots_per_agent = number_robots_per_agent
         self.number_robots = number_robots_per_agent * len(agent_colors)
@@ -53,7 +54,7 @@ class Game(pettingzoo.AECEnv):
                                          k=self.number_robots)
         self.robots = {
             robot_color: [
-                Robot.Robot(
+                game_components.Robot(
                     robot_cells_init[number_robots_per_agent * j + i],
                     i + 1, robot_color, self.mail_sprites, self.game_clock, render_mode=render_mode)
                 for i in range(number_robots_per_agent)
@@ -103,7 +104,7 @@ class Game(pettingzoo.AECEnv):
         self.screen = None
         if self.render_mode == "human":
             #draw a background
-            self.background = pygame.Surface((CELL_SIZE[0] * 28, CELL_SIZE[1] * 11))
+            self.background = pygame.Surface((CELL_SIZE[0] * 19, CELL_SIZE[1] * 13))
             self.background.fill((255, 255, 255))
             #draw board
             for i in range(self.board.size):
@@ -117,26 +118,43 @@ class Game(pettingzoo.AECEnv):
             for i in range(self.board.size):
                 self.background.blit(
                     images_for_cell_coordinate[i],
-                    ((i + 1) * CELL_SIZE[0] +
-                    (CELL_SIZE[0] -
-                    images_for_cell_coordinate[i].get_width()) / 2,
-                    (CELL_SIZE[1] -
-                    images_for_cell_coordinate[i].get_height()) / 2))
+                    ((i + 5) * CELL_SIZE[0] +
+                    (CELL_SIZE[0] - images_for_cell_coordinate[i].get_width()) / 2,
+                    (CELL_SIZE[1] - images_for_cell_coordinate[i].get_height()) / 2))
                 self.background.blit(
                     images_for_cell_coordinate[i],
-                    ((CELL_SIZE[0] -
-                    images_for_cell_coordinate[i].get_width()) / 2,
-                    (i + 1) * CELL_SIZE[1] +
-                    (CELL_SIZE[1] -
-                    images_for_cell_coordinate[i].get_height()) / 2))
+                    (4 * CELL_SIZE[0] +
+                    (CELL_SIZE[0] - images_for_cell_coordinate[i].get_width()) / 2,
+                    (i+1) * CELL_SIZE[1] +
+                    (CELL_SIZE[1] - images_for_cell_coordinate[i].get_height()) / 2))
+                
+            #draw baterry side identification for each robot
+            images_for_baterry_bar = [
+            pygame.font.SysFont(None, 10).render(str(i), True, (255,255, 255))
+            for i in range(self.number_robots_per_agent)]
+            for j, agent in enumerate(self.agents):
+                for i in range(self.number_robots_per_agent):
+                    rect = pygame.Rect(
+                        (19 * CELL_SIZE[0] - 101 * CELL_BATTERY_SIZE[0])/2 - CELL_BATTERY_SIZE[0],
+                        11 * CELL_SIZE[1] + (j*self.number_robots_per_agent + i) * CELL_BATTERY_SIZE[1], 
+                        CELL_BATTERY_SIZE[0],
+                        CELL_BATTERY_SIZE[1])
+                    pygame.draw.rect(self.background, COLOR2RBG[agent], rect, 0)
+                    pygame.draw.rect(self.background, (0,0,0), rect, 1)
+                    self.background.blit(
+                        images_for_baterry_bar[i],
+                        (rect.left +
+                        (CELL_BATTERY_SIZE[0] - images_for_baterry_bar[i].get_width()) / 2,
+                        rect.top +
+                        (CELL_BATTERY_SIZE[1] - images_for_baterry_bar[i].get_height()) / 2))
+
             #draw baterry bar
             for j in range(self.number_robots):
                 for i in range(MAXIMUM_ROBOT_BATTERY + 1):
                     rect = pygame.Rect(
-                        10.5 * CELL_SIZE[0] + i * CELL_BATTERY_SIZE[0],
-                        (CELL_SIZE[1] * 11 -
-                        CELL_BATTERY_SIZE[1] * self.number_robots) / 2 +
-                        j * CELL_BATTERY_SIZE[1], CELL_BATTERY_SIZE[0],
+                        (19 * CELL_SIZE[0] - 101 * CELL_BATTERY_SIZE[0])/2 + i * CELL_BATTERY_SIZE[0],
+                        11 * CELL_SIZE[1] + j * CELL_BATTERY_SIZE[1], 
+                        CELL_BATTERY_SIZE[0],
                         CELL_BATTERY_SIZE[1])
                     pygame.draw.rect(self.background, (0, 0, 0), rect, 1)
             #clock to tuning fps        
@@ -189,7 +207,7 @@ class Game(pettingzoo.AECEnv):
         robot_cells_init = random.sample(self.board.white_cells,
                                          k=self.number_robots)
         for i, agent in enumerate(self.robots):
-            for j,robot in enumerate(self.robots[agent]):
+            for j, robot in enumerate(self.robots[agent]):
                 robot.reset(robot_cells_init[self.number_robots_per_agent*i+j])
 
         self.mail_sprites.empty()
@@ -230,11 +248,6 @@ class Game(pettingzoo.AECEnv):
                         if blue_cell.robot is not self.robots[self.agent_selection][r]:
                             blue_cell.robot.charge()
 
-        # if not any(action[:-1]):
-        #     self.nomove_count += 1
-        # else:
-        #     self.nomove_count = 0
-
         for robot in self.robots[self.agent_selection]:
             robot.allowed_step_per_turn = 1
             #we can consider now infinite battery
@@ -247,11 +260,6 @@ class Game(pettingzoo.AECEnv):
             self.terminations = {a: True for a in self.agents}
             self.winner = self.agent_selection
             log.info(f'At t={self.game_clock.now:04} Player {self.winner} win')
-
-        # if self.nomove_count == 3 * len(self.agents):
-        #     for a in self.agents:
-        #         self.rewards[a] = 0 
-        #     self.terminations = {a: True for a in self.agents}
 
         self.truncations = {a: self.num_moves >= NUM_ITERS for a in self.agents}
 
@@ -287,15 +295,9 @@ class Game(pettingzoo.AECEnv):
         for i, color in enumerate(self.robots):
             for robot in self.robots[color]:
                 pygame.draw.circle(
-                    self.screen, self.color_map[robot.color],
-                    (10.5 * CELL_SIZE[0] +
-                        (robot.battery) * CELL_BATTERY_SIZE[0] +
-                        CELL_BATTERY_SIZE[0] / 2,
-                        (CELL_SIZE[1] * 11 -
-                        CELL_BATTERY_SIZE[1] * self.number_robots) / 2 +
-                        (i * self.number_robots_per_agent +
-                        robot.index - 1) * CELL_BATTERY_SIZE[1] +
-                        CELL_BATTERY_SIZE[1] / 2),
+                    self.screen, COLOR2RBG[robot.color],
+                    ((19 * CELL_SIZE[0] - 101 * CELL_BATTERY_SIZE[0])/2 + (robot.battery + 0.5) * CELL_BATTERY_SIZE[0],
+                    11 * CELL_SIZE[1] + (i * self.number_robots_per_agent + robot.index - 1 + 0.5) * CELL_BATTERY_SIZE[1]),
                     CELL_BATTERY_SIZE[0] / 2 * 0.8, 0)
 
         self.clock.tick(self.metadata["render_fps"])
@@ -335,7 +337,9 @@ class Game(pettingzoo.AECEnv):
                     
                     if event.key == pygame.K_r:
                         self.reset()
-
+                        for agent in agents.values():
+                            agent.reset(self.state)
+                        
                     if event.key == pygame.K_f:
                         # self.nomove_count += 1
                         for robot in self.robots[self.agent_selection]:
@@ -407,7 +411,7 @@ class Game(pettingzoo.AECEnv):
                                         blue_cell.robot.charge()
 
             if self.agents.index(self.agent_selection) - number_people >= 0:
-                action = agents[self.agent_selection].policy(self.state)    
+                action = agents[self.agent_selection].get_action(self.state)    
                 self.step(action)
             else:
                 if self.render_mode == "human":
