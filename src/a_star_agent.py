@@ -96,25 +96,28 @@ class Vertex:
 
     @property
     def is_blocked(self) -> bool:
+        """
+        Vertex is blocked (robot shouldn't go there) if it has too much robots in queue to it.
+        """
+        #blue cell with robot in this and other robot is waiting
         if self.color == 'b':
             return len([
                 vertex for vertex in self.neighbors
                 if (vertex.robot and vertex.robot.battery <= 30)
             ]) == 1 and self.robot is not None
+        #green cell with robot in this and two other robots is waiting
         if self.color == 'gr':
             return len([
                 vertex for vertex in self.neighbors
                 if (vertex.robot and not vertex.robot.mail)
             ]) == 2 and self.robot is not None
+        #yellow cell with robot in this and two other robots is waiting
         if self.color == 'y':
             return len([
                 vertex
                 for vertex in self.neighbors if (vertex.robot and vertex.robot.mail)
             ]) == 2 and self.robot is not None
         return False
-
-    def generate_mail(self) -> None:
-        self.mail = random.choice(range(1, 10))
 
 class Graph:
 
@@ -182,7 +185,7 @@ class Graph:
         return [
             vertex for vertices in self.vertices for vertex in vertices
             if (vertex.robot or vertex.color == 'r' or vertex.color == 'y'
-                or vertex.color == 'gr')
+                or vertex.color == 'gr' or vertex.color == 'b')
         ]
 
     @staticmethod
@@ -190,15 +193,13 @@ class Graph:
                   b: Vertex) -> float:
         return abs(a.x - b.x) + abs(a.y - b.y)
 
-    def reset(self) -> None:
-        for vertices in self.vertices:
-            for vertex in vertices:
-                vertex.robot = None
-                vertex.mail = 0
-
     def a_star_search(
             self, start: Vertex,
             goal: Vertex) -> list[Vertex]:
+        """
+        A* search for shortest path to destination.
+        Return a list of vertices as shortest path.
+        """
         open_set: queue.PriorityQueue = queue.PriorityQueue()
         open_set.put((0, start))
 
@@ -221,10 +222,8 @@ class Graph:
                 return path
 
             neighbors = current.neighbors
-            #Reverse neighbors list if i is odd,
-            #change order putting cell to queue
-            #According to that, we don't get cell from queue over
-            #one row or column and search over diagonal
+            #Reverse neighbors list if i is odd, change order putting cell to queue
+            #According to that, we don't get cell from queue over one row or column and search over diagonal
             if i % 2 == 1:
                 neighbors.reverse()
             for next_vertex in neighbors:
@@ -244,318 +243,127 @@ class Robot:
 
     def __init__(self,
                  pos: Vertex,
-                 index: int,
-                 color: str,
                  mail: int = 0,
-                 count_mail: int = 0,
                  battery: int = MAXIMUM_ROBOT_BATTERY):
         self.pos = pos
         self.pos.robot = self
-        self.index = index
-        self.color = color
         self.mail = mail
-        self.count_mail = count_mail
         self.battery = battery
+        self.dest = None
 
     @property
     def is_charged(self) -> bool:
         return self.pos.color == 'b'
-
-    def move_up(self) -> bool:
-        if self.battery:
-            if self.is_legal_moves(Action.GO_AHEAD):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail()
-                self.pos = self.pos.front
-                self.pos.robot = self
-                self.battery -= 1
-                self.pick_up()
-                self.drop_off()
-                return True
-        return False
-
-    def move_down(self) -> bool:
-        if self.battery:
-            if self.is_legal_moves(Action.GO_BACK):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail()
-                self.pos = self.pos.back
-                self.pos.robot = self
-                self.battery -= 1
-                self.pick_up()
-                self.drop_off()
-                return True
-        return False
-
-    def move_right(self) -> bool:
-        if self.battery:
-            if self.is_legal_moves(Action.TURN_RIGHT):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail()
-                self.pos = self.pos.right
-                self.pos.robot = self
-                self.battery -= 1
-                self.pick_up()
-                self.drop_off()
-                return True
-        return False
-
-    def move_left(self) -> bool:
-        if self.battery:
-            if self.is_legal_moves(Action.TURN_LEFT):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail()
-                self.pos = self.pos.left
-                self.pos.robot = self
-                self.battery -= 1
-                self.pick_up()
-                self.drop_off()
-                return True
-        return False
-
-    def pick_up(self) -> bool:
-        if not self.mail and self.pos.color == 'gr':
-            self.mail = self.pos.mail
-            return True
-        return False
-
-    def drop_off(self) -> bool | int:
-        if self.mail and self.pos.color == 'y':
-            deliveried_mail = self.mail
-            self.mail = 0
-            self.count_mail += 1
-            return deliveried_mail
-        return False
     
-    def charge(self) -> None:
-        self.battery += BATERRY_UP_PER_STEP
-        if self.battery > MAXIMUM_ROBOT_BATTERY:
-            self.battery = MAXIMUM_ROBOT_BATTERY
-    
-    def reset(self, pos: Vertex) -> None:
-        self.pos = pos
-        self.pos.robot = self
-        self.mail = 0
-        self.count_mail = 0
-        self.battery = MAXIMUM_ROBOT_BATTERY
-    
-    def is_legal_moves(self, action: int) -> bool:
-        if action == Action.DO_NOTHING:
-            return True
-        
-        if action == Action.GO_AHEAD:
-            if self.pos.front:
-                if self.pos.front.color != 'r' and self.pos.front.robot is None and (
-                    self.pos.front.color != 'y' or (self.mail != 0 and self.pos.front.target == self.mail)) and (
-                    self.pos.front.color != 'gr' or self.mail == 0):
-                    return True
-            
-        if action == Action.GO_BACK:
-            if self.pos.back:
-                if self.pos.back.color != 'r' and self.pos.back.robot is None and (
-                    self.pos.back.color != 'y' or (self.mail != 0 and self.pos.back.target == self.mail)) and (
-                    self.pos.back.color != 'gr' or self.mail == 0):
-                    return True
-                
-        if action == Action.TURN_LEFT:
-            if self.pos.left:
-                if self.pos.left.color != 'r' and self.pos.left.robot is None and (
-                    self.pos.left.color != 'y' or (self.mail != 0 and self.pos.left.target == self.mail)) and (
-                    self.pos.left.color != 'gr' or self.mail == 0):
-                    return True
-                
-        if action == Action.TURN_RIGHT:
-            if self.pos.right:
-                if self.pos.right.color != 'r' and self.pos.right.robot is None and (
-                    self.pos.right.color != 'y' or (self.mail != 0 and self.pos.right.target == self.mail)) and (
-                    self.pos.right.color != 'gr' or self.mail == 0):
-                    return True
-                
-        return False
-
-    def get_destination(
+    def set_destination(
         self,
         board: Graph,
         blocked: list[Vertex] = []
-    ) -> Vertex:
-        if self.battery <= 30:
-            return min(
+    ) -> None:
+        """
+        Set destination for robot base on its state.
+        """
+        if self.battery <= 20:
+            self.dest = min(
                 [cell for cell in board.blue_vertices if cell not in blocked],
                 key=lambda blue_cell: Graph.heuristic(
                     self.pos, blue_cell))
         else:
             if self.mail:
-                for yellow_cell in board.yellow_vertices:
-                    if yellow_cell.target == self.mail:
-                        return yellow_cell
+                self.dest = [yellow_cell for yellow_cell in board.yellow_vertices if yellow_cell.target == self.mail][0]
             else:
-                return min([
+                self.dest = min([
                     cell for cell in board.green_vertices if cell not in blocked
                 ],
                            key=lambda green_cell: Graph.
                            heuristic(self.pos, green_cell))
-        return self.pos
     
-class Simulator:
+class AStarAgent:
+    """
+    A controller for single robot, using A* star search shortest path through graph.
+    """
 
-    def __init__(self, 
+    def __init__(self,
                  colors_map: str,
                  targets_map: str,
-                 state: dict[str, list[dict[str, typing.Any]] | list[int]]) -> None:
+                 number_robots: int) -> None:
+        """
+        :param colors_map: colors map of the board game.
+        :type colors_map: str
+        :param targets_map: target map of the board game.
+        :type targets_map: str
+        :param number_robots: number robots in game.
+        :type number_robots: int
+        """
 
         self.graph = Graph(colors_map=colors_map, targets_map=targets_map)
-        self.robots: dict[str, list[Robot]] = {}
-        for robot_state in state['robots_state']:
-            self.robots[robot_state['color']] = []
-        for robot_state in state['robots_state']:
-            robot = Robot(
-                self.graph[robot_state['pos'][0],
-                           robot_state['pos'][1]], robot_state['index'],
-                robot_state['color'], robot_state['mail'],
-                robot_state['count_mail'], robot_state['battery'])
-            self.robots[robot.color].append(robot)
+        self.number_robots = number_robots
 
-        for green_cell, mail_number in zip(self.graph.green_vertices,
-                                           state['generated_mails']):
-            green_cell.mail = mail_number
-
-    def sum_count_mail(self, color: str) -> int:
-        return sum([robot.count_mail for robot in self.robots[color]])
-
-    def update(self, state: dict[str,
-                                 list[dict[str, typing.Any]] | list[int]]) -> None:
-        for robot_state in state['robots_state']:
-            robot: Robot = self.robots[
-                robot_state['color']][robot_state['index'] - 1]
+        robot_cells_init = random.sample(self.graph.white_vertecies, k=number_robots)
+        self.robots: list[Robot] = [Robot(robot_cells_init[i]) for i in range(number_robots)]
+    
+    def load_state_from_obs(self, obs: dict[str, np.array]) -> None:
+        """
+        Load states of all robots to local board.
+        """
+        robot_states = np.split(obs['observation'], self.number_robots)
+        for i, _ in enumerate(robot_states):
+            maximum_battery = robot_states[i].shape[0] - 2*self.graph.size - 10
+            split_indices = np.cumsum([self.graph.size, self.graph.size, 10, maximum_battery])[:-1]
+            robot_states[i] = np.split(robot_states[i], split_indices)
+            for j, _ in enumerate(robot_states[i]):
+                robot_states[i][j] = np.argmax(robot_states[i][j]) 
+        for robot, robot_state in zip(self.robots, robot_states):
             robot.pos.robot = None
-            robot.pos = self.graph[robot_state['pos'][0],
-                                   robot_state['pos'][1]]
+            robot.pos = self.graph[robot_state[0], robot_state[1]]
             robot.pos.robot = robot
-            robot.mail = robot_state['mail']
-            robot.count_mail = robot_state['count_mail']
-            robot.battery = robot_state['battery']
+            robot.mail = robot_state[2]
+            robot.battery = robot_state[3]
 
-        for green_cell, mail_number in zip(self.graph.green_vertices,
-                                           state['generated_mails']):
-            green_cell.mail = mail_number
-
-    def reset(self, state: dict[str,
-                                list[dict[str, typing.Any]] | list[int]]) -> None:
-        self.graph.reset()
-
-        for robot_state in state['robots_state']:
-            robot: Robot = self.robots[
-                robot_state['color']][robot_state['index'] - 1]
-            robot.reset(self.graph[robot_state['pos'][0], robot_state['pos'][1]])
-
-        for green_cell, mail_number in zip(self.graph.green_vertices,
-                                           state['generated_mails']):
-            green_cell.mail = mail_number
-
-class AStarAgent:
-
-    def __init__(self, 
-                 color: str,
-                 colors_map: str,
-                 targets_map: str,
-                 state) -> None:
-
-        self.color = color
-        self.simulator = Simulator(colors_map, targets_map, state)
-        self.dests: list[Vertex] = []
-        for robot in self.simulator.robots[self.color]:
-            self.dests.append(robot.get_destination(self.simulator.graph))
-
-    def __get_action_for_one_robot(self, robot: Robot,
-                                   board: Graph) -> int:
-        if robot.is_charged:
-            if robot.battery < 70:
-                return 0
-
-        if robot.pos is self.dests[robot.index - 1]:
-            self.dests[robot.index - 1] = robot.get_destination(board)
-
+    @staticmethod
+    def apply_action_mask(action, action_mask) -> int:
+        """
+        Handle if given action is illegal.
+        """
+        if not any(action_mask): 
+            return action
+        return action if action_mask[action] else random.choice([act for act in range(5) if action_mask[act]])
+        
+    def get_action(self, obs: dict[str, np.array]) -> int:
+        """
+        Get action base on robot state.
+        """
+        self.load_state_from_obs(obs)
+        acting_robot = self.robots[0]
+        if acting_robot.is_charged and acting_robot.battery < 40:
+            return self.apply_action_mask(0, obs['action_mask'])
+        
+        acting_robot.set_destination(self.graph)
         # when many other robot wait for queue to destination, go to other destination or don't move
         # we want avoid draw when all players don't want to move
-
-        if self.dests[robot.index -
-                      1].is_blocked and robot.pos not in self.dests[
-                          robot.index - 1].neighbors:
-            if self.dests[robot.index - 1].color == 'y':
-                return 0
-            if self.dests[robot.index - 1].color == 'b':
-                if all([cell.is_blocked for cell in board.blue_vertices]):
-                    return 0
-                self.dests[robot.index - 1] = robot.get_destination(
-                    board,
-                    [cell for cell in board.blue_vertices if cell.is_blocked])
-            if self.dests[robot.index - 1].color == 'gr':
-                if all([cell.is_blocked for cell in board.green_vertices]):
-                    return 0
-                self.dests[robot.index - 1] = robot.get_destination(
-                    board,
-                    [cell for cell in board.green_vertices if cell.is_blocked])
+        if acting_robot.dest.is_blocked and acting_robot.pos not in acting_robot.dest.neighbors:
+            if acting_robot.dest.color == 'y':
+                return self.apply_action_mask(0, obs['action_mask'])
+            if acting_robot.dest.color == 'b':
+                if all([vertex.is_blocked for vertex in self.graph.blue_vertices]):
+                    return self.apply_action_mask(0, obs['action_mask'])
+                acting_robot.set_destination(self.graph, [vertex for vertex in self.graph.blue_vertices if vertex.is_blocked])
+            if acting_robot.dest.color == 'gr':
+                if all([vertex.is_blocked for vertex in self.graph.green_vertices]):
+                    return self.apply_action_mask(0, obs['action_mask'])
+                acting_robot.set_destination(self.graph, [vertex for vertex in self.graph.green_vertices if vertex.is_blocked])
 
         #build the path
-        path = board.a_star_search(robot.pos, self.dests[robot.index - 1])
-
+        path = self.graph.a_star_search(acting_robot.pos, acting_robot.dest)
         if len(path) != 0:
             next = path[0]
-
-            #get the action
-            if next is robot.pos.front:
+            if next is acting_robot.pos.front:
                 action = 1
-            if next is robot.pos.back:
+            if next is acting_robot.pos.back:
                 action = 2
-            if next is robot.pos.left:
+            if next is acting_robot.pos.left:
                 action = 3
-            if next is robot.pos.right:
+            if next is acting_robot.pos.right:
                 action = 4
-
-            #simulation
-            if not next.robot:
-                robot.pos.robot = None
-                if robot.pos.color == 'gr':
-                    robot.pos.generate_mail()
-                robot.pos = next
-                robot.pos.robot = robot
-                #rows below not necessary because agent control next robot and don't need 
-                #to known about battery and mail of the previous robot
-                robot.battery -= 1
-                robot.pick_up()
-                robot.drop_off()
-
-                #charge robot in blue cells
-                for blue_cell in board.blue_vertices:
-                    if blue_cell.robot:
-                        if blue_cell.robot is not robot:
-                            blue_cell.robot.charge()
-
-            return action
-
-        return 0
-
-    def get_action(self, state) -> int:
-        #update the game state for simulator
-        self.simulator.update(state)
-
-        #simulation
-        action = [
-            self.__get_action_for_one_robot(robot, self.simulator.graph)
-            for robot in self.simulator.robots[self.color]
-        ] + [0]
-
-        number_robots_per_agent = len(list(self.simulator.robots.values())[0])
-        action = np.ravel_multi_index(action, [5]*number_robots_per_agent+[math.factorial(number_robots_per_agent)])
-        
-        return action
-
-    def reset(self, state) -> None:
-        self.simulator.reset(state)
-        self.dests = []
-        for robot in self.simulator.robots[self.color]:
-            self.dests.append(robot.get_destination(self.simulator.graph))
+            return action if obs['action_mask'][action] else self.apply_action_mask(0, obs['action_mask'])
+        return self.apply_action_mask(0, obs['action_mask'])

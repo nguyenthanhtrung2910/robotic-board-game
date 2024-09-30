@@ -11,7 +11,9 @@ import pygame
 from src.consts import *
 
 class Action(enum.IntEnum):
-
+    '''
+    Enum for enumeration of the actions.
+    '''
     DO_NOTHING = 0
     GO_AHEAD = 1
     GO_BACK = 2
@@ -86,6 +88,9 @@ class Cell:
 
     @property
     def x(self) -> int:
+        """
+        The abscissa on the game board. The coordinate origin is at the top left point, positive direction from left to right.
+        """
         return self.__x
 
     @x.setter
@@ -94,6 +99,9 @@ class Cell:
 
     @property
     def y(self) -> int:
+        """
+        The ordinate on the game board. The coordinate origin is at the top left point, positive direction from top to bottom.
+        """
         return self.__y
 
     @y.setter
@@ -102,6 +110,9 @@ class Cell:
 
     @property
     def color(self) -> str:
+        """
+        Color of this cell.
+        """
         return self.__color
 
     @color.setter
@@ -110,6 +121,9 @@ class Cell:
 
     @property
     def target(self) -> int:
+        """
+        Target of this cell.
+        """
         return self.__target
 
     @target.setter
@@ -118,26 +132,38 @@ class Cell:
 
     @property
     def neighbors(self) -> list['Cell']:
+        """
+        Returns neighboring cells of this cell.
+        """
         return [
             cell for cell in [self.front, self.back, self.left, self.right]
             if cell
         ]
 
     def generate_mail(self, sprites_mail: pygame.sprite.Group, render_mode: str|None) -> None:
-        mail = Mail(random.choice(range(1, 10)), self, render_mode)
-        self.mail = mail
-        sprites_mail.add(mail)
+        """
+        Genarate a new mail.
+        """
+        #create new mail-sprite
+        self.mail = Mail(random.choice(range(1, 10)), self, render_mode)
+        #add mail to respective ground of sprites
+        sprites_mail.add(self.mail)
 
     def draw(self, surface: pygame.Surface) -> None:
-
+        """
+        Draw this cell in a ```pygame.Surface```.
+        """
+        #draw rectangle of the cell
         pygame.draw.rect(
             surface, COLOR2RBG[self.color],
             ((self.x + 5) * CELL_SIZE[0],
              (self.y + 1) * CELL_SIZE[1], CELL_SIZE[0], CELL_SIZE[1]))
+        #draw border
         pygame.draw.rect(
             surface, (0, 0, 0),
             ((self.x + 5) * CELL_SIZE[0],
              (self.y + 1) * CELL_SIZE[1], CELL_SIZE[0], CELL_SIZE[1]), 1)
+        #draw target number if it isn't 0 
         if self.target:
             target_font = pygame.font.SysFont(None, 64)
             target_image = target_font.render(str(self.target), True,
@@ -214,15 +240,10 @@ class Board:
                 if (j - 1) >= 0:
                     self.cells[i][j].left = self.cells[i][j - 1]
 
-    @property
-    def cannot_step(self) -> list[Cell]:
-        return [
-            cell for cells in self.cells for cell in cells
-            if (cell.robot or cell.color == 'r' or cell.color == 'y'
-                or cell.color == 'gr')
-        ]
-
     def reset(self) -> None:
+        '''
+        Reset board to empty board.
+        '''
         for cells in self.cells:
             for cell in cells:
                 cell.robot = None
@@ -243,7 +264,6 @@ class Robot(pygame.sprite.Sprite):
                  mail: Mail | None = None,
                  count_mail: int = 0,
                  battery: int = MAXIMUM_ROBOT_BATTERY,
-                 allowed_step_per_turn: int = 1,
                  render_mode: str|None = None) -> None:
         
         r"""
@@ -263,9 +283,7 @@ class Robot(pygame.sprite.Sprite):
         :type count_mail: int
         :param battery: robot battery.
         :type battery: int
-        :param allowed_step_per_turn: variable to control the number of possible steps on each player turn.
-        :type allowed_step_per_turn: int
-        :param render_mode: the render mode. It can be None or `human`.
+        :param render_mode: the render mode. It can be None or ```'human'```.
         :type render_mode: str or None
         """
 
@@ -279,14 +297,13 @@ class Robot(pygame.sprite.Sprite):
         self.mail = mail
         self.count_mail = count_mail
         self.battery = battery
-        self.allowed_step_per_turn = allowed_step_per_turn
         self.render_mode = render_mode
         if self.render_mode == 'human':
             self.__set_image()
             self.__set_number_image()
 
     def __set_image(self) -> None:
-        assert self.color in COLOR_MAP.keys()
+        assert self.color in COLOR_MAP.keys(), "Colors of the robot can only be 'b', 'r', 'y', 'gr', 'o'"
         if self.color == 'b':
             self.image = pygame.image.load('images/blue_robot.png')
         if self.color == 'r':
@@ -307,165 +324,223 @@ class Robot(pygame.sprite.Sprite):
                          0.7 * CELL_SIZE[1] - number_img.get_height() / 2))
 
     @property
-    def state(self) -> dict[str, typing.Any]:
-        state = {
-            'color': self.color,
-            'index': self.index,
-            'pos': (self.pos.x, self.pos.y),
-            'mail': self.mail.mail_number if self.mail else 0,
-            'count_mail': self.count_mail,
-            'battery': self.battery
-        }
-        return state
+    def battery(self) -> int:
+        """
+        Battery of the robot. It must be positive and less than ```MAXIMUM_ROBOT_BATTERY```.
+        """
+        return self.__battery
+    
+    @battery.setter
+    def battery(self, battery: int) -> None:
+        if battery < 0:
+            self.__battery = 0
+        elif battery > MAXIMUM_ROBOT_BATTERY:
+            self.__battery = MAXIMUM_ROBOT_BATTERY
+        else:
+            self.__battery = battery
 
     @property
     def observation(self) -> np.ndarray:
+        """
+        Observation of the single robot. Each of attributes x, y, mail, battery is transformed to 
+        one-hot vector and all this concatenated.
+        """
         mail = self.mail.mail_number if self.mail else 0
-        return np.hstack([np.eye(9, dtype=np.int8)[self.pos.x], np.eye(9, dtype=np.int8)[self.pos.y], np.eye(10, dtype=np.int8)[mail]])
+        return np.hstack([np.eye(9, dtype=np.int8)[self.pos.x], 
+                          np.eye(9, dtype=np.int8)[self.pos.y], 
+                          np.eye(10, dtype=np.int8)[mail],
+                          np.eye(51, dtype=np.int8)[self.battery]])
     
     @property
     def is_charged(self) -> bool:
+        """
+        Robot is charging or not.
+        """
         return self.pos.color == 'b'
 
     @property
     def rect(self) -> pygame.Rect:
+        """
+        Rectangle to define where to draw robot. Typical ```pygame.Sprite``` attribute.
+        """
         rect = self.image.get_rect()
         rect.topleft = ((self.pos.x + 5) * CELL_SIZE[0],
                         (self.pos.y + 1) * CELL_SIZE[1])
         return rect
+    
+    def stand(self) -> tuple[bool, float]:
+        """
+        Don't move.
+        """
+        #we assume this action is legal.
+        reward = DEFAULT_REWARD
+        if self.pos.color == 'b':
+            self.charge()
+            reward = REWARD_FOR_CHARGING
+        return False, reward
 
     def move_up(self) -> tuple[bool, float]:
+        """
+        Move forward. Return reward for this move. 
+        """
+        #we assume this action is legal.
         reward = DEFAULT_REWARD
-        if self.allowed_step_per_turn and self.battery:
-            if self.is_legal_moves(Action.GO_AHEAD):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail(self.sprites_group, self.render_mode)
-                self.pos = self.pos.front
-                self.pos.robot = self
-                self.allowed_step_per_turn -= 1
-                self.battery -= 1
-                log.info(
-                    f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
-                )
-                if self.mail:
-                    self.mail.pos = self.pos
-                if self.pick_up(): 
-                    reward = REWARD_FOR_PICK_UP_MAIL
-                if self.drop_off(): 
-                    reward = REWARD_FOR_DROP_OFF_MAIL
-                self.clock.up()
-                return True, reward
-        return False, reward
+        self.pos.robot = None
+        if self.pos.color == 'gr':
+            self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.pos = self.pos.front
+        self.pos.robot = self
+        self.battery -= 1
+        log.info(
+            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
+        )
+        if self.mail:
+            self.mail.pos = self.pos
+        if self.pos.color == 'gr':
+            self.pick_up()
+            reward = REWARD_FOR_PICK_UP_MAIL
+        elif self.pos.color == 'y':
+            self.drop_off()
+            reward = REWARD_FOR_DROP_OFF_MAIL
+        elif self.pos.color == 'b':
+            reward = REWARD_FOR_CHARGING
+        self.clock.up()
+        return True, reward
 
     def move_down(self) -> tuple[bool, float]:
+        """
+        Move back. Return reward for this move.
+        """
+        #we assume this action is legal.
         reward = DEFAULT_REWARD
-        if self.allowed_step_per_turn and self.battery:
-            if self.is_legal_moves(Action.GO_BACK):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail(self.sprites_group, self.render_mode)
-                self.pos = self.pos.back
-                self.pos.robot = self
-                self.allowed_step_per_turn -= 1
-                self.battery -= 1
-                log.info(
-                    f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
-                )
-                if self.mail:
-                    self.mail.pos = self.pos
-                if self.pick_up(): 
-                    reward = REWARD_FOR_PICK_UP_MAIL
-                if self.drop_off(): 
-                    reward = REWARD_FOR_DROP_OFF_MAIL
-                self.clock.up()
-                return True, reward
-        return False, reward
+        self.pos.robot = None
+        if self.pos.color == 'gr':
+            self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.pos = self.pos.back
+        self.pos.robot = self
+        self.battery -= 1
+        log.info(
+            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
+        )
+        if self.mail:
+            self.mail.pos = self.pos
+        if self.pos.color == 'gr':
+            self.pick_up()
+            reward = REWARD_FOR_PICK_UP_MAIL
+        elif self.pos.color == 'y':
+            self.drop_off()
+            reward = REWARD_FOR_DROP_OFF_MAIL
+        elif self.pos.color == 'b':
+            reward = REWARD_FOR_CHARGING
+        self.clock.up()
+        return True, reward
 
     def move_right(self) -> tuple[bool, float]:
+        """
+        Move right. Return reward for this move.
+        """
+        #we assume this action is legal.
         reward = DEFAULT_REWARD
-        if self.allowed_step_per_turn and self.battery:
-            if self.is_legal_moves(Action.TURN_RIGHT):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail(self.sprites_group, self.render_mode)
-                self.pos = self.pos.right
-                self.pos.robot = self
-                self.allowed_step_per_turn -= 1
-                self.battery -= 1
-                log.info(
-                    f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
-                )
-                if self.mail:
-                    self.mail.pos = self.pos
-                if self.pick_up(): 
-                    reward = REWARD_FOR_PICK_UP_MAIL
-                if self.drop_off(): 
-                    reward = REWARD_FOR_DROP_OFF_MAIL
-                self.clock.up()
-                return True, reward
-        return False, reward
+        self.pos.robot = None
+        if self.pos.color == 'gr':
+            self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.pos = self.pos.right
+        self.pos.robot = self
+        self.battery -= 1
+        log.info(
+            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
+        )
+        if self.mail:
+            self.mail.pos = self.pos
+        if self.pos.color == 'gr':
+            self.pick_up()
+            reward = REWARD_FOR_PICK_UP_MAIL
+        elif self.pos.color == 'y':
+            self.drop_off()
+            reward = REWARD_FOR_DROP_OFF_MAIL
+        elif self.pos.color == 'b':
+            reward = REWARD_FOR_CHARGING
+        self.clock.up()
+        return True, reward
 
     def move_left(self) -> tuple[bool, float]:
+        """
+        Move left. Return reward for this move. 
+        """
+        #we assume this action is legal.
         reward = DEFAULT_REWARD
-        if self.allowed_step_per_turn and self.battery:
-            if self.is_legal_moves(Action.TURN_LEFT):
-                self.pos.robot = None
-                if self.pos.color == 'gr':
-                    self.pos.generate_mail(self.sprites_group, self.render_mode)
-                self.pos = self.pos.left
-                self.pos.robot = self
-                self.allowed_step_per_turn -= 1
-                self.battery -= 1
-                log.info(
-                    f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
-                )
-                if self.mail:
-                    self.mail.pos = self.pos
-                if self.pick_up(): 
-                    reward = REWARD_FOR_PICK_UP_MAIL
-                if self.drop_off(): 
-                    reward = REWARD_FOR_DROP_OFF_MAIL
-                self.clock.up()
-                return True, reward
-        return False, reward
+        self.pos.robot = None
+        if self.pos.color == 'gr':
+            self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.pos = self.pos.left
+        self.pos.robot = self
+        self.battery -= 1
+        log.info(
+            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
+        )
+        if self.mail:
+            self.mail.pos = self.pos
+        if self.pos.color == 'gr':
+            self.pick_up()
+            reward = REWARD_FOR_PICK_UP_MAIL
+        elif self.pos.color == 'y':
+            self.drop_off()
+            reward = REWARD_FOR_DROP_OFF_MAIL
+        elif self.pos.color == 'b':
+            reward = REWARD_FOR_CHARGING
+        self.clock.up()
+        return True, reward
 
-    def pick_up(self) -> bool:
-        if not self.mail and self.pos.color == 'gr':
-            self.mail = self.pos.mail
-            log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}'
-            )
-            return True
-        return False
+    def pick_up(self) -> None:
+        """
+        Pick up a mail.
+        """
+        #we assume this action is legal.
+        self.mail = self.pos.mail
+        log.info(
+            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}'
+        )
 
-    def drop_off(self) -> bool | Mail:
-        if self.mail and self.pos.color == 'y':
-            deliveried_mail = self.mail
-            self.mail.kill()
-            self.mail = None
-            self.count_mail += 1
-            log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} drop off mail {deliveried_mail.mail_number}'
-            )
-            return deliveried_mail
-        return False
+    def drop_off(self) -> None:
+        """
+        Drop off a mail.
+        """
+        #we assume this action is legal.
+        deliveried_mail = self.mail
+        self.mail.kill()
+        self.mail = None
+        self.count_mail += 1
+        log.info(
+            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} drop off mail {deliveried_mail.mail_number}'
+        )
 
     def charge(self) -> None:
+        """
+        Charge.
+        """
+        #we assume this action is legal.
         self.battery += BATERRY_UP_PER_STEP
-        if self.battery > MAXIMUM_ROBOT_BATTERY:
-            self.battery = MAXIMUM_ROBOT_BATTERY
     
     def reset(self, pos: Cell) -> None:
+        """
+        Reset robot to initial state in ```pos```.
+        """
         self.pos = pos
         self.pos.robot = self
         self.mail = None
         self.count_mail = 0
         self.battery = MAXIMUM_ROBOT_BATTERY
-        self.allowed_step_per_turn = 1
 
     def step(self, action: int) -> tuple[bool, float]:
-        if action == Action.DO_NOTHING:
+        """
+        Do robot move base on  ```action```.
+        """
+        #check if action is legal
+        #truly, action from agent always is legal because of action mask
+        #we check for case that all actions are illegal
+        is_legal_action = self.is_legal_move(action) 
+        if not is_legal_action:
+            #if all actions are not legal, skip robot's turn
             return False, DEFAULT_REWARD
         if action == Action.GO_AHEAD:
             return self.move_up()
@@ -475,44 +550,137 @@ class Robot(pygame.sprite.Sprite):
             return self.move_left()
         if action == Action.TURN_RIGHT:
             return self.move_right()
-        return False, DEFAULT_REWARD
-    
-    def is_legal_moves(self, action: int) -> bool:
         if action == Action.DO_NOTHING:
-            return True
+            return self.stand()
+    
+    def is_legal_move(self, action: int) -> bool:
+        """
+        Check if action is legal.
+        """
+
+        if action == Action.DO_NOTHING:
+            #robot with high battery can't stand in the blue cell
+            if self.pos.color == 'b' and self.battery >= MAXIMUM_ROBOT_BATTERY - BATERRY_UP_PER_STEP:
+                return False
+            #robot without mail can't stand in the yellow cell
+            if self.pos.color == 'y' and not self.mail:
+                return False
+            #robot with mail can't stand in the green cell
+            if self.pos.color == 'gr' and self.mail:
+                return False
+        
         if action == Action.GO_AHEAD:
-            if self.pos.front:
-                if self.pos.front.color != 'r' and self.pos.front.robot is None and (
-                    self.pos.front.color != 'y' or (self.mail and self.pos.front.target == self.mail.mail_number)) and (
-                    self.pos.front.color != 'gr' or self.mail is None):
-                    return True
-            
+            #robot can't move if battery is exhausted
+            if not self.battery:
+                return False
+            #robot can't move if next cell is none
+            if not self.pos.front:
+                return False
+            #robot can't move if next cell is red
+            if self.pos.front.color == 'r':
+                return False
+            #robot can't move if next cell is not empty
+            if self.pos.front.robot:
+                return False
+            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            if self.pos.front.color == 'y':
+                if not self.mail:
+                    return False
+                if self.pos.front.target != self.mail.mail_number:
+                    return False
+            #robot can't move to green cell if it already has carried a mail
+            if self.pos.front.color == 'gr' and self.mail:
+                return False
+            #robot with high battery can't move to blue cell
+            if self.pos.front.color == 'b' and self.battery > 20:
+                return False
+
         if action == Action.GO_BACK:
-            if self.pos.back:
-                if self.pos.back.color != 'r' and self.pos.back.robot is None and (
-                    self.pos.back.color != 'y' or (self.mail and self.pos.back.target == self.mail.mail_number)) and (
-                    self.pos.back.color != 'gr' or self.mail is None):
-                    return True
-                
+            #robot can't move if battery is exhausted
+            if not self.battery:
+                return False
+            #robot can't move if next cell is none
+            if not self.pos.back:
+                return False
+            #robot can't move if next cell is red
+            if self.pos.back.color == 'r':
+                return False
+            #robot can't move if next cell is not empty
+            if self.pos.back.robot:
+                return False
+            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            if self.pos.back.color == 'y':
+                if not self.mail:
+                    return False
+                if self.pos.back.target != self.mail.mail_number:
+                    return False
+            #robot can't move to green cell if it already has carried a mail
+            if self.pos.back.color == 'gr' and self.mail:
+                return False
+            #robot with high battery can't move to blue cell
+            if self.pos.back.color == 'b' and self.battery > 20:
+                return False
+
         if action == Action.TURN_LEFT:
-            if self.pos.left:
-                if self.pos.left.color != 'r' and self.pos.left.robot is None and (
-                    self.pos.left.color != 'y' or (self.mail and self.pos.left.target == self.mail.mail_number)) and (
-                    self.pos.left.color != 'gr' or self.mail is None):
-                    return True
+            #robot can't move if battery is exhausted
+            if not self.battery:
+                return False
+            #robot can't move if next cell is none
+            if not self.pos.left:
+                return False
+            #robot can't move if next cell is red
+            if self.pos.left.color == 'r':
+                return False
+            #robot can't move if next cell is not empty
+            if self.pos.left.robot:
+                return False
+            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            if self.pos.left.color == 'y':
+                if not self.mail:
+                    return False
+                if self.pos.left.target != self.mail.mail_number:
+                    return False
+            #robot can't move to green cell if it already has carried a mail
+            if self.pos.left.color == 'gr' and self.mail:
+                return False
+            #robot with high battery can't move to blue cell
+            if self.pos.left.color == 'b' and self.battery > 20:
+                return False
                 
         if action == Action.TURN_RIGHT:
-            if self.pos.right:
-                if self.pos.right.color != 'r' and self.pos.right.robot is None and (
-                    self.pos.right.color != 'y' or (self.mail and self.pos.right.target == self.mail.mail_number)) and (
-                    self.pos.right.color != 'gr' or self.mail is None):
-                    return True
+            #robot can't move if battery is exhausted
+            if not self.battery:
+                return False
+            #robot can't move if next cell is none
+            if not self.pos.right:
+                return False
+            #robot can't move if next cell is red
+            if self.pos.right.color == 'r':
+                return False
+            #robot can't move if next cell is not empty
+            if self.pos.right.robot:
+                return False
+            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            if self.pos.right.color == 'y':
+                if not self.mail:
+                    return False
+                if self.pos.right.target != self.mail.mail_number:
+                    return False
+            #robot can't move to green cell if it already has carried a mail
+            if self.pos.right.color == 'gr' and self.mail:
+                return False
+            #robot with high battery can't move to blue cell
+            if self.pos.right.color == 'b' and self.battery > 20:
+                return False
                 
-        return False
+        return True
     
     @property
     def mask(self) -> np.ndarray:
-        return np.array([int(self.is_legal_moves(action)) for action in range(5)])
+        """
+        Action mask for legal actions.
+        """
+        return np.array([int(self.is_legal_move(action)) for action in Action], dtype=np.int8)
     
 class Mail(pygame.sprite.Sprite):
     
@@ -542,6 +710,9 @@ class Mail(pygame.sprite.Sprite):
 
     @property
     def rect(self) -> pygame.Rect:
+        """
+        Rectangle to define where to draw mail. Typical ```pygame.Sprite``` attribute.
+        """
         rect = self.image.get_rect()
         rect.topleft = ((self.pos.x + 5) * CELL_SIZE[0],
                         (self.pos.y + 1) * CELL_SIZE[1])
@@ -553,11 +724,22 @@ class Clock:
     A object measuring game time. For each step of the robot time increases by $\delta t$.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, delta_t: float=1) -> None:
+        r"""
+        :param delta_t: $\delta t$ - time span that we assume for one move.
+        :type delta_t: float
+        """
         self.now = 0
+        self.delta_t = delta_t
 
     def up(self) -> None:
-        self.now += DELTA_T
+        r"""
+        Increases time by $\delta t$.
+        """
+        self.now += self.delta_t
 
     def reset(self) -> None:
+        """
+        Reset to zero time.
+        """
         self.now = 0

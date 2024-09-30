@@ -16,11 +16,11 @@ parser.add_argument("--required_mail",
                     help="chose required mail to win",
                     type=int)
 parser.add_argument(
-    "--number_robots_with_same_color",
-    help="chose number robots with same color. It shouldn't more than 6",
+    "--number_robots_per_player",
+    help="chose number robots per player. It shouldn't more than 6",
     default=3,
     type=int,
-    choices=[1, 2, 3, 4, 5, 6, 7, 8])
+    choices=[1, 2, 3, 4, 5, 6])
 parser.add_argument("--robot_colors",
                     help="chose robot colors",
                     nargs="+",
@@ -35,21 +35,20 @@ log.basicConfig(level=log.INFO,
                 filename="events.log",
                 filemode="w",
                 format="%(levelname)s: %(message)s")
-number_human_players = len(args.robot_colors) - args.number_auto_players
 agents = []
 game = Game(args.color_map, 
             args.target_map, 
             args.required_mail, 
-            args.number_robots_with_same_color,
+            args.number_robots_per_player,
             args.robot_colors, 
             render_mode='human', 
+            max_step=500,
             battery_considered=True)
-
-for i in range(args.number_auto_players):
-    agents.append(
-        AStarAgent(args.robot_colors[i + number_human_players],
-                   args.color_map,
-                   args.target_map, 
-                   game.state))
+a_star = AStarAgent(args.color_map,
+                    args.target_map, 
+                    game.number_robots)
+for _ in range(args.number_auto_players):
+    for _ in range(args.number_robots_per_player):
+        agents.append(a_star)
 
 print(game.run(agents))

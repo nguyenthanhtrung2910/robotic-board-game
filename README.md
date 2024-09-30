@@ -147,7 +147,7 @@ Run python file main.py with followed arguments:
 - ``--color_map``: path for csv color map file. <br/>
 - ``--targte_map``: path for csv target map file. <br/>
 - ``--required_mail``: number requried mails in order to win, it shouldn't more than 5.<br/> 
-- ``--number_robots_with_same_color``: number robots for each player. <br/>
+- ``--number_robots_per_player``: number robots for each player. <br/>
 - ``--robot_colors``: colors for robots on board.<br/>
 - ``--number_auto_player``: number auto player.<br/>
 Allowed player's colors: ``r`` : red, ``b`` :blue, ``gr`` :green, ``y`` :yellow, ``o`` : orange.<br/>
@@ -155,7 +155,7 @@ Allowed player's colors: ``r`` : red, ``b`` :blue, ``gr`` :green, ``y`` :yellow,
 Game can have less than 5 players.
 ### Example:
 ```
-python3 main.py --color_map csv_files/colors_map.csv --target_map csv_files/targets_map.csv --required_mail 20 --number_robots_with_same_color 3 --robot_colors r b --number_auto_players 2
+python3 main.py --color_map csv_files/colors_map.csv --target_map csv_files/targets_map.csv --required_mail 20 --number_robots_per_player 3 --robot_colors r b --number_auto_players 2
 ```
 ### Buttons detail:
 You can play with below buttons:<br/>
