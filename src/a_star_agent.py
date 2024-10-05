@@ -301,24 +301,21 @@ class AStarAgent:
 
         robot_cells_init = random.sample(self.graph.white_vertecies, k=number_robots)
         self.robots: list[Robot] = [Robot(robot_cells_init[i]) for i in range(number_robots)]
+        
+        self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices), MAXIMUM_ROBOT_BATTERY]
     
-    def load_state_from_obs(self, obs: dict[str, np.array]) -> None:
+    def load_state_from_obs(self, obs: dict[str, np.ndarray]) -> None:
         """
         Load states of all robots to local board.
         """
         robot_states = np.split(obs['observation'], self.number_robots)
-        for i, _ in enumerate(robot_states):
-            maximum_battery = robot_states[i].shape[0] - 2*self.graph.size - 10
-            split_indices = np.cumsum([self.graph.size, self.graph.size, 10, maximum_battery])[:-1]
-            robot_states[i] = np.split(robot_states[i], split_indices)
-            for j, _ in enumerate(robot_states[i]):
-                robot_states[i][j] = np.argmax(robot_states[i][j]) 
         for robot, robot_state in zip(self.robots, robot_states):
             robot.pos.robot = None
-            robot.pos = self.graph[robot_state[0], robot_state[1]]
+            robot.pos = self.graph[int(robot_state[0]*self.max_values_for_robot_attributes[0]), 
+                                   int(robot_state[1]*self.max_values_for_robot_attributes[1])]
             robot.pos.robot = robot
-            robot.mail = robot_state[2]
-            robot.battery = robot_state[3]
+            robot.mail = int(robot_state[2]*self.max_values_for_robot_attributes[2])
+            robot.battery = int(robot_state[3]*self.max_values_for_robot_attributes[3])
 
     @staticmethod
     def apply_action_mask(action, action_mask) -> int:

@@ -342,14 +342,10 @@ class Robot(pygame.sprite.Sprite):
     @property
     def observation(self) -> np.ndarray:
         """
-        Observation of the single robot. Each of attributes x, y, mail, battery is transformed to 
-        one-hot vector and all this concatenated.
+        Observation of the single robot. Each of attributes x, y, mail, battery is normalized and all this concatenated.
         """
         mail = self.mail.mail_number if self.mail else 0
-        return np.hstack([np.eye(9, dtype=np.int8)[self.pos.x], 
-                          np.eye(9, dtype=np.int8)[self.pos.y], 
-                          np.eye(10, dtype=np.int8)[mail],
-                          np.eye(51, dtype=np.int8)[self.battery]])
+        return np.array([self.pos.x/8, self.pos.y/8, mail/9, self.battery/50], dtype=np.float32)
     
     @property
     def is_charged(self) -> bool:
@@ -376,7 +372,7 @@ class Robot(pygame.sprite.Sprite):
         reward = DEFAULT_REWARD
         if self.pos.color == 'b':
             self.charge()
-            reward = REWARD_FOR_CHARGING
+            reward = 0
         return False, reward
 
     def move_up(self) -> tuple[bool, float]:
@@ -403,7 +399,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_CHARGING
+            reward = REWARD_FOR_MOVING_TO_BLUE
         self.clock.up()
         return True, reward
 
@@ -431,7 +427,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_CHARGING
+            reward = REWARD_FOR_MOVING_TO_BLUE
         self.clock.up()
         return True, reward
 
@@ -459,7 +455,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_CHARGING
+            reward = REWARD_FOR_MOVING_TO_BLUE
         self.clock.up()
         return True, reward
 
@@ -487,7 +483,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_CHARGING
+            reward = REWARD_FOR_MOVING_TO_BLUE
         self.clock.up()
         return True, reward
 
@@ -573,6 +569,9 @@ class Robot(pygame.sprite.Sprite):
             #robot can't move if battery is exhausted
             if not self.battery:
                 return False
+            #if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
+                return False
             #robot can't move if next cell is none
             if not self.pos.front:
                 return False
@@ -598,6 +597,9 @@ class Robot(pygame.sprite.Sprite):
         if action == Action.GO_BACK:
             #robot can't move if battery is exhausted
             if not self.battery:
+                return False
+            #if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
                 return False
             #robot can't move if next cell is none
             if not self.pos.back:
@@ -625,6 +627,9 @@ class Robot(pygame.sprite.Sprite):
             #robot can't move if battery is exhausted
             if not self.battery:
                 return False
+            #if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
+                return False
             #robot can't move if next cell is none
             if not self.pos.left:
                 return False
@@ -650,6 +655,9 @@ class Robot(pygame.sprite.Sprite):
         if action == Action.TURN_RIGHT:
             #robot can't move if battery is exhausted
             if not self.battery:
+                return False
+            #if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
                 return False
             #robot can't move if next cell is none
             if not self.pos.right:
@@ -680,7 +688,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Action mask for legal actions.
         """
-        return np.array([int(self.is_legal_move(action)) for action in Action], dtype=np.int8)
+        return np.array([int(self.is_legal_move(action)) for action in Action], dtype=np.uint8)
     
 class Mail(pygame.sprite.Sprite):
     

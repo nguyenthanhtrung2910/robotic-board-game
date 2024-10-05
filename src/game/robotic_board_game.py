@@ -73,9 +73,9 @@ class Game(pettingzoo.AECEnv):
             a: spaces.Dict(
                 {
                     "observation": spaces.Box(
-                        low=0, high=1, shape=(79*self.number_robots,), dtype=np.int8
+                        low=0, high=1, shape=(4*self.number_robots,), dtype=np.float32
                     ),
-                    "action_mask": spaces.Box(low=0, high=1, shape=(self.action_spaces[a].n,), dtype=np.int8),
+                    "action_mask": spaces.Box(low=0, high=1, shape=(self.action_spaces[a].n,), dtype=np.uint8),
                 }
             )
             for a in self.agents
