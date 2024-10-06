@@ -2,10 +2,8 @@ import pygame
 import logging as log
 import argparse
 
-from src.game.game_components import Board
 from src.game.robotic_board_game import Game
 from src.a_star_agent import AStarAgent
-from src.a_star_agent import Graph
 
 pygame.init()
 
@@ -46,7 +44,8 @@ game = Game(args.color_map,
             battery_considered=True)
 a_star = AStarAgent(args.color_map,
                     args.target_map, 
-                    game.number_robots)
+                    game.number_robots,
+                    game.robots[game.agent_selection].battery)
 for _ in range(args.number_auto_players):
     for _ in range(args.number_robots_per_player):
         agents.append(a_star)

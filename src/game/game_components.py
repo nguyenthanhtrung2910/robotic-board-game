@@ -1,14 +1,14 @@
 from __future__ import annotations
+import os
 import random
 import csv
-import typing
 import logging as log
 import enum
 
 import numpy as np
 import pygame
 
-from src.consts import *
+from src.game.consts import *
 
 class Action(enum.IntEnum):
     '''
@@ -301,19 +301,22 @@ class Robot(pygame.sprite.Sprite):
         if self.render_mode == 'human':
             self.__set_image()
             self.__set_number_image()
+            self.rect = self.image.get_rect()
+            self.rect.topleft = ((self.pos.x + 5) * CELL_SIZE[0],
+                                 (self.pos.y + 1) * CELL_SIZE[1])
 
     def __set_image(self) -> None:
         assert self.color in COLOR_MAP.keys(), "Colors of the robot can only be 'b', 'r', 'y', 'gr', 'o'"
         if self.color == 'b':
-            self.image = pygame.image.load('images/blue_robot.png')
-        if self.color == 'r':
-            self.image = pygame.image.load('images/red_robot.png')
-        if self.color == 'y':
-            self.image = pygame.image.load('images/yellow_robot.png')
-        if self.color == 'gr':
-            self.image = pygame.image.load('images/green_robot.png')
-        if self.color == 'o':
-            self.image = pygame.image.load('images/orange_robot.png')
+            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'blue_robot.png'))
+        elif self.color == 'r':
+            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'red_robot.png'))
+        elif self.color == 'y':
+            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'yellow_robot.png'))
+        elif self.color == 'gr':
+            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'green_robot.png'))
+        elif self.color == 'o':
+            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'orange_robot.png'))
         self.image = pygame.transform.scale(self.image, CELL_SIZE)
 
     def __set_number_image(self) -> None:
@@ -355,9 +358,9 @@ class Robot(pygame.sprite.Sprite):
         return self.pos.color == 'b'
 
     @property
-    def rect(self) -> pygame.Rect:
+    def next_rect(self) -> pygame.Rect:
         """
-        Rectangle to define where to draw robot. Typical ```pygame.Sprite``` attribute.
+        Rectangle to define where to draw robot.
         """
         rect = self.image.get_rect()
         rect.topleft = ((self.pos.x + 5) * CELL_SIZE[0],
@@ -390,8 +393,6 @@ class Robot(pygame.sprite.Sprite):
         log.info(
             f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
         )
-        if self.mail:
-            self.mail.pos = self.pos
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -418,8 +419,6 @@ class Robot(pygame.sprite.Sprite):
         log.info(
             f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
         )
-        if self.mail:
-            self.mail.pos = self.pos
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -446,8 +445,6 @@ class Robot(pygame.sprite.Sprite):
         log.info(
             f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
         )
-        if self.mail:
-            self.mail.pos = self.pos
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -474,8 +471,6 @@ class Robot(pygame.sprite.Sprite):
         log.info(
             f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
         )
-        if self.mail:
-            self.mail.pos = self.pos
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -526,6 +521,7 @@ class Robot(pygame.sprite.Sprite):
         self.mail = None
         self.count_mail = 0
         self.battery = MAXIMUM_ROBOT_BATTERY
+        self.rect = self.next_rect
 
     def step(self, action: int) -> tuple[bool, float]:
         """
@@ -591,7 +587,7 @@ class Robot(pygame.sprite.Sprite):
             if self.pos.front.color == 'gr' and self.mail:
                 return False
             #robot with high battery can't move to blue cell
-            if self.pos.front.color == 'b' and self.battery > 20:
+            if self.pos.front.color == 'b' and self.battery > BATTERY_TO_CHARGE:
                 return False
 
         if action == Action.GO_BACK:
@@ -620,7 +616,7 @@ class Robot(pygame.sprite.Sprite):
             if self.pos.back.color == 'gr' and self.mail:
                 return False
             #robot with high battery can't move to blue cell
-            if self.pos.back.color == 'b' and self.battery > 20:
+            if self.pos.back.color == 'b' and self.battery > BATTERY_TO_CHARGE:
                 return False
 
         if action == Action.TURN_LEFT:
@@ -649,7 +645,7 @@ class Robot(pygame.sprite.Sprite):
             if self.pos.left.color == 'gr' and self.mail:
                 return False
             #robot with high battery can't move to blue cell
-            if self.pos.left.color == 'b' and self.battery > 20:
+            if self.pos.left.color == 'b' and self.battery > BATTERY_TO_CHARGE:
                 return False
                 
         if action == Action.TURN_RIGHT:
@@ -678,7 +674,7 @@ class Robot(pygame.sprite.Sprite):
             if self.pos.right.color == 'gr' and self.mail:
                 return False
             #robot with high battery can't move to blue cell
-            if self.pos.right.color == 'b' and self.battery > 20:
+            if self.pos.right.color == 'b' and self.battery > BATTERY_TO_CHARGE:
                 return False
                 
         return True
@@ -707,24 +703,16 @@ class Mail(pygame.sprite.Sprite):
         """
         super().__init__()
         self.mail_number = mail_number
-        self.pos = pos
         if render_mode == 'human':
             self.image = pygame.transform.scale(
-                pygame.image.load('images/mail.png'), CELL_SIZE)
+                pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images','mail.png')), CELL_SIZE)
             mail_number_images = pygame.font.SysFont(None, 16).render(
                 str(self.mail_number), True, (255, 0, 0))
             self.image.blit(mail_number_images,
                             (0.5 * CELL_SIZE[0], 0.2 * CELL_SIZE[1]))
-
-    @property
-    def rect(self) -> pygame.Rect:
-        """
-        Rectangle to define where to draw mail. Typical ```pygame.Sprite``` attribute.
-        """
-        rect = self.image.get_rect()
-        rect.topleft = ((self.pos.x + 5) * CELL_SIZE[0],
-                        (self.pos.y + 1) * CELL_SIZE[1])
-        return rect
+            self.rect = self.image.get_rect()
+            self.rect.topleft = ((pos.x + 5) * CELL_SIZE[0],
+                                 (pos.y + 1) * CELL_SIZE[1])
     
 class Clock:
     

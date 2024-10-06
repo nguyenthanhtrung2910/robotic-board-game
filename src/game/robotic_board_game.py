@@ -13,7 +13,7 @@ from gymnasium import spaces
 from pettingzoo import utils
 
 from src.game import game_components
-from src.consts import *
+from src.game.consts import *
 
 pygame.init()
 
@@ -23,7 +23,7 @@ class Game(pettingzoo.AECEnv):
     A class representing our game. The game can be configured with difference parameters.
     """
 
-    metadata = {"render_modes": ["human"], "name": "robotic_board_game", "is_parallelizable": False, "render_fps": 5}
+    metadata = {"render_modes": ["human"], "name": "robotic_board_game", "is_parallelizable": False, "render_fps": 20}
 
     def __init__(self, 
                  colors_map: str, 
@@ -233,12 +233,18 @@ class Game(pettingzoo.AECEnv):
             log.info(f'At t={self.game_clock.now:04} Player {self.winner} win')
 
         self.truncations = {a: self.num_steps >= self.max_step for a in self.agents}
-
-        self.previous_agent = self.agent_selection
-        self.agent_selection = self._agent_selector.next() 
         
         if self.render_mode == "human":
-            self.render()
+            #for smooth movement
+            for i in range(1, SPRITE_SPEED+1):
+                diff = tuple(a-b for a, b in zip(acting_robot.next_rect.topleft, acting_robot.rect.topleft))
+                acting_robot.rect.topleft = tuple(a+i/SPRITE_SPEED*b for a,b in zip(acting_robot.rect.topleft, diff))
+                if acting_robot.mail:
+                    acting_robot.mail.rect.topleft = acting_robot.rect.topleft
+                self.render()
+        
+        self.previous_agent = self.agent_selection
+        self.agent_selection = self._agent_selector.next() 
 
     def render(self) -> None:
         if self.render_mode is None:

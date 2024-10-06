@@ -1,14 +1,9 @@
 from __future__ import annotations
-import math
 import random
 import csv
 import queue
-import typing
 
 import numpy as np
-
-from src.game.game_components import Action
-from src.consts import *
 
 class Vertex:
 
@@ -243,8 +238,8 @@ class Robot:
 
     def __init__(self,
                  pos: Vertex,
-                 mail: int = 0,
-                 battery: int = MAXIMUM_ROBOT_BATTERY):
+                 battery: int,
+                 mail: int = 0):
         self.pos = pos
         self.pos.robot = self
         self.mail = mail
@@ -286,7 +281,8 @@ class AStarAgent:
     def __init__(self,
                  colors_map: str,
                  targets_map: str,
-                 number_robots: int) -> None:
+                 number_robots: int,
+                 maximum_battery: int) -> None:
         """
         :param colors_map: colors map of the board game.
         :type colors_map: str
@@ -300,9 +296,9 @@ class AStarAgent:
         self.number_robots = number_robots
 
         robot_cells_init = random.sample(self.graph.white_vertecies, k=number_robots)
-        self.robots: list[Robot] = [Robot(robot_cells_init[i]) for i in range(number_robots)]
+        self.robots: list[Robot] = [Robot(robot_cells_init[i], maximum_battery) for i in range(number_robots)]
         
-        self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices), MAXIMUM_ROBOT_BATTERY]
+        self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices), maximum_battery]
     
     def load_state_from_obs(self, obs: dict[str, np.ndarray]) -> None:
         """
