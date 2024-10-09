@@ -159,3 +159,5 @@ events.log
 log_files*
 test.py
 evaluate.py
+*.pth
+*stats*

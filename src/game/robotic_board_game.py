@@ -11,7 +11,7 @@ import pettingzoo
 import gymnasium
 from gymnasium import spaces
 from pettingzoo import utils
-
+from tianshou.data import Batch
 from src.game import game_components
 from src.game.consts import *
 
@@ -327,8 +327,9 @@ class Game(pettingzoo.AECEnv):
                             self.step(game_components.Action.TURN_LEFT)
 
             if self.agents.index(self.agent_selection) - num_robots_for_people >= 0:
-                action = agents[self.agent_selection].get_action(self.last()[0])    
-                self.step(action)
+                obs, reward, termination, truncation, info = self.last()
+                action = agents[self.agent_selection](Batch(obs=Batch(obs=obs['observation'].reshape(1, -1), mask=obs['action_mask'].reshape(1,-1)), info=info)).act    
+                self.step(action[0])
             else:
                 if self.render_mode == "human":
                     self.render()

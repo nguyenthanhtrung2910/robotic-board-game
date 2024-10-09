@@ -521,7 +521,8 @@ class Robot(pygame.sprite.Sprite):
         self.mail = None
         self.count_mail = 0
         self.battery = MAXIMUM_ROBOT_BATTERY
-        self.rect = self.next_rect
+        if self.render_mode == 'human':
+            self.rect = self.next_rect
 
     def step(self, action: int) -> tuple[bool, float]:
         """

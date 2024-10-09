@@ -4,6 +4,8 @@ import csv
 import queue
 
 import numpy as np
+from tianshou.data import Batch
+from tianshou.data.types import ObsBatchProtocol
 
 class Vertex:
 
@@ -300,11 +302,11 @@ class AStarAgent:
         
         self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices), maximum_battery]
     
-    def load_state_from_obs(self, obs: dict[str, np.ndarray]) -> None:
+    def load_state_from_obs(self, obs: np.ndarray) -> None:
         """
         Load states of all robots to local board.
         """
-        robot_states = np.split(obs['observation'], self.number_robots)
+        robot_states = np.split(obs, self.number_robots)
         for robot, robot_state in zip(self.robots, robot_states):
             robot.pos.robot = None
             robot.pos = self.graph[int(robot_state[0]*self.max_values_for_robot_attributes[0]), 
@@ -314,7 +316,7 @@ class AStarAgent:
             robot.battery = int(robot_state[3]*self.max_values_for_robot_attributes[3])
 
     @staticmethod
-    def apply_action_mask(action, action_mask) -> int:
+    def apply_action_mask(action: int, action_mask: np.ndarray) -> int:
         """
         Handle if given action is illegal.
         """
@@ -322,28 +324,30 @@ class AStarAgent:
             return action
         return action if action_mask[action] else random.choice([act for act in range(5) if action_mask[act]])
         
-    def get_action(self, obs: dict[str, np.array]) -> int:
+    def get_action(self, obs: np.ndarray, mask: np.ndarray|None = None) -> int:
         """
         Get action base on robot state.
         """
+        if mask is None:
+            mask = np.array([1]*5, dtype = np.uint8)
         self.load_state_from_obs(obs)
         acting_robot = self.robots[0]
         if acting_robot.is_charged and acting_robot.battery < 40:
-            return self.apply_action_mask(0, obs['action_mask'])
+            return self.apply_action_mask(0, mask)
         
         acting_robot.set_destination(self.graph)
         # when many other robot wait for queue to destination, go to other destination or don't move
         # we want avoid draw when all players don't want to move
         if acting_robot.dest.is_blocked and acting_robot.pos not in acting_robot.dest.neighbors:
             if acting_robot.dest.color == 'y':
-                return self.apply_action_mask(0, obs['action_mask'])
+                return self.apply_action_mask(0, mask)
             if acting_robot.dest.color == 'b':
                 if all([vertex.is_blocked for vertex in self.graph.blue_vertices]):
-                    return self.apply_action_mask(0, obs['action_mask'])
+                    return self.apply_action_mask(0, mask)
                 acting_robot.set_destination(self.graph, [vertex for vertex in self.graph.blue_vertices if vertex.is_blocked])
             if acting_robot.dest.color == 'gr':
                 if all([vertex.is_blocked for vertex in self.graph.green_vertices]):
-                    return self.apply_action_mask(0, obs['action_mask'])
+                    return self.apply_action_mask(0, mask)
                 acting_robot.set_destination(self.graph, [vertex for vertex in self.graph.green_vertices if vertex.is_blocked])
 
         #build the path
@@ -358,5 +362,12 @@ class AStarAgent:
                 action = 3
             if next is acting_robot.pos.right:
                 action = 4
-            return action if obs['action_mask'][action] else self.apply_action_mask(0, obs['action_mask'])
-        return self.apply_action_mask(0, obs['action_mask'])
+            return action if mask[action] else self.apply_action_mask(0, mask)
+        return self.apply_action_mask(0, mask)
+    
+    def __call__(self, batch: ObsBatchProtocol, **kwargs) -> Batch:
+        obs = batch.obs
+        obs_next = obs.obs.reshape(-1) if hasattr(obs, "obs") else obs
+        mask = obs.mask.reshape(-1) if hasattr(obs, "mask") else None
+        act = np.array([self.get_action(obs=obs_next, mask=mask)])
+        return Batch(act=act)
