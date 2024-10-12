@@ -156,7 +156,7 @@ env = robotic_board_game.Game(
     number_robots_per_player=args.number_robots_per_player,
     render_mode=None,
     max_step=args.max_step,
-    battery_considered=True,
+    with_battery=True,
 )
 trainer = DQNTrainer(env)
 print(trainer.policy.model)

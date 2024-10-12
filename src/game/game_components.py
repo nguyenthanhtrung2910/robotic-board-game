@@ -264,6 +264,7 @@ class Robot(pygame.sprite.Sprite):
                  mail: Mail | None = None,
                  count_mail: int = 0,
                  battery: int = MAXIMUM_ROBOT_BATTERY,
+                 with_battery: bool = True,
                  render_mode: str|None = None) -> None:
         
         r"""
@@ -296,7 +297,8 @@ class Robot(pygame.sprite.Sprite):
         self.clock = clock
         self.mail = mail
         self.count_mail = count_mail
-        self.battery = battery
+        self.__battery = battery
+        self.with_battery = with_battery
         self.render_mode = render_mode
         if self.render_mode == 'human':
             self.__set_image()
@@ -335,6 +337,8 @@ class Robot(pygame.sprite.Sprite):
     
     @battery.setter
     def battery(self, battery: int) -> None:
+        if not self.with_battery:
+            return
         if battery < 0:
             self.__battery = 0
         elif battery > MAXIMUM_ROBOT_BATTERY:

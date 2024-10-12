@@ -29,11 +29,11 @@ class Game(pettingzoo.AECEnv):
                  colors_map: str, 
                  targets_map: str,
                  required_mail: int,
-                 number_robots_per_player: int,
-                 agent_colors: list[str], 
+                 agent_colors: list[str],
+                 number_robots_per_player: int = 1, 
+                 with_battery: bool = True,
                  max_step: int = 500,
-                 render_mode: str|None = None,
-                 battery_considered = True) -> None:
+                 render_mode: str|None = None) -> None:
         
         super().__init__()
         self.game_clock = game_components.Clock()
@@ -45,14 +45,14 @@ class Game(pettingzoo.AECEnv):
         self.max_step = max_step
         self.number_robots_per_player = number_robots_per_player
         self.number_robots = number_robots_per_player * len(agent_colors)
-        self.battery_considered = battery_considered
+        self.with_battery = with_battery
 
         robot_cells_init = random.sample(self.board.white_cells,
                                          k=self.number_robots)
         robots: list[game_components.Robot] = [
                 game_components.Robot(
                     robot_cells_init[number_robots_per_player * j + i],
-                    i + 1, robot_color, self.mail_sprites, self.game_clock, render_mode=render_mode)
+                    i + 1, robot_color, self.mail_sprites, self.game_clock, with_battery=self.with_battery, render_mode=render_mode)
             for j, robot_color in enumerate(agent_colors)
             for i in range(number_robots_per_player)
         ]
@@ -217,13 +217,10 @@ class Game(pettingzoo.AECEnv):
         self._accumulate_rewards()
         #if robot has moved, charge robots in blue cells
         #don't charge acting robot, it decides this itself in step method
-        if is_moved:
+        if is_moved and self.with_battery:
             for blue_cell in self.board.blue_cells:
                 if blue_cell.robot and blue_cell.robot is not acting_robot:
                     blue_cell.robot.charge()
-            #if we don't consider battery, robot's battery after movement does not change
-            if not self.battery_considered:
-                acting_robot.battery = MAXIMUM_ROBOT_BATTERY
 
         self.num_steps += 1    
 
@@ -236,9 +233,9 @@ class Game(pettingzoo.AECEnv):
         
         if self.render_mode == "human":
             #for smooth movement
-            for i in range(1, SPRITE_SPEED+1):
+            for i in range(1, FRAME_PER_STEP+1):
                 diff = tuple(a-b for a, b in zip(acting_robot.next_rect.topleft, acting_robot.rect.topleft))
-                acting_robot.rect.topleft = tuple(a+i/SPRITE_SPEED*b for a,b in zip(acting_robot.rect.topleft, diff))
+                acting_robot.rect.topleft = tuple(a+i/FRAME_PER_STEP*b for a,b in zip(acting_robot.rect.topleft, diff))
                 if acting_robot.mail:
                     acting_robot.mail.rect.topleft = acting_robot.rect.topleft
                 self.render()
