@@ -32,6 +32,9 @@ parser.add_argument("--number_robots_per_player",
 parser.add_argument("--with_battery",
                     help="battery is considered or not",
                     action='store_true')
+parser.add_argument("--random_steps_per_turn",
+                    help="allow ramdom number steps per turn or not",
+                    action='store_true')
 
 parser.add_argument("--max_step",
                     help="maximum game's step",
@@ -53,6 +56,7 @@ parser.add_argument("--number_runs",
 
 args = parser.parse_args()
 render_mode = None if args.render_mode == "None" else args.render_mode
+assert args.number_persons <= len(args.robot_colors), "Number person-players can't be bigger than number players "
 log.basicConfig(level=log.INFO,
                 filename="events.log",
                 filemode="w",
@@ -65,6 +69,7 @@ game = Game(args.color_map,
             agent_colors=args.robot_colors,
             number_robots_per_player=args.number_robots_per_player,
             with_battery=args.with_battery,
+            random_steps_per_turn=args.random_steps_per_turn,
             max_step=args.max_step,
             render_mode=render_mode)
 

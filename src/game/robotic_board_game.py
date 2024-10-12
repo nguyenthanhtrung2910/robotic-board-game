@@ -32,6 +32,7 @@ class Game(pettingzoo.AECEnv):
                  agent_colors: list[str],
                  number_robots_per_player: int = 1, 
                  with_battery: bool = True,
+                 random_steps_per_turn = False,
                  max_step: int = 500,
                  render_mode: str|None = None) -> None:
         
@@ -46,6 +47,8 @@ class Game(pettingzoo.AECEnv):
         self.number_robots_per_player = number_robots_per_player
         self.number_robots = number_robots_per_player * len(agent_colors)
         self.with_battery = with_battery
+        self.random_steps_per_turn = random_steps_per_turn
+        self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
 
         robot_cells_init = random.sample(self.board.white_cells,
                                          k=self.number_robots)
@@ -189,7 +192,8 @@ class Game(pettingzoo.AECEnv):
         self.mail_sprites.empty()
         for green_cell in self.board.green_cells:
             green_cell.generate_mail(self.mail_sprites, self.render_mode)
-
+            
+        self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
         self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.reset()
         self.previous_agent = None
@@ -240,8 +244,11 @@ class Game(pettingzoo.AECEnv):
                     acting_robot.mail.rect.topleft = acting_robot.rect.topleft
                 self.render()
         
-        self.previous_agent = self.agent_selection
-        self.agent_selection = self._agent_selector.next() 
+        self.steps_to_change_turn -= 1
+        if self.steps_to_change_turn == 0:
+            self.previous_agent = self.agent_selection
+            self.agent_selection = self._agent_selector.next() 
+            self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
 
     def render(self) -> None:
         if self.render_mode is None:
@@ -295,6 +302,8 @@ class Game(pettingzoo.AECEnv):
         assert len(agents) <= len(self.agents)
         self.reset()
         num_robots_for_people = len(self.agents) - len(agents)
+        if num_robots_for_people > 0 and self.render_mode is None:
+            raise ValueError("Person-player can't play without rendering animation")
         agents = {name: a for name, a in zip(self.agents[num_robots_for_people:], agents)}
 
         running = True
@@ -324,8 +333,8 @@ class Game(pettingzoo.AECEnv):
                             self.step(game_components.Action.TURN_LEFT)
 
             if self.agents.index(self.agent_selection) - num_robots_for_people >= 0:
-                obs, reward, termination, truncation, info = self.last()
-                action = agents[self.agent_selection](Batch(obs=Batch(obs=obs['observation'].reshape(1, -1), mask=obs['action_mask'].reshape(1,-1)), info=info)).act    
+                obs = self.observe(self.agent_selection)
+                action = agents[self.agent_selection](Batch(obs=Batch(obs=obs['observation'].reshape(1, -1), mask=obs['action_mask'].reshape(1,-1)), info=[])).act    
                 self.step(action[0])
             else:
                 if self.render_mode == "human":
