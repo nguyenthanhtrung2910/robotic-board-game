@@ -11,10 +11,10 @@ import pettingzoo
 import gymnasium
 from gymnasium import spaces
 from pettingzoo import utils
-from tianshou.data import Batch
+
 from src.game import game_components
 from src.game.consts import *
-
+from src.agents.base_agent import BaseAgent
 pygame.init()
 
 class Game(pettingzoo.AECEnv):
@@ -297,14 +297,14 @@ class Game(pettingzoo.AECEnv):
                     running = False
             self.render()
 
-    def run(self, agents: list[Any]) -> tuple[str | None, int]:
+    def run(self, agents: list[BaseAgent]) -> tuple[str | None, int]:
         
         assert len(agents) <= len(self.agents)
         self.reset()
         num_robots_for_people = len(self.agents) - len(agents)
         if num_robots_for_people > 0 and self.render_mode is None:
             raise ValueError("Person-player can't play without rendering animation")
-        agents = {name: a for name, a in zip(self.agents[num_robots_for_people:], agents)}
+        agents: dict[str, BaseAgent] = {name: a for name, a in zip(self.agents[num_robots_for_people:], agents)}
 
         running = True
         while running and not self.terminations[self.agent_selection] and not self.truncations[self.agent_selection]:
@@ -334,8 +334,8 @@ class Game(pettingzoo.AECEnv):
 
             if self.agents.index(self.agent_selection) - num_robots_for_people >= 0:
                 obs = self.observe(self.agent_selection)
-                action = agents[self.agent_selection](Batch(obs=Batch(obs=obs['observation'].reshape(1, -1), mask=obs['action_mask'].reshape(1,-1)), info=[])).act    
-                self.step(action[0])
+                action = agents[self.agent_selection].get_action(obs)  
+                self.step(action)
             else:
                 if self.render_mode == "human":
                     self.render()

@@ -4,8 +4,8 @@ import csv
 import queue
 
 import numpy as np
-from tianshou.data import Batch
-from tianshou.data.types import ObsBatchProtocol
+from gymnasium import spaces
+from src.agents.base_agent import BaseAgent
 
 class Vertex:
 
@@ -275,31 +275,29 @@ class Robot:
                            key=lambda green_cell: Graph.
                            heuristic(self.pos, green_cell))
     
-class AStarAgent:
+class AStarAgent(BaseAgent):
     """
     A controller for single robot, using A* star search shortest path through graph.
     """
 
     def __init__(self,
+                 observation_space: spaces.Dict,
                  colors_map: str,
                  targets_map: str,
-                 number_robots: int,
                  maximum_battery: int) -> None:
         """
         :param colors_map: colors map of the board game.
         :type colors_map: str
         :param targets_map: target map of the board game.
         :type targets_map: str
-        :param number_robots: number robots in game.
-        :type number_robots: int
+        :param maximum_battery: maximum battery for robot.
+        :type maximum_battery: int
         """
-
+        super().__init__(observation_space)
         self.graph = Graph(colors_map=colors_map, targets_map=targets_map)
-        self.number_robots = number_robots
-
-        robot_cells_init = random.sample(self.graph.white_vertecies, k=number_robots)
-        self.robots: list[Robot] = [Robot(robot_cells_init[i], maximum_battery) for i in range(number_robots)]
-        
+        self.number_robots = int(self.observation_space['observation'].shape[0]/4)
+        robot_cells_init = random.sample(self.graph.white_vertecies, k=self.number_robots)
+        self.robots: list[Robot] = [Robot(robot_cells_init[i], maximum_battery) for i in range(self.number_robots)]
         self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices), maximum_battery]
     
     def load_state_from_obs(self, obs: np.ndarray) -> None:
@@ -324,12 +322,13 @@ class AStarAgent:
             return action
         return action if action_mask[action] else random.choice([act for act in range(5) if action_mask[act]])
         
-    def get_action(self, obs: np.ndarray, mask: np.ndarray|None = None) -> int:
+    def get_action(self, obs: dict[str, np.ndarray]) -> int:
         """
         Get action base on robot state.
         """
-        if mask is None:
-            mask = np.array([1]*5, dtype = np.uint8)
+        
+        mask = obs.get('action_mask', np.array([1]*5, dtype = np.uint8))
+        obs = obs['observation']
         self.load_state_from_obs(obs)
         acting_robot = self.robots[0]
         if acting_robot.is_charged and acting_robot.battery < 40:
@@ -356,18 +355,11 @@ class AStarAgent:
             next = path[0]
             if next is acting_robot.pos.front:
                 action = 1
-            if next is acting_robot.pos.back:
+            elif next is acting_robot.pos.back:
                 action = 2
-            if next is acting_robot.pos.left:
+            elif next is acting_robot.pos.left:
                 action = 3
-            if next is acting_robot.pos.right:
+            elif next is acting_robot.pos.right:
                 action = 4
             return action if mask[action] else self.apply_action_mask(0, mask)
         return self.apply_action_mask(0, mask)
-    
-    def __call__(self, batch: ObsBatchProtocol, **kwargs) -> Batch:
-        obs = batch.obs
-        obs_next = obs.obs.reshape(-1) if hasattr(obs, "obs") else obs
-        mask = obs.mask.reshape(-1) if hasattr(obs, "mask") else None
-        act = np.array([self.get_action(obs=obs_next, mask=mask)])
-        return Batch(act=act)

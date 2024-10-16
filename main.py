@@ -3,7 +3,7 @@ import logging as log
 import argparse
 
 from src.game.robotic_board_game import Game
-from src.a_star_agent import AStarAgent
+from src.agents.astar_agent import AStarAgent
 
 pygame.init()
 
@@ -35,11 +35,11 @@ parser.add_argument("--with_battery",
 parser.add_argument("--random_steps_per_turn",
                     help="allow ramdom number steps per turn or not",
                     action='store_true')
-
 parser.add_argument("--max_step",
                     help="maximum game's step",
                     type=int,
                     default=800)
+
 parser.add_argument("--render_mode",
                     help="render mode",
                     type=str,
@@ -73,14 +73,18 @@ game = Game(args.color_map,
             max_step=args.max_step,
             render_mode=render_mode)
 
-a_star = AStarAgent(args.color_map,
+astar = AStarAgent(game.observation_space(game.agent_selection),
+                    args.color_map,
                     args.target_map, 
-                    game.number_robots,
                     game.robots[game.agent_selection].battery)
 
 for _ in range(len(game.agents) - args.number_persons):
     for _ in range(args.number_robots_per_player):
-        agents.append(a_star)
+        agents.append(astar)
 
-for _ in range(args.number_runs):
-    print(game.run(agents))
+i = 0
+while i < args.number_runs:
+    winner, time = game.run(agents)
+    if winner:
+        print(winner, time)
+        i += 1
