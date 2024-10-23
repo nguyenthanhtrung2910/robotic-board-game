@@ -78,10 +78,9 @@ astar = AStarAgent(game.observation_space(game.agent_selection),
                     args.target_map, 
                     game.robots[game.agent_selection].battery)
 
-for _ in range(len(game.agents) - args.number_persons):
-    for _ in range(args.number_robots_per_player):
-        agents.append(astar)
-
+for _ in range(len(game.agents) - args.number_persons*args.number_robots_per_player):
+    agents.append(astar)
+    
 i = 0
 while i < args.number_runs:
     winner, time = game.run(agents)

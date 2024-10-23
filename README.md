@@ -2,48 +2,122 @@
 # Robotic Board Game 
 <h1>Table of Contents</h1>
 
-- [Game Description](#game-description)
+- [Overview](#overview)
+- [Project structure](#project-structure)
+- [Game](#game)
   - [What does it look like?](#what-does-it-look-like)
-  - [Game Rule](#game-rule)
-- [Game Parameters](#game-parameters)
-  - [Custom layout](#custom-layout)
-- [Installation](#installation)
+  - [Game rule](#game-rule)
+  - [Game parameters](#game-parameters)
+  - [Interact with player](#interact-with-player)
+- [Player](#player)
+  - [Player based on shortest path finding](#player-based-on-shortest-path-finding)
+  - [Trainable player](#trainable-player)
 - [Usage](#usage)
-  - [Actions From Keyboard ](#actions-from-keyboard)
-    - [Arguments](#arguments)
-    - [Example](#example)
-    - [Button Details](#buttons-detail)
-- [About Greedy Policy](#about-greedy-policy)
-# Game Description
-The game describes the process of sorting mail by delivery directions using delivery robots. The game is inspired by real-world applications, in which robots pick-up mail and deliver them to a workstation.
-
-The environment is configurable: it allows for different sizes (difficulty), number of agents, number of robots for each agent, number of required mails . Of course, the parameters used in each experiment must be clearly reported to allow for fair comparisons between algorithms.
-## What does it look like?
-Below example of game between two players. Each of them have 3 robots. Algorithm for greedy agent is described later.
+  - [Installation](#installation)
+  - [Simulation](#simulation)
+  - [Person-player](#person-player)
+# Overview
+This library simulates the process of a board game. 
+The goal of the simulation is to predict the game process 
+statistics depending on various parameters. 
+From this, one can conclude which parameters are desirable 
+to set in order to play effectively in a real game.
+# Project structure
+The project has a structure similar to reinforcement learning. 
+The game (environment) and the player (agent) are isolated from each other. 
+The player observes the environment, receiving observation <b>o</b>, 
+and based on that chooses an action <b>a</b>. The game executes action <b>a</b>, 
+moves to the next observation, and passes it to the next player. 
+The process continues until a win is achieved. This approach allows 
+anyone to write an algorithm for an automated player, knowing only 
+how the observation looks, without worrying about what happens in the game.
 <p align="center">
- <img width="600px" src="docs/example.gif" align="center" alt="Robotic  Board Game Illustration" />
+ <img width="300px" src="docs/player_and_game.svg" 
+ align="center" alt="The player and the game interact" />
 </p>
 
-## Game Rule
-Robots move across the playing field horizontally and vertically. Diagonal movements are prohibited. On the playing field, points are marked in green where robots can pick up mails to deliver them to destinations, colored yellow and numbered from 1 to 9 (the number and numbering order may differ for different fields).
+<p align="center">
+<strong>Figure 1: </strong>
+<i>The player and the game interact.</i>
+</p>
 
-Chargers are marked in blue. For each move, the robot spends one unit of charge. A fully charged robot has $N = 100$ units of charge. A robot standing on charge receives $M = 10$ units of charge in one move. A fully charged robot must leave the charger. The robot can leave the charger at any time without waiting for a full charge. To account for the charge, we use special charge cards. At the beginning of the game, all robots are fully charged, which is described by placing the piece corresponding to the robot in the far right position. Then, with each move, the piece moves to the left one square.
+# Game
+The game is inspired by real-world applications, in which robots pick-up mail 
+and deliver them to a workstation. <b>The goal of all players is to deliver the 
+required number of mails as soon as possible.</b>
+## What does it look like?
+Below example of game between three players. Each of them have 2 robots. 
+One move consumes one unit of battery. Every single robot can make maximum 
+only one move per turn.
+<p align="center">
+ <img width="600px" src="docs/robotic_board_game_example.gif" align="center" alt="Robotic  Board Game Illustration" />
+</p>
 
-Fields where the robot cannot be moved are marked in red. The white square in the center is the zone into which at the beginning of the game you can introduce your robot. Squares that robots can move through and those that do not have special properties are marked in gray. At the beginning of the game, each player takes turns placing a robot within the boundaries of the white square.
+<p align="center">
+<strong>Figure 2: </strong>
+<i>Example of game process.</i>
+</p>
 
-After all the pieces have been placed, each player takes turns
-performs a move, moving each of his robots 1 space.
-If a robot is blocked (all neighboring cells are taken by other robots), it skips this move. Only robots with mail, whose numbers correspond to the field number are allowed to enter the yellow field. As soon as the robot with the mail leaves the green cell, the player who owns the robot rolls two dices and places a mail with a number corresponding to the rolled sum of points on the vacated green cell. If the corresponding number is not on the playing field, the dice are re-rolled. The game ends as soon as one of the players collects the required number of mails. If all player don't want to move anymore or no legal move so Draw. 
-# Game Parameters
-The robotic board game is parameterised by:
-- The layout of board.
-- The number of agents.
-- The number of robots for each agent.
-- The number of required mails.
-## Custom Layout
-You can design a custom board layout with the .csv files, what are accepted as arguments for game contructor. Examples of these files are as follows:<br/>
+## Game rule
+<table border="1" align="center" cellpadding="10" cellspacing="0">
+  <tr>
+    <th>Cell's color</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td>White</td>
+    <td>Cells where player must place robot at the beginning of the game.</td>
+  </tr>
+  <tr>
+    <td>Gray</td>
+    <td>Cell where robots can move through and do not have special properties.</td>
+  </tr>
+  <tr>
+    <td>Red</td>
+    <td>Cells where the robot cannot be moved to.</td>
+  </tr>
+  <tr>
+    <td>Yellow</td>
+    <td>Cells where the robot must deliver the package corresponding 
+    to the number of this cell. Only the robot with the correct 
+    number of mail can move to the yellow cell. Robot, after dropping off the
+    mail, must leave this cell in next turn.</td>
+  </tr>
+  <tr>
+    <td>Green</td>
+    <td>Cells where the robot can pick up mail. Only robot without mail can
+    move to this cell. Robot, after picking up a mail, must learning this cell in the 
+    next turn. </td>
+  </tr>
+    <tr>
+    <td>Blue</td>
+    <td>Cells where the robot can be charged. For each move, the robot spends one unit
+        of charge. A fully charged robot has N = 50 units of charge. A robot standing 
+        on charge receives M = 5 units of charge in one move. To account for the 
+        charge, we use special charge cards. At the beginning of the game, all robots 
+        are fully charged, which is described by placing the piece corresponding to 
+        the robot in the far right position. Then, with each move, the piece moves 
+        to the left one square. Only robot with low baterry can move to this cell. Robot after charging to high battery must leave this cell in next turn.
+    </td>
+  </tr>
+</table>
 
-<table>
+## Game parameters
+The robotic board game is parameterized by:
+<ul>
+  <li>The layout of board.</li>
+  <li>The number of required mails.</li>
+  <li>The number of players.</li>
+  <li>The number of robots for each players.</li>
+  <li>Battery is considered or not.</li>
+  <li>Randomly set maximum possible step for each robot in every turn or not.</li>
+  <li>Maximum step enviroment (our game) can reach.</li>
+</ul>
+
+### Custom Layout
+You can design a custom board layout with the .csv files, what are accepted as arguments for game contructor. Examples of these files are as follows:
+
+<table border="1" align="center" cellpadding="10" cellspacing="0">
 <tr>
   <th>Type map</th>
   <th>Configuration</th>
@@ -96,7 +170,167 @@ You can design a custom board layout with the .csv files, what are accepted as a
 </tr>
 </table>
 
-# Installation
+### Number of players
+Pass to argument ```agent_colors``` a list of colors. For example, passing the list
+```python
+['r', 'gr', 'b']
+``` 
+correspond to having red, green and blue players. 
+### With battery or not
+Movement can waste battery with every single move, or the robot can always be fully charged. You can set this option by using the argument ```with_battery``` when constructing the game.
+### The maximum possible number of moves for the robot in each turn is set randomly or not
+In each turn, player can optionally move the robot several steps, but not exceed a certain number. This number can be either 1 or set randomly. You can adjust this with argument ```random_steps_per_turn``` when constructing the game.
+### Maximum step enviroment can reach
+A game can be played infinitely. Set maximum step that game can reach with argument ```
+max_step```.
+## Interact with player
+### Observation Space
+The observation is a dictionary which contains an ```'observation'``` element which 
+is the usual RL observation described below, and an ```'action_mask'``` which holds 
+the legal moves, described in the Legal Actions Mask section.
+
+Observation of the single robot is the vector with size 4. 
+It contains respectively  x-coordinate, y-coordinate, mail's number, 
+battery of that robot. All components are normalized for passing to neural 
+networks. Observations of all robots are concatenated to create main observation. 
+The observation of the robot that is being controlled is placed first in the main 
+observation vector i.e. first four components of the main observation is the 
+observation of the controlled robot. This ensure possibility of self-play, one agent 
+can play as all players because it always provides action for the robot with the 
+observation in the first position of the main observation.
+
+For example, for first robot enviroment provides vector:
+$$
+\begin{pmatrix}
+x_1 \\
+y_1 \\
+m_1 \\
+b_1 \\
+x_2 \\
+y_2 \\
+m_2 \\
+b_2 \\
+x_3 \\
+y_3 \\
+m_3 \\
+b_3 \\
+...
+\end{pmatrix}
+$$
+For second robot:
+$$
+\begin{pmatrix}
+x_2 \\
+y_2 \\
+m_2 \\
+b_2 \\
+x_1 \\
+y_1 \\
+m_1 \\
+b_1 \\
+x_3 \\
+y_3 \\
+m_3 \\
+b_3 \\
+...
+\end{pmatrix}
+$$
+For third robot:
+$$
+\begin{pmatrix}
+x_3 \\
+y_3 \\
+m_3 \\
+b_3 \\
+x_1 \\
+y_1 \\
+m_1 \\
+b_1 \\
+x_2 \\
+y_2 \\
+m_2 \\
+b_2 \\
+...
+\end{pmatrix}
+$$
+and so on.
+### Legal Actions Mask 
+The legal moves available to the current agent are found in the ```action_mask``` element 
+of the dictionary observation. The ```action_mask``` is a binary vector where each index 
+of the vector represents whether the action is legal or not.
+### Action Space
+5 actions are available for each robot:
+
+<table border="1" align="center" cellpadding="10" cellspacing="0">
+  <tr>
+    <th>Action ID</th>
+    <th>Action</th>
+  </tr>
+  <tr>
+    <td>0</td>
+    <td>Stand still. Charge if possible.</td>
+  </tr>
+  <tr>
+    <td>1</td>
+    <td>Make move foward. Pick up or drop off if possible.</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Make move backward. Pick up or drop off if possible.</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Make move to left. Pick up or drop off if possible.</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Make move to right. Pick up or drop off if possible.</td>
+  </tr>
+</table>
+
+# Player
+## Player based on shortest path finding
+This agent loads states of robots from observation to a local graph and make decision 
+by setting destination for robot and finding shortest path to this.
+
+Algorithm for controlling single robot is described below:
+<p align="center">
+ <img width="500px" src="docs/algorithm_for_auto_play.svg" align="center" alt="Robotic  Board Game Illustration" />
+</p>
+
+<p align="center">
+<strong>Figure 3: </strong>
+<i>Algorithm for controlling single robot.</i>
+</p>
+
+> ***:** A cell is considered blocked if a robot is standing on it and only 1 of its neighbors is free. Agent decides that the robot will stop waiting if the destination is occupied. Therefore, if all the neighboring cells of the destination are occupied by waiting robots, the robot at the destination will not be able to exit that cell. All the robots will stop waiting for each other and the game cannot continue.
+
+Algorithm for chosing destination is described below:
+<p align="center">
+ <img width="300px" src="docs/algorithm_for_chosing_destination.svg" align="center" alt="Robotic  Board Game Illustration" />
+</p>
+
+<p align="center">
+<strong>Figure 4: </strong>
+<i>Algorithm for chosing destination.</i>
+</p>
+
+## Trainable player
+We combine below RL methods to training agent by self-play:
+<ul>
+  <li>Double DQN</li>
+  <li>Dueling DQN</li>
+  <li>Prioritized Experience Replay</li>
+  <li>Multi-step DQN</li>
+</ul>
+
+It works for enviroment with 2, 3, 4 but for enviroment with more robots, agent need to be trained more. You can train agent by running file ```train.py``` with default parameters for agent and paramters for enviroment that will be described in Usage section.
+
+> **Note:** This option in the process of improvement and upgrade.
+
+# Usage
+
+## Installation
 You can install the project following these steps:
 - Use Git to download:
 ```
@@ -116,60 +350,127 @@ source .env/bin/activate
 ```
 pip install -r requirements.txt
 ```
-# Usage
-Use with Petting Zoo AEC enviroment interface:
-```python
-from Game.Board import Board
-from Game.Game import Game
 
-board = Board.Board('csv_files/colors_map.csv', 'csv_files/targets_map.csv')
-env = Game.Game(board, 3, 20, ['r', 'b'] ,render_mode="human", battery_considered = True)
-env.reset(seed=42)
+## Simulation
+The lines below show you how to simulate game process, running game between players.
+Now available only game process between players based on shortest path finding.
 
-for agent in env.agent_iter():
-    observation, reward, termination, truncation, info = env.last()
+To run the game, run file ```main.py``` with following arguments:
 
-    if termination or truncation:
-        action = None
-    else:
-        mask = observation["action_mask"]
-        # this is where you would insert your policy
-        action = env.action_space(agent).sample(mask)
+<table border="1" align="center" cellpadding="40" cellspacing="0">
+  <tr>
+    <th>Argument</th>
+    <th>Default</th>
+    <th>Decription</th>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--color_map</code></td>
+    <td><code>assets/csv_files/colors_map.csv</code></td>
+    <td>Path for csv color map file.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--target_map</code></td>
+    <td><code>assets/csv_files/targets_map.csv</code></td>
+    <td>Path for csv target map file.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--required_mail</code></td>
+    <td></td>
+    <td>Required number of mails in order to win.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--robot_colors</code></td>
+    <td></td>
+    <td>Colors of players. Allowed player's colors: ,<code>r</code> : red, <code>b</code> :blue, <code>gr</code> :green, <code>y</code> :yellow, <code>o</code> : orange.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--number_robots_per_player</code></td>
+    <td><code>1</code></td>
+    <td>Number robots per player.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--with_battery</code></td>
+    <td><code>False</code></td>
+    <td>Battery is considered or not.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--random_steps_per_turn</code></td>
+    <td><code>False</code></td>
+    <td>The maximum possible number of moves for the robot in each turn is set randomly or not.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--max_step</code></td>
+    <td><code>800</code></td>
+    <td>Maximum enviroment step.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--render_mode</code></td>
+    <td><code>human</code></td>
+    <td>Run with animation or not. Can be <code>human</code> or <code>None</code>.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--number_persons</code></td>
+    <td><code>0</code></td>
+    <td>Number of person-players.</td>
+  </tr>
+  <tr>
+    <td style="white-space: nowrap;">
+    <code>--number_run</code></td>
+    <td><code>1</code></td>
+    <td>How many times the game is runned.</td>
+  </tr>
+</table>
 
-    env.step(action)
-env.close()
+For example:
+```bash
+python3 main.py --required_mail 10 --robot_colors r b --number_run 5 > results.txt
 ```
+Results is winner and game's time of every run.
 
-## Actions From Keyboard
-You can enter actions from keyboard, playing with yourself or with other. You can also play with my greedy agent or watch his clones play.
-Run python file main.py with followed arguments: 
-### Arguments:
-- ``--color_map``: path for csv color map file. <br/>
-- ``--targte_map``: path for csv target map file. <br/>
-- ``--required_mail``: number requried mails in order to win, it shouldn't more than 5.<br/> 
-- ``--number_robots_per_player``: number robots for each player. <br/>
-- ``--robot_colors``: colors for robots on board.<br/>
-- ``--number_auto_player``: number auto player.<br/>
-Allowed player's colors: ``r`` : red, ``b`` :blue, ``gr`` :green, ``y`` :yellow, ``o`` : orange.<br/>
+## Person-player
+You can enter actions from keyboard, playing with yourself or with other.
+<table border="1" align="center" cellpadding="10" cellspacing="0">
+  <tr>
+    <th>Button</th>
+    <th>Action ID</th>
+    <th>Action</th>
+  </tr>
+  <tr>
+    <td style="font-size: 20px; text-align: center; vertical-align: middle;
+    "><code>space</code></td>
+    <td>0</td>
+    <td>Stand still. Charge if possible.</td>
+  </tr>
+  <tr>
+    <td style="font-size: 30px; text-align: center; vertical-align: middle;">&uarr;</td>
+    <td>1</td>
+    <td>Make move foward. Pick up or drop off if possible.</td>
+  </tr>
+  <tr>
+    <td style="font-size: 30px; text-align: center; vertical-align: middle;">&darr;</td>
+    <td>2</td>
+    <td>Make move backward. Pick up or drop off if possible.</td>
+  </tr>
+  <tr>
+    <td style="font-size: 30px; text-align: center; vertical-align: middle;">&larr;</td>
+    <td>3</td>
+    <td>Make move to left. Pick up or drop off if possible.</td>
+  </tr>
+  <tr>
+    <td style="font-size: 30px; text-align: center; vertical-align: middle;">&rarr;</td>
+    <td>4</td>
+    <td>Make move to right. Pick up or drop off if possible.</td>
+  </tr>
+</table>
 
-Game can have less than 5 players.
-### Example:
-```
-python3 main.py --color_map assets/csv_files/colors_map.csv --target_map assets/csv_files/targets_map.csv --required_mail 20 --number_robots_per_player 3 --robot_colors r b --number_auto_players 2
-```
-### Buttons detail:
-You can play with below buttons:<br/>
-- $\uparrow$: Move up. <br/>
-- $\downarrow$: Move up. <br/>
-- $\rightarrow$: Move right. <br/>
-- $\leftarrow$: Move left. <br/>
-- ``F`` : Finish your turn. We also can finish our turn when we haven't moved all robot but we must move all fully charged robots, located in blue cell before finishing our turn. When all your robots have done their moves, keyboard is blocked. You must press ``F`` key to finish your turn. <br/>
-- ``1``,``2``,``3``,... : Chose your robot to move.<br/>
-
-Game's process is writen in file ``events.log``. 
-
-# About Greedy Policy:
-In fact, player and game are isolated objects so Agent class can not have reference to Game's object. Agent receive state from Game, simulate next state and from that generate action.
-Agent have his own simulator in order to simulate the game. 
-
-Our board changes every step so we need search shortest path to destination for each robot every movement. I use A* algorithm for shortest path searching. When robot reach its destination, it changes its destination to new destination. Robot need to charge if its baterry less than 30 and get ready to go if its battery more than 70.
+You can't switch to other robot until you enter legal move or there no move is legal.
