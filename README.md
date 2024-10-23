@@ -200,6 +200,7 @@ can play as all players because it always provides action for the robot with the
 observation in the first position of the main observation.
 
 For example, for first robot enviroment provides vector:
+
 $$
 \begin{pmatrix}
 x_1 \\
@@ -217,7 +218,9 @@ b_3 \\
 ...
 \end{pmatrix}
 $$
+
 For second robot:
+
 $$
 \begin{pmatrix}
 x_2 \\
@@ -235,7 +238,9 @@ b_3 \\
 ...
 \end{pmatrix}
 $$
+
 For third robot:
+
 $$
 \begin{pmatrix}
 x_3 \\
@@ -253,6 +258,7 @@ b_2 \\
 ...
 \end{pmatrix}
 $$
+
 and so on.
 ### Legal Actions Mask 
 The legal moves available to the current agent are found in the ```action_mask``` element 
