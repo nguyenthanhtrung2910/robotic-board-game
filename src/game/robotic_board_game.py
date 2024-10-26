@@ -72,11 +72,12 @@ class Game(pettingzoo.AECEnv):
         self.possible_agents = self.agents[:]
 
         self.action_spaces: dict[str, spaces.Discrete] = {a: spaces.Discrete(5) for a in self.agents}
+        robot_obs_size = 4 if self.with_battery else 3
         self.observation_spaces: dict[str, spaces.Dict]= {
             a: spaces.Dict(
                 {
                     "observation": spaces.Box(
-                        low=0, high=1, shape=(4*self.number_robots,), dtype=np.float32
+                        low=0, high=1, shape=(robot_obs_size*self.number_robots,), dtype=np.float32
                     ),
                     "action_mask": spaces.Box(low=0, high=1, shape=(self.action_spaces[a].n,), dtype=np.uint8),
                 }

@@ -352,7 +352,8 @@ class Robot(pygame.sprite.Sprite):
         Observation of the single robot. Each of attributes x, y, mail, battery is normalized and all this concatenated.
         """
         mail = self.mail.mail_number if self.mail else 0
-        return np.array([self.pos.x/8, self.pos.y/8, mail/9, self.battery/50], dtype=np.float32)
+        return np.array([self.pos.x/8, self.pos.y/8, mail/9, self.battery/50], dtype=np.float32) if self.with_battery \
+            else np.array([self.pos.x/8, self.pos.y/8, mail/9], dtype=np.float32)
     
     @property
     def is_charged(self) -> bool:

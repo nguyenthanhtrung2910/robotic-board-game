@@ -284,7 +284,7 @@ class AStarAgent(BaseAgent):
                  observation_space: spaces.Dict,
                  colors_map: str,
                  targets_map: str,
-                 maximum_battery: int) -> None:
+                 maximum_battery: int|None = None) -> None:
         """
         :param colors_map: colors map of the board game.
         :type colors_map: str
@@ -295,10 +295,13 @@ class AStarAgent(BaseAgent):
         """
         super().__init__(observation_space)
         self.graph = Graph(colors_map=colors_map, targets_map=targets_map)
-        self.number_robots = int(self.observation_space['observation'].shape[0]/4)
+        robot_obs_size = 4 if maximum_battery is not None else 3
+        self.number_robots = int(self.observation_space['observation'].shape[0]/robot_obs_size)
         robot_cells_init = random.sample(self.graph.white_vertecies, k=self.number_robots)
-        self.robots: list[Robot] = [Robot(robot_cells_init[i], maximum_battery) for i in range(self.number_robots)]
-        self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices), maximum_battery]
+        self.robots: list[Robot] = [Robot(robot_cells_init[i], 50) for i in range(self.number_robots)]
+        self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices)]
+        if maximum_battery is not None:
+            self.max_values_for_robot_attributes.append(maximum_battery)
     
     def load_state_from_obs(self, obs: np.ndarray) -> None:
         """
@@ -309,9 +312,11 @@ class AStarAgent(BaseAgent):
             robot.pos.robot = None
             robot.pos = self.graph[int(robot_state[0]*self.max_values_for_robot_attributes[0]), 
                                    int(robot_state[1]*self.max_values_for_robot_attributes[1])]
-            robot.pos.robot = robot
             robot.mail = int(robot_state[2]*self.max_values_for_robot_attributes[2])
-            robot.battery = int(robot_state[3]*self.max_values_for_robot_attributes[3])
+            if len(self.max_values_for_robot_attributes) > 3:
+                robot.battery = int(robot_state[3]*self.max_values_for_robot_attributes[3])
+        for robot in self.robots:
+            robot.pos.robot = robot
 
     @staticmethod
     def apply_action_mask(action: int, action_mask: np.ndarray) -> int:

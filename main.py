@@ -72,11 +72,12 @@ game = Game(args.color_map,
             random_steps_per_turn=args.random_steps_per_turn,
             max_step=args.max_step,
             render_mode=render_mode)
-
+maximum_battery = game.robots[game.agent_selection].battery if args.with_battery else None
 astar = AStarAgent(game.observation_space(game.agent_selection),
                     args.color_map,
                     args.target_map, 
-                    game.robots[game.agent_selection].battery)
+                    maximum_battery,
+                    )
 
 for _ in range(len(game.agents) - args.number_persons*args.number_robots_per_player):
     agents.append(astar)
