@@ -17,7 +17,7 @@ from src.game.consts import *
 from src.agents.base_agent import BaseAgent
 pygame.init()
 
-class Game(pettingzoo.AECEnv):
+class Game(gymnasium.Env, pettingzoo.AECEnv):
 
     """
     A class representing our game. The game can be configured with difference parameters.
@@ -34,7 +34,8 @@ class Game(pettingzoo.AECEnv):
                  with_battery: bool = True,
                  random_steps_per_turn = False,
                  max_step: int = 500,
-                 render_mode: str|None = None) -> None:
+                 render_mode: str|None = None,
+                 log_to_file: bool = False) -> None:
         
         super().__init__()
         self.game_clock = game_components.Clock()
@@ -55,7 +56,7 @@ class Game(pettingzoo.AECEnv):
         robots: list[game_components.Robot] = [
                 game_components.Robot(
                     robot_cells_init[number_robots_per_player * j + i],
-                    i + 1, robot_color, self.mail_sprites, self.game_clock, with_battery=self.with_battery, render_mode=render_mode)
+                    i + 1, robot_color, self.mail_sprites, self.game_clock, with_battery=self.with_battery, render_mode=render_mode, log_to_file=log_to_file)
             for j, robot_color in enumerate(agent_colors)
             for i in range(number_robots_per_player)
         ]
@@ -99,6 +100,7 @@ class Game(pettingzoo.AECEnv):
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
+        self.log = log_to_file
         
         self.screen = None
         if self.render_mode == "human":
@@ -197,13 +199,14 @@ class Game(pettingzoo.AECEnv):
         self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
         self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.reset()
-        self.previous_agent = None
 
         self.num_steps = 0
         self.winner = None
 
         if self.render_mode == "human":
             self.render()
+
+        return self.observe(self.agent_selection), self.infos[self.agent_selection]
 
     def step(self, action: int|None) -> None:
         if (
@@ -232,7 +235,8 @@ class Game(pettingzoo.AECEnv):
         if self.sum_count_mail(acting_robot.color) == self.required_mail:
             self.terminations = {a: True for a in self.agents}
             self.winner = acting_robot.color
-            log.info(f'At t={self.game_clock.now:04} Player {self.winner} win')
+            if self.log:
+                log.info(f'At t={self.game_clock.now:04} Player {self.winner} win')
 
         self.truncations = {a: self.num_steps >= self.max_step for a in self.agents}
         
@@ -247,9 +251,29 @@ class Game(pettingzoo.AECEnv):
         
         self.steps_to_change_turn -= 1
         if self.steps_to_change_turn == 0:
-            self.previous_agent = self.agent_selection
             self.agent_selection = self._agent_selector.next() 
             self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
+            return (
+                self.observe(self.previous_agent),
+                self._cumulative_rewards[self.previous_agent],
+                self.terminations[self.agent_selection],
+                self.truncations[self.agent_selection],
+                self.infos[self.agent_selection],
+            )
+        return (
+            self.observe(self.agent_selection),
+            self._cumulative_rewards[self.agent_selection],
+            self.terminations[self.agent_selection],
+            self.truncations[self.agent_selection],
+            self.infos[self.agent_selection],
+            )
+    
+    @property
+    def previous_agent(self):
+        index = self.agents.index(self.agent_selection)
+        if index == 0: 
+            return self.agents[-1]
+        return self.agents[index-1]
 
     def render(self) -> None:
         if self.render_mode is None:

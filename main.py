@@ -53,14 +53,18 @@ parser.add_argument("--number_runs",
                     help="number of runs",
                     type=int,
                     default=1)
+parser.add_argument("--logger",
+                    help="log to file or not",
+                    action='store_true')
 
 args = parser.parse_args()
 render_mode = None if args.render_mode == "None" else args.render_mode
 assert args.number_persons <= len(args.robot_colors), "Number person-players can't be bigger than number players "
-log.basicConfig(level=log.INFO,
-                filename="events.log",
-                filemode="w",
-                format="%(levelname)s: %(message)s")
+if args.logger:
+    log.basicConfig(level=log.INFO,
+                    filename="events.log",
+                    filemode="w",
+                    format="%(levelname)s: %(message)s")
 
 agents = []
 game = Game(args.color_map, 
@@ -71,7 +75,9 @@ game = Game(args.color_map,
             with_battery=args.with_battery,
             random_steps_per_turn=args.random_steps_per_turn,
             max_step=args.max_step,
-            render_mode=render_mode)
+            render_mode=render_mode,
+            log_to_file=args.logger)
+
 maximum_battery = game.robots[game.agent_selection].battery if args.with_battery else None
 astar = AStarAgent(game.observation_space(game.agent_selection),
                     args.color_map,

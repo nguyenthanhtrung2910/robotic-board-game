@@ -265,7 +265,8 @@ class Robot(pygame.sprite.Sprite):
                  count_mail: int = 0,
                  battery: int = MAXIMUM_ROBOT_BATTERY,
                  with_battery: bool = True,
-                 render_mode: str|None = None) -> None:
+                 render_mode: str|None = None,
+                 log_to_file: bool = False,) -> None:
         
         r"""
         :param pos: current location of the robot.
@@ -300,6 +301,7 @@ class Robot(pygame.sprite.Sprite):
         self.__battery = battery
         self.with_battery = with_battery
         self.render_mode = render_mode
+        self.log = log_to_file 
         if self.render_mode == 'human':
             self.__set_image()
             self.__set_number_image()
@@ -395,9 +397,10 @@ class Robot(pygame.sprite.Sprite):
         self.pos = self.pos.front
         self.pos.robot = self
         self.battery -= 1
-        log.info(
-            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
-        )
+        if self.log:
+            log.info(
+                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
+            )
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -421,9 +424,10 @@ class Robot(pygame.sprite.Sprite):
         self.pos = self.pos.back
         self.pos.robot = self
         self.battery -= 1
-        log.info(
-            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
-        )
+        if self.log:
+            log.info(
+                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
+            )
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -447,9 +451,10 @@ class Robot(pygame.sprite.Sprite):
         self.pos = self.pos.right
         self.pos.robot = self
         self.battery -= 1
-        log.info(
-            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
-        )
+        if self.log:
+            log.info(
+                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
+            )
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -473,9 +478,10 @@ class Robot(pygame.sprite.Sprite):
         self.pos = self.pos.left
         self.pos.robot = self
         self.battery -= 1
-        log.info(
-            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
-        )
+        if self.log:
+            log.info(
+                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
+            )
         if self.pos.color == 'gr':
             self.pick_up()
             reward = REWARD_FOR_PICK_UP_MAIL
@@ -493,9 +499,10 @@ class Robot(pygame.sprite.Sprite):
         """
         #we assume this action is legal.
         self.mail = self.pos.mail
-        log.info(
-            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}'
-        )
+        if self.log:
+            log.info(
+                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}'
+            )
 
     def drop_off(self) -> None:
         """
@@ -506,9 +513,10 @@ class Robot(pygame.sprite.Sprite):
         self.mail.kill()
         self.mail = None
         self.count_mail += 1
-        log.info(
-            f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} drop off mail {deliveried_mail.mail_number}'
-        )
+        if self.log:
+            log.info(
+                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} drop off mail {deliveried_mail.mail_number}'
+            )
 
     def charge(self) -> None:
         """

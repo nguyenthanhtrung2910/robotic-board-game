@@ -16,6 +16,7 @@
   - [Installation](#installation)
   - [Simulation](#simulation)
   - [Person-player](#person-player)
+- [Some results](#some-results)
 # Overview
 This library simulates the process of a board game. 
 The goal of the simulation is to predict the game process 
@@ -301,7 +302,7 @@ by setting destination for robot and finding shortest path to this.
 
 Algorithm for controlling single robot is described below:
 <p align="center">
- <img width="500px" src="docs/algorithm_for_auto_play.svg" align="center" alt="Robotic  Board Game Illustration" />
+ <img width="500px" src="docs/algorithm_for_auto_play.svg" align="center" alt="Algorithm controlling single robot" />
 </p>
 
 <p align="center">
@@ -313,7 +314,7 @@ Algorithm for controlling single robot is described below:
 
 Algorithm for chosing destination is described below:
 <p align="center">
- <img width="300px" src="docs/algorithm_for_chosing_destination.svg" align="center" alt="Robotic  Board Game Illustration" />
+ <img width="300px" src="docs/algorithm_for_chosing_destination.svg" align="center" alt="Algorithm chosing destination" />
 </p>
 
 <p align="center">
@@ -435,6 +436,12 @@ To run the game, run file ```main.py``` with following arguments:
     <td><code>1</code></td>
     <td>How many times the game is runned.</td>
   </tr>
+    <tr>
+    <td style="white-space: nowrap;">
+    <code>--logger</code></td>
+    <td><code>False</code></td>
+    <td>Logging to file  or not.</td>
+  </tr>
 </table>
 
 For example:
@@ -480,3 +487,20 @@ You can enter actions from keyboard, playing with yourself or with other.
 </table>
 
 You can't switch to other robot until you enter legal move or there no move is legal.
+
+# Some results
+
+<p align="center">
+ <img width="700px" src="docs/results for game time span.png" align="center" alt="Results" />
+</p>
+
+<p align="center">
+<strong>Figure 5: </strong>
+<i>Estimation of duration by different parameters. 
+Experiments were conducted for 4 cases: the robot has an infinite battery 
+and can only make 1 move on each queue, the robot moves with decreasing 
+battery and can only make 1 move on each queue, the robot has an infinite 
+battery and can make a random number of moves on each queue, the robot moves 
+with decreasing battery and can make a random number of moves on each queue. 
+For each set of parameters, 50 measurements were made and then averaging.</i>
+</p>
