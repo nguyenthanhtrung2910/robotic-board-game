@@ -302,6 +302,11 @@ class Robot(pygame.sprite.Sprite):
         self.with_battery = with_battery
         self.render_mode = render_mode
         self.log = log_to_file 
+
+        self.stand_times = 0
+        self.previous_pos = None
+        self.repeat_pos_times = 0
+
         if self.render_mode == 'human':
             self.__set_image()
             self.__set_number_image()
@@ -380,6 +385,7 @@ class Robot(pygame.sprite.Sprite):
         """
         #we assume this action is legal.
         reward = DEFAULT_REWARD
+        self.stand_times += 1
         if self.pos.color == 'b':
             self.charge()
             reward = 0
@@ -391,9 +397,15 @@ class Robot(pygame.sprite.Sprite):
         """
         #we assume this action is legal.
         reward = DEFAULT_REWARD
+        self.stand_times = 0
+        if self.pos.front is self.previous_pos:
+            self.repeat_pos_times += 1
+        else:
+            self.repeat_pos_times = 0
         self.pos.robot = None
         if self.pos.color == 'gr':
             self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.previous_pos = self.pos
         self.pos = self.pos.front
         self.pos.robot = self
         self.battery -= 1
@@ -418,9 +430,15 @@ class Robot(pygame.sprite.Sprite):
         """
         #we assume this action is legal.
         reward = DEFAULT_REWARD
+        self.stand_times = 0
+        if self.pos.back is self.previous_pos:
+            self.repeat_pos_times += 1
+        else:
+            self.repeat_pos_times = 0
         self.pos.robot = None
         if self.pos.color == 'gr':
             self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.previous_pos = self.pos
         self.pos = self.pos.back
         self.pos.robot = self
         self.battery -= 1
@@ -445,9 +463,15 @@ class Robot(pygame.sprite.Sprite):
         """
         #we assume this action is legal.
         reward = DEFAULT_REWARD
+        self.stand_times = 0
+        if self.pos.right is self.previous_pos:
+            self.repeat_pos_times += 1
+        else:
+            self.repeat_pos_times = 0
         self.pos.robot = None
         if self.pos.color == 'gr':
             self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.previous_pos = self.pos
         self.pos = self.pos.right
         self.pos.robot = self
         self.battery -= 1
@@ -472,9 +496,15 @@ class Robot(pygame.sprite.Sprite):
         """
         #we assume this action is legal.
         reward = DEFAULT_REWARD
+        self.stand_times = 0
+        if self.pos.left is self.previous_pos:
+            self.repeat_pos_times += 1
+        else:
+            self.repeat_pos_times = 0
         self.pos.robot = None
         if self.pos.color == 'gr':
             self.pos.generate_mail(self.sprites_group, self.render_mode)
+        self.previous_pos = self.pos
         self.pos = self.pos.left
         self.pos.robot = self
         self.battery -= 1
@@ -574,6 +604,9 @@ class Robot(pygame.sprite.Sprite):
             #robot with mail can't stand in the green cell
             if self.pos.color == 'gr' and self.mail:
                 return False
+            #prohibit robot stand constantly
+            if self.pos.color != 'b' and self.stand_times >= 5:
+                return False
         
         if action == Action.GO_AHEAD:
             #robot can't move if battery is exhausted
@@ -584,6 +617,9 @@ class Robot(pygame.sprite.Sprite):
                 return False
             #robot can't move if next cell is none
             if not self.pos.front:
+                return False
+            #prohibit robot repeat old position many times
+            if self.pos.front is self.previous_pos and self.repeat_pos_times >= 4:
                 return False
             #robot can't move if next cell is red
             if self.pos.front.color == 'r':
@@ -614,6 +650,9 @@ class Robot(pygame.sprite.Sprite):
             #robot can't move if next cell is none
             if not self.pos.back:
                 return False
+            #prohibit robot repeat old position many times
+            if self.pos.back is self.previous_pos and self.repeat_pos_times >= 4:
+                return False
             #robot can't move if next cell is red
             if self.pos.back.color == 'r':
                 return False
@@ -643,6 +682,9 @@ class Robot(pygame.sprite.Sprite):
             #robot can't move if next cell is none
             if not self.pos.left:
                 return False
+            #prohibit robot repeat old position many times
+            if self.pos.left is self.previous_pos and self.repeat_pos_times >= 4:
+                return False
             #robot can't move if next cell is red
             if self.pos.left.color == 'r':
                 return False
@@ -671,6 +713,9 @@ class Robot(pygame.sprite.Sprite):
                 return False
             #robot can't move if next cell is none
             if not self.pos.right:
+                return False
+            #prohibit robot repeat old position many times
+            if self.pos.right is self.previous_pos and self.repeat_pos_times >= 4:
                 return False
             #robot can't move if next cell is red
             if self.pos.right.color == 'r':

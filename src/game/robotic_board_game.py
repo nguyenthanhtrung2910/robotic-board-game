@@ -175,7 +175,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
     def action_space(self, agent: str) -> spaces.Discrete:
         return self.action_spaces[agent]
 
-    def reset(self, seed: int|None = None, options=None) -> None:
+    def reset(self, seed: int|None = None, options=None) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
         random.seed(seed)
         self.agents = self.possible_agents[:]
         self.rewards = {agent: 0 for agent in self.agents}
@@ -208,7 +208,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
 
         return self.observe(self.agent_selection), self.infos[self.agent_selection]
 
-    def step(self, action: int|None) -> None:
+    def step(self, action: int|None) -> tuple[dict[str, np.ndarray], float, bool, bool, dict[str, Any]]:
         if (
             self.terminations[self.agent_selection]
             or self.truncations[self.agent_selection]

@@ -6,18 +6,19 @@ import numpy as np
 from gymnasium import spaces
 import torch
 from torch import nn
-from tianshou.policy import DQNPolicy
+from tianshou.policy import C51Policy
 from tianshou.utils.net.common import Net
 from tianshou.utils.net.discrete import NoisyLinear
 from tianshou.data import Batch, PrioritizedVectorReplayBuffer
 from tianshou.env import DummyVectorEnv
 from tianshou.utils.torch_utils import policy_within_training_step, torch_train_mode
-from tianshou.policy.modelfree.dqn import TDQNTrainingStats
+from tianshou.policy.modelfree.c51 import TC51TrainingStats
 from tianshou.data.types import RolloutBatchProtocol
+
 from src.agents.base_agent import BaseAgent
 
-class NoisyDQNPolicy(DQNPolicy[TDQNTrainingStats]):
-    def learn(self, batch: RolloutBatchProtocol, *args: Any, **kwargs: Any) -> TDQNTrainingStats:
+class RainbowPolicy(C51Policy[TC51TrainingStats]):
+    def learn(self, batch: RolloutBatchProtocol, *args: Any, **kwargs: Any) -> TC51TrainingStats:
         for module in self.model.modules():
             if isinstance(module, NoisyLinear):
                 module.sample()
@@ -26,8 +27,8 @@ class NoisyDQNPolicy(DQNPolicy[TDQNTrainingStats]):
                 if isinstance(module, NoisyLinear):
                     module.sample()
         return super().learn(batch, *args, **kwargs)
-
-class DQNAgent(BaseAgent):
+    
+class RainbowAgent(BaseAgent):
     def __init__(self,
                  observation_space: spaces.Dict,
                  action_space: spaces.Discrete,
@@ -35,7 +36,7 @@ class DQNAgent(BaseAgent):
                  beta_schedule: Callable[[int], float],
                  net_params: dict[str, Any] = None, 
                  policy_params: dict[str, Any] = None,
-                 using_noisy_net: bool = True,
+                 using_noisy_net: bool = True, 
                  learning_rate: float = 0.0001,
                  batch_size: int = 64,
                  steps_per_update: int = 1,
@@ -51,9 +52,11 @@ class DQNAgent(BaseAgent):
             raise ValueError('Required epsilon schedule if no using noisy net.')
         
         default_net_params = dict(
-            hidden_sizes=[256, 256, 128, 128, 64, 64],
+            hidden_sizes=[128, 256, 512, 512],
             norm_layer=nn.LayerNorm,
             device=device,
+            num_atoms=101,
+            softmax=True,
             dueling_param=[{}, {}],
         )
         self.using_noisy_net = using_noisy_net
@@ -70,6 +73,9 @@ class DQNAgent(BaseAgent):
             estimation_step=20,
             target_update_freq=100,
             is_double=True,
+            num_atoms=101,
+            v_min=0,
+            v_max=20,
         )
         if policy_params:
             for key, value in policy_params.items():
@@ -85,7 +91,7 @@ class DQNAgent(BaseAgent):
         default_policy_params['model'] = net
         default_policy_params['optim'] = optim
         default_policy_params['action_space'] = self.action_space
-        self.policy = NoisyDQNPolicy(**default_policy_params)
+        self.policy = RainbowPolicy(**default_policy_params)
         #policy should be always in eval mode to inference action
         #training mode is turned on only within context manager
         self.policy.eval()
@@ -162,8 +168,8 @@ class DQNAgent(BaseAgent):
 
             if episode % 10 == 0:
                 num_steps, total_reward = self.eval(eval_env)
-                if len(rewards) > 30 and total_reward > rewards[-1]:
-                    torch.save(self.policy.state_dict(), f'DQN_{num_robots}_robots_with_battery_best.pth')
+                if len(rewards) > 5 and total_reward > rewards[-1]:
+                    torch.save(self.policy.state_dict(), f'RainbowDQN_{num_robots}_robots_best.pth')
                 rewards.append(total_reward)
                 print("===episode {:04d} done with epsilon {:4.3f}, number steps: {:3d}, reward: {:04.2f}===".format(episode, self.policy.eps, num_steps, total_reward))
 
@@ -171,7 +177,7 @@ class DQNAgent(BaseAgent):
                 self.policy.set_eps(self.eps_schedule(episode))
             self.memory.set_beta(self.beta_schedule(episode))
         
-        torch.save(self.policy.state_dict(), f'DQN_{num_robots}_robots_last_with_battery_last.pth')
+        torch.save(self.policy.state_dict(), f'RainbowDQN_{num_robots}_robots_last.pth')
         with open(f"training_stats_{num_robots}_robots.txt", "w") as file:
             file.write(",".join([str(reward) for reward in rewards]))
             
