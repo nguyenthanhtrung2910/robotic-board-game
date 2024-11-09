@@ -19,15 +19,16 @@ CELL_BATTERY_SIZE = (12, 12)
 FRAME_PER_STEP = 10
 MAXIMUM_ROBOT_BATTERY = 50
 BATERRY_UP_PER_STEP = 6
-BATTERY_TO_CHARGE = 25
+PERCENT_BATTERY_TO_CHARGE = 0.5
+PERCENT_BATTERY_TO_LEAVE = 0.8
 MAXIMUM_STEP_PER_TURN = 6
 REWARD_FOR_DROP_OFF_MAIL = 5
 REWARD_FOR_PICK_UP_MAIL = 1
-#reward agent if it reach blue cell
-#it shoulen't be so small in comparsion with reward for dropping off a mail
-#otherwise agent don't recognize blue cell and go to there when battery go down
-REWARD_FOR_MOVING_TO_BLUE = 1
-#small punishment for agent every move so it can complete episode as soon as possible
-#but it can't be too small in comparsion with reward for reaching blue cell
-#because agent can walk more steps in order to charge more times, but reward is still positive.
+# reward agent if it reach blue cell
+# it shoulen't be so small in comparsion with reward for dropping off a mail
+# otherwise agent don't recognize blue cell and go to there when battery go down
+REWARD_FOR_REACHING_BLUE = 1
+# small punishment for agent every move so it can complete episode as soon as possible
+# but it can't be too small in comparsion with reward for reaching blue cell
+# because agent can walk more steps in order to charge more times, but reward is still positive.
 DEFAULT_REWARD = -0.1

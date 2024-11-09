@@ -1,85 +1,96 @@
 import argparse
+from typing import Any
 
 import pygame
 import numpy as np
+import yaml
+import importlib
+import torch
 from tianshou.env import DummyVectorEnv
+from tianshou.utils.net.common import Net
+from tianshou.policy import DQNPolicy
 from tianshou.data import PrioritizedVectorReplayBuffer
-from src.agents.dqn_agent import DQNAgent
-from src.agents.rainbow_agent import RainbowAgent
+
 from src.game.robotic_board_game import Game
-#parse arguments
+from src.agents.dqn_agent import RLAgent
 parser = argparse.ArgumentParser()
-parser.add_argument("--color_map", 
-                    help="chose colors map",
-                    type=str,
-                    default="assets/csv_files/colors_map.csv")
-parser.add_argument("--target_map", 
-                    help="chose targets map",
-                    type=str,
-                    default="assets/csv_files/targets_map.csv")
-parser.add_argument("--required_mail",
-                    help="chose required mail to win",
-                    default=6,
-                    type=int)
-parser.add_argument("--robot_colors",
-                    help="chose robot colors",
-                    nargs="+",
-                    choices=['r', 'b', 'o', 'gr', 'y'])
-parser.add_argument("--number_robots_per_player",
-                    help="chose number robots per player. It shouldn't more than 6",
-                    type=int,
-                    default=1,
-                    choices=[1, 2, 3, 4, 5, 6])
-parser.add_argument("--with_battery",
-                    help="battery is considered or not",
-                    action='store_true')
-parser.add_argument("--random_steps_per_turn",
-                    help="allow ramdom number steps per turn or not",
-                    action='store_true')
-parser.add_argument("--max_step",
-                    help="maximum game's step",
-                    type=int,
-                    default=500)
+parser.add_argument(
+    "--config", 
+    help="path to configuration .yaml file",
+    type=str,
+)
+
 args = parser.parse_args()
 
+def set_class(config: dict[str, Any], key: str) -> None:
+    class_path = config[key]
+    module_path, class_name = class_path.rsplit(".", 1)
+    module = importlib.import_module(module_path)
+    cls = getattr(module, class_name)
+    config[key] = cls
 
-def make_env():
-    return Game(
-        args.color_map, 
-        args.target_map, 
-        required_mail=args.required_mail, 
-        agent_colors=args.robot_colors,
-        number_robots_per_player=args.number_robots_per_player,
-        with_battery=args.with_battery,
-        random_steps_per_turn=args.random_steps_per_turn,
-        max_step=args.max_step,
-        render_mode=None,
-        log_to_file=False,
-    )
-game = make_env()
-env = DummyVectorEnv([make_env for _ in range(8)])
-eval_env = DummyVectorEnv([make_env for _ in range(8)])
-memory = PrioritizedVectorReplayBuffer(
-    total_size=500*len(env)*300,
-    buffer_num=len(env)*len(args.robot_colors),
-    alpha=0.6,
-    beta=0.4,
-)
-beta_schedule = lambda episode: 1.0 + (0.4 - 1.0) * np.exp(-0.04 * episode)
-epison_schedule = lambda episode: np.maximum(1.0*0.99**episode, 0.05)
-agent = RainbowAgent(
-    game.observation_space(game.agent_selection),
-    game.action_space(game.agent_selection),
-    replaybuffer=memory,
-    beta_schedule=beta_schedule,
-    using_noisy_net=False,
-    learning_rate=0.0001,
-    batch_size=64,
-    steps_per_update=1,
-    max_episodes=300,
-    eps_schedule=epison_schedule,
-)
-print(agent.policy.model)
-agent.train(env, eval_env)
-eval_env.close()
+with open(args.config, "r") as file:
+    config = yaml.safe_load(file)
+try:
+    set_class(config['net_config'], 'norm_layer')
+    set_class(config['net_config'], 'activation')
+    set_class(config['net_config'], 'linear_layer')
+except KeyError:
+    pass
+
+try:
+    # enviroment
+    config['env_config']['render_mode'] = None
+    config['env_config']['log_to_file'] = False
+    def make_env():
+        return Game(**config['env_config'])
+    game = make_env()
+    train_env = DummyVectorEnv([make_env for _ in range(config['num_train_envs'])])
+    test_env = DummyVectorEnv([make_env for _ in range(config['num_test_envs'])])
+
+    # net
+    config['net_config']['state_shape'] = game.observation_space(game.agent_selection)['observation'].shape
+    config['net_config']['action_shape'] = game.action_space(game.agent_selection).n
+    config['net_config']['device'] = "cuda" if torch.cuda.is_available() else "cpu"
+    net = Net(**config['net_config'])
+
+    # policy
+    set_class(config, 'policy_type')
+    set_class(config, 'optim_type')
+    config['policy_config']['model'] = net
+    config['policy_config']['optim'] = config['optim_type'](net.parameters(), config['learning_rate'])
+    config['policy_config']['action_space'] = game.action_space(game.agent_selection)
+    config['policy_config']['lr_scheduler'] = None
+    policy: DQNPolicy = config['policy_type'](**config['policy_config'])
+
+    # memory
+    config['memory_config']['buffer_num'] = train_env.env_num*game.num_robots
+    memory = PrioritizedVectorReplayBuffer(**config['memory_config'])
+
+    # agent
+    def train_function(episode: int, step: int) -> None:
+        policy.set_eps(np.maximum(config['max_eps']*config['eps_rate']**episode, config['min_eps']))
+        memory.set_beta(config['max_beta'] + (config['min_beta'] - config['max_beta']) * np.exp(-config['beta_rate'] * episode))
+    def save_best_function(episode: int):
+        torch.save(policy.state_dict(), config['best_checkpoint'])
+    def save_last_function():
+        torch.save(policy.state_dict(), config['last_checkpoint'])
+    config['training_config']['train_env'] = train_env
+    config['training_config']['test_env'] = test_env
+    config['training_config']['policy'] = policy
+    config['training_config']['memory'] = memory
+    config['training_config']['train_fn'] = train_function
+    config['training_config']['test_fn'] = None
+    config['training_config']['save_best_fn'] = save_best_function
+    config['training_config']['save_last_fn'] = save_last_function
+    config['training_config']['reward_metric'] = None
+    agent = RLAgent(**config['training_config'])
+
+except KeyError as e:
+    print(f'No {e.args[0]} is provided.')
+    exit()
+training_stats = agent.train()
+print(training_stats['training_time'])
+train_env.close()
+test_env.close()
 

@@ -1,22 +1,25 @@
 from __future__ import annotations
 from typing import Any, Callable
 import warnings
+import time
 
 import numpy as np
-from gymnasium import spaces
 import torch
-from torch import nn
-from tianshou.policy import DQNPolicy
-from tianshou.utils.net.common import Net
+from tianshou.policy import DQNPolicy, C51Policy
 from tianshou.utils.net.discrete import NoisyLinear
 from tianshou.data import Batch, PrioritizedVectorReplayBuffer
 from tianshou.env import DummyVectorEnv
-from tianshou.utils.torch_utils import policy_within_training_step, torch_train_mode
 from tianshou.policy.modelfree.dqn import TDQNTrainingStats
+from tianshou.policy.modelfree.c51 import TC51TrainingStats
 from tianshou.data.types import RolloutBatchProtocol
+from tianshou.utils.torch_utils import policy_within_training_step, torch_train_mode
+
 from src.agents.base_agent import BaseAgent
 
 class NoisyDQNPolicy(DQNPolicy[TDQNTrainingStats]):
+    """
+    DQN using NoisyLinear.
+    """
     def learn(self, batch: RolloutBatchProtocol, *args: Any, **kwargs: Any) -> TDQNTrainingStats:
         for module in self.model.modules():
             if isinstance(module, NoisyLinear):
@@ -26,201 +29,206 @@ class NoisyDQNPolicy(DQNPolicy[TDQNTrainingStats]):
                 if isinstance(module, NoisyLinear):
                     module.sample()
         return super().learn(batch, *args, **kwargs)
+    
+class RainbowPolicy(C51Policy[TC51TrainingStats]):
+    """
+    Rainbow.
+    """
+    def learn(self, batch: RolloutBatchProtocol, *args: Any, **kwargs: Any) -> TC51TrainingStats:
+        for module in self.model.modules():
+            if isinstance(module, NoisyLinear):
+                module.sample()
+        if self._target:
+            for module in self.model.modules():
+                if isinstance(module, NoisyLinear):
+                    module.sample()
+        return super().learn(batch, *args, **kwargs)
+    
+class RLAgent(BaseAgent):
+    def __init__(
+            self,
+            train_env: DummyVectorEnv,
+            test_env: DummyVectorEnv,
+            policy: DQNPolicy,
+            memory: PrioritizedVectorReplayBuffer,
+            
+            batch_size: int = 64,
+            steps_per_update: int = 16,
+            episodes_per_update: int = 0,
+            episodes_per_train: int = 800,
+            episodes_per_test: int = 1,
+            test_freq: int = 10,
 
-class DQNAgent(BaseAgent):
-    def __init__(self,
-                 observation_space: spaces.Dict,
-                 action_space: spaces.Discrete,
-                 replaybuffer: PrioritizedVectorReplayBuffer,
-                 beta_schedule: Callable[[int], float],
-                 net_params: dict[str, Any] = None, 
-                 policy_params: dict[str, Any] = None,
-                 using_noisy_net: bool = True,
-                 learning_rate: float = 0.0001,
-                 batch_size: int = 64,
-                 steps_per_update: int = 1,
-                 max_episodes: int = 250,
-                 max_eps: float = 1.0,
-                 eps_schedule: Callable[[int], float]|None = None,
-                 load_from_file: str|None = None,
-                 device: str = "cuda" if torch.cuda.is_available() else "cpu",
-                 ):
-        
-        super().__init__(observation_space, action_space)
-        if not using_noisy_net and eps_schedule is None:
-            raise ValueError('Required epsilon schedule if no using noisy net.')
-        
-        default_net_params = dict(
-            hidden_sizes=[256, 256, 128, 128, 64, 64],
-            norm_layer=nn.LayerNorm,
-            device=device,
-            dueling_param=[{}, {}],
-        )
-        self.using_noisy_net = using_noisy_net
-        if using_noisy_net:
-            default_net_params['linear_layer'] = NoisyLinear
-            default_net_params['dueling_param'] = [dict(linear_layer=NoisyLinear), 
-                                                   dict(linear_layer=NoisyLinear)]
-        if net_params:
-            for key, value in net_params.items():
-                default_net_params[key] = value
+            train_fn: Callable[[int, int], None]|None = None,
+            test_fn: Callable[[int, int], None]|None = None,
+            save_best_fn: Callable[[int], None]|None = None,
+            save_last_fn: Callable[[], None]|None = None,
+            reward_metric: Callable[[np.ndarray], float]|None = None,
+    ):
+        assert episodes_per_train > 0, 'Training must be with positive number of episodes.'
+        assert episodes_per_test > 0, 'Testing must be with positive number of episodes.'
+        assert steps_per_update > 0 or episodes_per_update > 0, 'Net will not be updated.'
 
-        default_policy_params = dict(
-            discount_factor=0.99,
-            estimation_step=20,
-            target_update_freq=100,
-            is_double=True,
-        )
-        if policy_params:
-            for key, value in policy_params.items():
-                default_policy_params[key] = value
-
-        self.memory = replaybuffer
-        self.beta_schedule = beta_schedule
-        #policy creation
-        default_net_params['state_shape'] = self.observation_space['observation'].shape
-        default_net_params['action_shape'] = self.action_space.n
-        net = Net(**default_net_params)
-        optim = torch.optim.Adam(net.parameters(), lr=learning_rate)
-        default_policy_params['model'] = net
-        default_policy_params['optim'] = optim
-        default_policy_params['action_space'] = self.action_space
-        self.policy = NoisyDQNPolicy(**default_policy_params)
-        #policy should be always in eval mode to inference action
-        #training mode is turned on only within context manager
-        self.policy.eval()
+        self.train_env = train_env
+        self.test_env = test_env
+        self.policy = policy
+        self.memory = memory
 
         self.batch_size = batch_size
         self.steps_per_update = steps_per_update
-        self.max_episodes = max_episodes
-        self.max_eps = max_eps
-        self.eps_schedule = eps_schedule
-        if load_from_file is not None:
-            self.policy.load_state_dict(torch.load(load_from_file, weights_only=True, map_location=torch.device(device)))
-            self.load_from_file = True
-        else:
-            self.load_from_file = False
-        self.device = device
+        self.episodes_per_update = episodes_per_update
+        self.episodes_per_train = episodes_per_train
+        self.episodes_per_test = episodes_per_test
+        self.test_freq = test_freq
+        self.train_fn = train_fn
+        self.test_fn = test_fn
+        self.save_best_fn = save_best_fn
+        self.save_last_fn = save_last_fn
+        self.reward_metric = reward_metric
 
-    def train(self, train_env: DummyVectorEnv, eval_env: DummyVectorEnv, reset_memory: bool = True) -> list[float]:
-        num_cpu = len(train_env)
-        num_robots = train_env.get_env_attr('number_robots', id = 0)[0]
-        max_step = train_env.get_env_attr('max_step', id = 0)[0]
+        self.num_agents = train_env.get_env_attr('number_robots', id = 0)[0]
+        self.max_env_step = train_env.get_env_attr('max_step', id = 0)[0]
+
+        # policy should be always in eval mode to inference action
+        # training mode is turned on only within context manager
+        self.policy.eval()
+
+    def train(self, reset_memory: bool = True) -> list[float]:
+        """
+        E - number of enviroments
+        B - collected batch size
+        O - observation-vector size
+        """
+        if not self.save_best_fn and not self.save_last_fn:
+            warnings.warn("No saving function is provided. \
+                           Last model is saved in default checkpoint: 'default_last_checkpoint.pth'.", UserWarning)
+        num_cpus = self.train_env.env_num
+        num_collected_steps = 0
+        last_num_collected_steps = num_collected_steps
         rewards = []
-        if not self.using_noisy_net:
-            self.policy.set_eps(self.max_eps)
-        for episode in range(self.max_episodes):
-            dones = np.array([False]*num_cpu)
-            all_obses, _ = train_env.reset()
-            player = 0
-            for step in range(max_step):
-                #ids of envs that has not done
-                ids = np.where(dones == False)[0]
-                #policy generate action from envs that hasn't done
-                obs = np.array([obs['observation'] for obs in all_obses[ids]])
-                action_mask = np.array([obs['action_mask'] for obs in all_obses[ids]])
-                batch_obs = Batch(obs=Batch(obs=obs, mask=action_mask), info=[])
-                with torch.no_grad():
-                    act = self.policy(batch_obs).act
-                if not self.using_noisy_net:
-                    act = self.policy.exploration_noise(act, batch_obs)    
-                #step in the envs that has not done
-                next_obs, rew, terminated, truncated, info = train_env.step(act, ids)
-                next_obs = np.array([obs['observation'] for obs in next_obs])
+        start = time.time()
+        for episode in range(self.episodes_per_train):
+            all_dones_e = np.zeros(num_cpus, dtype=np.bool_)
+            all_observations_e, _ = self.train_env.reset()
+            if self.train_fn:
+                self.train_fn(episode, num_collected_steps)
+            while not all(all_dones_e):
+                # ids of envs that hasn't done
+                ids_b = np.where(all_dones_e == False)[0]
 
-                #add to memory
+                # policy generate action from envs that hasn't done
+                obs_b_o = np.array([obs['observation'] for obs in all_observations_e[ids_b]])
+                action_mask_b = np.array([obs['action_mask'] for obs in all_observations_e[ids_b]])
+                batch_obs = Batch(obs=Batch(obs=obs_b_o, mask=action_mask_b), info=None)
+                with torch.no_grad():
+                    act_b = self.policy(batch_obs).act
+                    act_b = self.policy.exploration_noise(act_b, batch_obs)
+
+                # step in the envs that hasn't done
+                next_obs_b, rew_b, terminated_b, truncated_b, info_b = self.train_env.step(act_b, ids_b)
+                
+                # add to memory
+                next_obs_b_o = np.array([obs['observation'] for obs in next_obs_b])
+                agent_indices_b = np.array([info['transition_belongs_agent'] for info in info_b])
                 self.memory.add(
                     Batch(
-                        obs=obs,
-                        act=act,
-                        rew=rew,
-                        terminated=terminated,
-                        truncated=truncated,
-                        obs_next=next_obs,
-                        info=info,
+                        obs=obs_b_o,
+                        act=act_b,
+                        rew=rew_b,
+                        terminated=terminated_b,
+                        truncated=truncated_b,
+                        obs_next=next_obs_b_o,
+                        info=info_b,
                     ),
-                    buffer_ids=num_cpu*player + ids,
+                    buffer_ids=ids_b*self.num_agents+agent_indices_b,
                 )
+                num_collected_steps += ids_b.size
 
-                #net updating
-                if (step % self.steps_per_update == 0) and (len(self.memory) >= self.batch_size):
-                    with policy_within_training_step(self.policy), torch_train_mode(self.policy):
-                        self.policy.update(sample_size=self.batch_size, buffer=self.memory)
+                # net updating
+                if self.steps_per_update:
+                    if ((num_collected_steps-last_num_collected_steps) >= self.steps_per_update) and (len(self.memory) >= self.batch_size):
+                        with policy_within_training_step(self.policy), torch_train_mode(self.policy):
+                            self.policy.update(sample_size=self.batch_size, buffer=self.memory)
+                        last_num_collected_steps=num_collected_steps
 
-                #observe new observations and dones of all envs 
-                dones[ids] = np.logical_or(terminated, truncated)
+                # observe new observations and dones of all envs 
+                all_dones_e[ids_b] = np.logical_or(terminated_b, truncated_b)
                 # dones = np.array([last()[2] or last()[3] for last in env.get_env_attr('last')])
-                all_obses = np.array([last()[0] for last in train_env.get_env_attr('last')])
-                player = (player + 1)%num_robots
-
-                #break when all envs are terminated or truncated
-                if all(dones):
-                    num_steps = step
-                    break
-                if step == max_step - 1:
-                    num_steps = step
-
-            if episode % 10 == 0:
-                num_steps, total_reward = self.eval(eval_env)
-                if len(rewards) > 30 and total_reward > rewards[-1]:
-                    torch.save(self.policy.state_dict(), f'DQN_{num_robots}_robots_with_battery_best.pth')
-                rewards.append(total_reward)
-                print("===episode {:04d} done with epsilon {:4.3f}, number steps: {:3d}, reward: {:04.2f}===".format(episode, self.policy.eps, num_steps, total_reward))
-
-            if not self.using_noisy_net:
-                self.policy.set_eps(self.eps_schedule(episode))
-            self.memory.set_beta(self.beta_schedule(episode))
-        
-        torch.save(self.policy.state_dict(), f'DQN_{num_robots}_robots_last_with_battery_last.pth')
-        with open(f"training_stats_{num_robots}_robots.txt", "w") as file:
-            file.write(",".join([str(reward) for reward in rewards]))
+                all_observations_e = np.array([last()[0] for last in self.train_env.get_env_attr('last')])
             
+            if (episode+1) % self.test_freq == 0:
+                num_steps, reward_metric = self.test()
+                if len(rewards) > 0 and reward_metric > rewards[-1] and self.save_best_fn:
+                    self.save_best_fn(episode)
+                rewards.append(reward_metric)
+                print("===episode {:04d} done with epsilon {:5.3f}, number steps: {:5.1f}, reward: {:+06.2f}==="
+                      .format((episode+1), self.policy.eps, num_steps, reward_metric))
+                
+        finish = time.time()      
+        if self.save_last_fn:
+            self.save_last_fn()
+        else:
+            torch.save(self.policy.state_dict(), 'default_last_checkpoint.pth')
         if reset_memory:
             self.memory.reset()
-        train_env.close()
 
-        return rewards
+        return {'reward_metric_stats': rewards,
+                'num_collected_steps': num_collected_steps,
+                'training_time': finish - start,
+                }
     
-    def eval(self, env: DummyVectorEnv) -> tuple[int, np.ndarray]:
-        num_cpu = len(env)
-        num_robots = env.get_env_attr('number_robots', id = 0)[0]
-        max_step = env.get_env_attr('max_step', id = 0)[0]
+    def test(self) -> tuple[float, float]:
+        """
+        P - number of episodes
+        E - number of enviroments
+        B - collected batch size
+        O - observation-vector size
+        A - number of agents
+        """
+        num_cpus = self.test_env.env_num
+        num_collected_steps = 0
+        all_rewards_p_e_a = np.zeros((self.episodes_per_test, num_cpus, self.num_agents))
+        mean_step_through_episode = []
+        for episode in range(self.episodes_per_test):
+            all_dones_e = np.zeros(num_cpus, dtype=np.bool_)
+            all_observations_e, _ = self.test_env.reset()
+            if self.test_fn:
+                self.test_fn(episode, num_collected_steps)
+            while not all(all_dones_e):
+                # ids of envs that hasn't done
+                ids_b = np.where(all_dones_e == False)[0]
 
-        list_total_reward = np.zeros(num_robots*num_cpu, dtype=np.float64)
-        dones = np.array([False]*num_cpu)
-        all_obses, infos = env.reset()
-        player = 0
-        for step in range(max_step):
-            #ids of envs that has not done
-            ids = np.where(dones == False)[0]
-            #policy generate action from envs that hasn't done
-            obs = np.array([obs['observation'] for obs in all_obses[ids]])
-            action_mask = np.array([obs['action_mask'] for obs in all_obses[ids]])
-            with torch.no_grad():
-                act = self.policy(Batch(obs=Batch(obs=obs, mask=action_mask), info=[])).act
-            #step in the envs that has not done
-            next_obs, rew, terminated, truncated, info = env.step(act, ids)
+                # policy generate action from envs that hasn't done
+                obs_b_o = np.array([obs['observation'] for obs in all_observations_e[ids_b]])
+                action_mask_b = np.array([obs['action_mask'] for obs in all_observations_e[ids_b]])
+                batch_obs = Batch(obs=Batch(obs=obs_b_o, mask=action_mask_b), info=None)
+                with torch.no_grad():
+                    act_b = self.policy(batch_obs).act
 
-            #observe new observations and dones of all envs 
-            list_total_reward[num_cpu*player + ids] += rew
-            dones[ids] = np.logical_or(terminated, truncated)
-            # dones = np.array([last()[2] or last()[3] for last in env.get_env_attr('last')])
-            all_obses = np.array([last()[0] for last in env.get_env_attr('last')])
-            player = (player + 1)%num_robots
+                # step in the envs that hasn't done
+                _, rew_b, terminated_b, truncated_b, info_b = self.test_env.step(act_b, ids_b)
+                agent_indices_b = np.array([info['transition_belongs_agent'] for info in info_b])
+                num_collected_steps += ids_b.size
 
-            #break when all envs are terminated or truncated
-            if all(dones):
-                num_steps = step
-                break
-            if step == max_step - 1:
-                num_steps = step
-        reward = np.reshape(list_total_reward, (num_robots, -1)).max(axis=0).mean()
-        return num_steps, reward
+                # observe new observations and dones of all envs 
+                all_dones_e[ids_b] = np.logical_or(terminated_b, truncated_b)
+                # dones = np.array([last()[2] or last()[3] for last in env.get_env_attr('last')])
+                all_observations_e = np.array([last()[0] for last in self.test_env.get_env_attr('last')])
+                all_rewards_p_e_a[episode, ids_b, agent_indices_b] += rew_b
 
+            mean_step_per_episode = np.array([num_steps for num_steps in self.test_env.get_env_attr('num_steps')]).mean()
+            mean_step_through_episode.append(mean_step_per_episode)
+
+        if self.reward_metric:
+            reward = self.reward_metric(all_rewards_p_e_a)  
+        else:
+            reward = all_rewards_p_e_a.max(axis=-1).mean()  
+        mean_step = np.array(mean_step_through_episode).mean()
+
+        return mean_step, reward
+    
     def get_action(self, obs: dict[str, np.ndarray]) -> int:
-        if self.policy.training:
-            raise RuntimeError("Please turn policy to eval mode before get an action")
-        if not self.load_from_file:
-            warnings.warn("No pre-trained model is loaded. Agent can give random action.", UserWarning)
-        return self.policy(Batch(obs=Batch(obs=obs['observation'].reshape(1, -1), mask=obs['action_mask'].reshape(1,-1)), info=[])).act[0]
-    
+        with torch.no_grad():
+            act = self.policy(Batch(obs=Batch(obs=obs['observation'].reshape(1, -1), 
+                                              mask=obs['action_mask'].reshape(1,-1)), info=[])).act[0]
+        return act

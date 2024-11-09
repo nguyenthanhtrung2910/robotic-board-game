@@ -29,10 +29,10 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                  colors_map: str, 
                  targets_map: str,
                  required_mail: int,
-                 agent_colors: list[str],
-                 number_robots_per_player: int = 1, 
-                 with_battery: bool = True,
-                 random_steps_per_turn = False,
+                 robot_colors: list[str],
+                 num_robots_per_player: int = 1, 
+                 with_battery: bool = False,
+                 random_num_steps = False,
                  max_step: int = 500,
                  render_mode: str|None = None,
                  log_to_file: bool = False) -> None:
@@ -45,28 +45,28 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         self.board = game_components.Board(colors_map=colors_map, targets_map=targets_map)
         self.required_mail = required_mail
         self.max_step = max_step
-        self.number_robots_per_player = number_robots_per_player
-        self.number_robots = number_robots_per_player * len(agent_colors)
+        self.num_robots_per_player = num_robots_per_player
+        self.num_robots = num_robots_per_player * len(robot_colors)
         self.with_battery = with_battery
-        self.random_steps_per_turn = random_steps_per_turn
-        self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
+        self.random_num_steps = random_num_steps
+        self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_num_steps else 1
 
         robot_cells_init = random.sample(self.board.white_cells,
-                                         k=self.number_robots)
+                                         k=self.num_robots)
         robots: list[game_components.Robot] = [
                 game_components.Robot(
-                    robot_cells_init[number_robots_per_player * j + i],
+                    robot_cells_init[num_robots_per_player * j + i],
                     i + 1, robot_color, self.mail_sprites, self.game_clock, with_battery=self.with_battery, render_mode=render_mode, log_to_file=log_to_file)
-            for j, robot_color in enumerate(agent_colors)
-            for i in range(number_robots_per_player)
+            for j, robot_color in enumerate(robot_colors)
+            for i in range(num_robots_per_player)
         ]
         self.robots: dict[str, game_components.Robot] = {robot.color + str(robot.index):robot for robot in robots}
 
-        #generate new mail in green cells
+        # generate new mail in green cells
         for green_cell in self.board.green_cells:
             green_cell.generate_mail(self.mail_sprites, render_mode)
 
-        #add all robots to sprites group
+        # add all robots to sprites group
         self.robot_sprites.add([robot for robot in self.robots.values()])
         
         self.agents = [robot_name for robot_name in self.robots.keys()]
@@ -78,7 +78,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
             a: spaces.Dict(
                 {
                     "observation": spaces.Box(
-                        low=0, high=1, shape=(robot_obs_size*self.number_robots,), dtype=np.float32
+                        low=0, high=1, shape=(robot_obs_size*self.num_robots,), dtype=np.float32
                     ),
                     "action_mask": spaces.Box(low=0, high=1, shape=(self.action_spaces[a].n,), dtype=np.uint8),
                 }
@@ -104,14 +104,14 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         
         self.screen = None
         if self.render_mode == "human":
-            #draw a background
+            # draw a background
             self.background = pygame.Surface((19*CELL_SIZE[0], 15*CELL_SIZE[1]))
             self.background.fill((255, 255, 255))
-            #draw board
+            # draw board
             for i in range(self.board.size):
                 for j in range(self.board.size):
                     self.board[i, j].draw(self.background)
-            #draw axes
+            # draw axes
             images_for_cell_coordinate = [
             pygame.font.SysFont(None, 48).render(str(i), True, (0, 0, 0))
             for i in range(9)
@@ -128,10 +128,10 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                     (CELL_SIZE[0] - images_for_cell_coordinate[i].get_width()) / 2,
                     (i+1) * CELL_SIZE[1] +
                     (CELL_SIZE[1] - images_for_cell_coordinate[i].get_height()) / 2)) 
-            #draw baterry side identification for each robot
+            # draw baterry side identification for each robot
             images_for_baterry_bar = [
             pygame.font.SysFont(None, 10).render(str(i+1), True, (255,255, 255))
-            for i in range(self.number_robots_per_player)]
+            for i in range(self.num_robots_per_player)]
             for i, robot in enumerate(self.robots.values()):
                 rect = pygame.Rect(
                     (19 * CELL_SIZE[0] - (MAXIMUM_ROBOT_BATTERY+1) * CELL_BATTERY_SIZE[0])/2 - CELL_BATTERY_SIZE[0],
@@ -146,8 +146,8 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                     (CELL_BATTERY_SIZE[0] - images_for_baterry_bar[robot.index - 1].get_width()) / 2,
                     rect.top +
                     (CELL_BATTERY_SIZE[1] - images_for_baterry_bar[robot.index - 1].get_height()) / 2))
-            #draw baterry bar
-            for j in range(self.number_robots):
+            # draw baterry bar
+            for j in range(self.num_robots):
                 for i in range(MAXIMUM_ROBOT_BATTERY + 1):
                     rect = pygame.Rect(
                         (19 * CELL_SIZE[0] - (MAXIMUM_ROBOT_BATTERY+1) * CELL_BATTERY_SIZE[0])/2 + i * CELL_BATTERY_SIZE[0],
@@ -155,7 +155,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                         CELL_BATTERY_SIZE[0],
                         CELL_BATTERY_SIZE[1])
                     pygame.draw.rect(self.background, (0, 0, 0), rect, 1)
-            #clock to tuning fps        
+            # clock to tuning fps        
             self.clock = pygame.time.Clock()
     
     def sum_count_mail(self, color: str) -> int:
@@ -188,7 +188,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         self.board.reset()
         
         robot_cells_init = random.sample(self.board.white_cells,
-                                         k=self.number_robots)
+                                         k=self.num_robots)
         for i, robot in enumerate(self.robots.values()):
             robot.reset(robot_cells_init[i])
 
@@ -196,7 +196,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         for green_cell in self.board.green_cells:
             green_cell.generate_mail(self.mail_sprites, self.render_mode)
             
-        self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
+        self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_num_steps else 1
         self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.reset()
 
@@ -218,13 +218,13 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
         self.rewards = {agent: 0 for agent in self.agents}
 
-        #r(s,a) and s'(s,a)
+        # #r(s,a) and s'(s,a)
         acting_robot = self.robots[self.agent_selection]
         is_moved, reward = acting_robot.step(action)
         self.rewards[self.agent_selection] = reward
         self._accumulate_rewards()
-        #if robot has moved, charge robots in blue cells
-        #don't charge acting robot, it decides this itself in step method
+        # if robot has moved, charge robots in blue cells
+        # don't charge acting robot, it decides this itself in step method
         if is_moved and self.with_battery:
             for blue_cell in self.board.blue_cells:
                 if blue_cell.robot and blue_cell.robot is not acting_robot:
@@ -241,7 +241,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         self.truncations = {a: self.num_steps >= self.max_step for a in self.agents}
         
         if self.render_mode == "human":
-            #for smooth movement
+            # for smooth movement
             for i in range(1, FRAME_PER_STEP+1):
                 diff = tuple(a-b for a, b in zip(acting_robot.next_rect.topleft, acting_robot.rect.topleft))
                 acting_robot.rect.topleft = tuple(a+i/FRAME_PER_STEP*b for a,b in zip(acting_robot.rect.topleft, diff))
@@ -252,20 +252,22 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         self.steps_to_change_turn -= 1
         if self.steps_to_change_turn == 0:
             self.agent_selection = self._agent_selector.next() 
-            self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_steps_per_turn else 1
+            self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_num_steps else 1
+            # return previous agent's observation as next observation if game changes turn
             return (
                 self.observe(self.previous_agent),
                 self._cumulative_rewards[self.previous_agent],
                 self.terminations[self.agent_selection],
                 self.truncations[self.agent_selection],
-                self.infos[self.agent_selection],
+                {'transition_belongs_agent': self.agents.index(self.previous_agent)},
             )
+        # return current agent's observation as next observation if game doesn't changes turn
         return (
             self.observe(self.agent_selection),
             self._cumulative_rewards[self.agent_selection],
             self.terminations[self.agent_selection],
             self.truncations[self.agent_selection],
-            self.infos[self.agent_selection],
+            {'transition_belongs_agent': self.agents.index(self.agent_selection)},
             )
     
     @property
@@ -333,7 +335,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
 
         running = True
         while running and not self.terminations[self.agent_selection] and not self.truncations[self.agent_selection]:
-            #Human behaviors
+            # Human behaviors
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False

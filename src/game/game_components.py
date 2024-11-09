@@ -77,7 +77,7 @@ class Cell:
     def __repr__(self) -> str:
         return f'Cell({self.x}, {self.y})'
 
-    #equal and hash dunder method for using a Cell as dictionary's key
+    # equal and hash dunder method for using a Cell as dictionary's key
     def __eq__(self, cell: object) -> bool:
         if isinstance(cell, Cell):
             return self.x == cell.x and self.y == cell.y
@@ -144,26 +144,26 @@ class Cell:
         """
         Genarate a new mail.
         """
-        #create new mail-sprite
+        # create new mail-sprite
         self.mail = Mail(random.choice(range(1, 10)), self, render_mode)
-        #add mail to respective ground of sprites
+        # add mail to respective ground of sprites
         sprites_mail.add(self.mail)
 
     def draw(self, surface: pygame.Surface) -> None:
         """
         Draw this cell in a ```pygame.Surface```.
         """
-        #draw rectangle of the cell
+        # draw rectangle of the cell
         pygame.draw.rect(
             surface, COLOR2RBG[self.color],
             ((self.x + 5) * CELL_SIZE[0],
              (self.y + 1) * CELL_SIZE[1], CELL_SIZE[0], CELL_SIZE[1]))
-        #draw border
+        # draw border
         pygame.draw.rect(
             surface, (0, 0, 0),
             ((self.x + 5) * CELL_SIZE[0],
              (self.y + 1) * CELL_SIZE[1], CELL_SIZE[0], CELL_SIZE[1]), 1)
-        #draw target number if it isn't 0 
+        # draw target number if it isn't 0 
         if self.target:
             target_font = pygame.font.SysFont(None, 64)
             target_image = target_font.render(str(self.target), True,
@@ -208,7 +208,7 @@ class Board:
 
     def __load_from_file(self, colors_map: str, targets_map: str) -> None:
 
-        #two dimension list of Cell
+        # two dimension list of Cell
         self.cells: list[list[Cell]] = []
 
         colors_map_file = open(colors_map, mode='r', encoding="utf-8")
@@ -217,7 +217,7 @@ class Board:
         color_matrix = csv.reader(colors_map_file)
         target_matrix = csv.reader(targets_map_file)
 
-        #create cells with given colors and targets in csv files
+        # create cells with given colors and targets in csv files
         for i, (color_row,
                 target_row) in enumerate(zip(color_matrix, target_matrix)):
             self.cells.append([])
@@ -228,7 +228,7 @@ class Board:
         colors_map_file.close()
         targets_map_file.close()
 
-        #set for each cell its adjacent
+        # set for each cell its adjacent
         for i, _ in enumerate(self.cells):
             for j, _ in enumerate(self.cells[i]):
                 if (i - 1) >= 0:
@@ -383,7 +383,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Don't move.
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         reward = DEFAULT_REWARD
         self.stand_times += 1
         if self.pos.color == 'b':
@@ -395,7 +395,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Move forward. Return reward for this move. 
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         reward = DEFAULT_REWARD
         self.stand_times = 0
         if self.pos.front is self.previous_pos:
@@ -420,7 +420,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_MOVING_TO_BLUE
+            reward = REWARD_FOR_REACHING_BLUE
         self.clock.up()
         return True, reward
 
@@ -428,7 +428,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Move back. Return reward for this move.
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         reward = DEFAULT_REWARD
         self.stand_times = 0
         if self.pos.back is self.previous_pos:
@@ -453,7 +453,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_MOVING_TO_BLUE
+            reward = REWARD_FOR_REACHING_BLUE
         self.clock.up()
         return True, reward
 
@@ -461,7 +461,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Move right. Return reward for this move.
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         reward = DEFAULT_REWARD
         self.stand_times = 0
         if self.pos.right is self.previous_pos:
@@ -486,7 +486,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_MOVING_TO_BLUE
+            reward = REWARD_FOR_REACHING_BLUE
         self.clock.up()
         return True, reward
 
@@ -494,7 +494,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Move left. Return reward for this move. 
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         reward = DEFAULT_REWARD
         self.stand_times = 0
         if self.pos.left is self.previous_pos:
@@ -519,7 +519,7 @@ class Robot(pygame.sprite.Sprite):
             self.drop_off()
             reward = REWARD_FOR_DROP_OFF_MAIL
         elif self.pos.color == 'b':
-            reward = REWARD_FOR_MOVING_TO_BLUE
+            reward = REWARD_FOR_REACHING_BLUE
         self.clock.up()
         return True, reward
 
@@ -527,7 +527,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Pick up a mail.
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         self.mail = self.pos.mail
         if self.log:
             log.info(
@@ -538,7 +538,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Drop off a mail.
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         deliveried_mail = self.mail
         self.mail.kill()
         self.mail = None
@@ -552,7 +552,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Charge.
         """
-        #we assume this action is legal.
+        # we assume this action is legal.
         self.battery += BATERRY_UP_PER_STEP
     
     def reset(self, pos: Cell) -> None:
@@ -571,12 +571,12 @@ class Robot(pygame.sprite.Sprite):
         """
         Do robot move base on  ```action```.
         """
-        #check if action is legal
-        #truly, action from agent always is legal because of action mask
-        #we check for case that all actions are illegal
+        # check if action is legal
+        # truly, action from agent always is legal because of action mask
+        # we check for case that all actions are illegal
         is_legal_action = self.is_legal_move(action) 
         if not is_legal_action:
-            #if all actions are not legal, skip robot's turn
+            # if all actions are not legal, skip robot's turn
             return False, DEFAULT_REWARD
         if action == Action.GO_AHEAD:
             return self.move_up()
@@ -595,145 +595,145 @@ class Robot(pygame.sprite.Sprite):
         """
 
         if action == Action.DO_NOTHING:
-            #robot with high battery can't stand in the blue cell
+            # robot with high battery can't stand in the blue cell
             if self.pos.color == 'b' and self.battery >= MAXIMUM_ROBOT_BATTERY - BATERRY_UP_PER_STEP:
                 return False
-            #robot without mail can't stand in the yellow cell
+            # robot without mail can't stand in the yellow cell
             if self.pos.color == 'y' and not self.mail:
                 return False
-            #robot with mail can't stand in the green cell
+            # robot with mail can't stand in the green cell
             if self.pos.color == 'gr' and self.mail:
                 return False
-            #prohibit robot stand constantly
+            # robot can't stand constantly
             if self.pos.color != 'b' and self.stand_times >= 5:
                 return False
         
         if action == Action.GO_AHEAD:
-            #robot can't move if battery is exhausted
+            # robot can't move if battery is exhausted
             if not self.battery:
                 return False
-            #if robot is charging, it can't move until battery is nearly full
-            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
+            # if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
                 return False
-            #robot can't move if next cell is none
+            # robot can't move if next cell is none
             if not self.pos.front:
                 return False
-            #prohibit robot repeat old position many times
+            # robot can't repeat old position many times
             if self.pos.front is self.previous_pos and self.repeat_pos_times >= 4:
                 return False
-            #robot can't move if next cell is red
+            # robot can't move if next cell is red
             if self.pos.front.color == 'r':
                 return False
-            #robot can't move if next cell is not empty
+            # robot can't move if next cell is not empty
             if self.pos.front.robot:
                 return False
-            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            # robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
             if self.pos.front.color == 'y':
                 if not self.mail:
                     return False
                 if self.pos.front.target != self.mail.mail_number:
                     return False
-            #robot can't move to green cell if it already has carried a mail
+            # robot can't move to green cell if it already has carried a mail
             if self.pos.front.color == 'gr' and self.mail:
                 return False
-            #robot with high battery can't move to blue cell
-            if self.pos.front.color == 'b' and self.battery > BATTERY_TO_CHARGE:
+            # robot with high battery can't move to blue cell
+            if self.pos.front.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
 
         if action == Action.GO_BACK:
-            #robot can't move if battery is exhausted
+            # robot can't move if battery is exhausted
             if not self.battery:
                 return False
-            #if robot is charging, it can't move until battery is nearly full
-            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
+            # if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
                 return False
-            #robot can't move if next cell is none
+            # robot can't move if next cell is none
             if not self.pos.back:
                 return False
-            #prohibit robot repeat old position many times
+            # robot can't repeat old position many times
             if self.pos.back is self.previous_pos and self.repeat_pos_times >= 4:
                 return False
-            #robot can't move if next cell is red
+            # robot can't move if next cell is red
             if self.pos.back.color == 'r':
                 return False
-            #robot can't move if next cell is not empty
+            # robot can't move if next cell is not empty
             if self.pos.back.robot:
                 return False
-            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            # robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
             if self.pos.back.color == 'y':
                 if not self.mail:
                     return False
                 if self.pos.back.target != self.mail.mail_number:
                     return False
-            #robot can't move to green cell if it already has carried a mail
+            # robot can't move to green cell if it already has carried a mail
             if self.pos.back.color == 'gr' and self.mail:
                 return False
-            #robot with high battery can't move to blue cell
-            if self.pos.back.color == 'b' and self.battery > BATTERY_TO_CHARGE:
+            # robot with high battery can't move to blue cell
+            if self.pos.back.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
 
         if action == Action.TURN_LEFT:
-            #robot can't move if battery is exhausted
+            # robot can't move if battery is exhausted
             if not self.battery:
                 return False
-            #if robot is charging, it can't move until battery is nearly full
-            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
+            # if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
                 return False
-            #robot can't move if next cell is none
+            # robot can't move if next cell is none
             if not self.pos.left:
                 return False
-            #prohibit robot repeat old position many times
+            # robot can't repeat old position many times
             if self.pos.left is self.previous_pos and self.repeat_pos_times >= 4:
                 return False
-            #robot can't move if next cell is red
+            # robot can't move if next cell is red
             if self.pos.left.color == 'r':
                 return False
-            #robot can't move if next cell is not empty
+            # robot can't move if next cell is not empty
             if self.pos.left.robot:
                 return False
-            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            # robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
             if self.pos.left.color == 'y':
                 if not self.mail:
                     return False
                 if self.pos.left.target != self.mail.mail_number:
                     return False
-            #robot can't move to green cell if it already has carried a mail
+            # robot can't move to green cell if it already has carried a mail
             if self.pos.left.color == 'gr' and self.mail:
                 return False
-            #robot with high battery can't move to blue cell
-            if self.pos.left.color == 'b' and self.battery > BATTERY_TO_CHARGE:
+            # robot with high battery can't move to blue cell
+            if self.pos.left.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
                 
         if action == Action.TURN_RIGHT:
-            #robot can't move if battery is exhausted
+            # robot can't move if battery is exhausted
             if not self.battery:
                 return False
-            #if robot is charging, it can't move until battery is nearly full
-            if self.pos.color == 'b' and self.battery < 0.8*MAXIMUM_ROBOT_BATTERY:
+            # if robot is charging, it can't move until battery is nearly full
+            if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
                 return False
-            #robot can't move if next cell is none
+            # robot can't move if next cell is none
             if not self.pos.right:
                 return False
-            #prohibit robot repeat old position many times
+            # robot can't repeat old position many times
             if self.pos.right is self.previous_pos and self.repeat_pos_times >= 4:
                 return False
-            #robot can't move if next cell is red
+            # robot can't move if next cell is red
             if self.pos.right.color == 'r':
                 return False
-            #robot can't move if next cell is not empty
+            # robot can't move if next cell is not empty
             if self.pos.right.robot:
                 return False
-            #robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
+            # robot can't move to yellow cell if it don't carry a mail or carried mail not match with cell target
             if self.pos.right.color == 'y':
                 if not self.mail:
                     return False
                 if self.pos.right.target != self.mail.mail_number:
                     return False
-            #robot can't move to green cell if it already has carried a mail
+            # robot can't move to green cell if it already has carried a mail
             if self.pos.right.color == 'gr' and self.mail:
                 return False
-            #robot with high battery can't move to blue cell
-            if self.pos.right.color == 'b' and self.battery > BATTERY_TO_CHARGE:
+            # robot with high battery can't move to blue cell
+            if self.pos.right.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
                 
         return True

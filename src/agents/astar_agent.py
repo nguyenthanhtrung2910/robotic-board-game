@@ -37,7 +37,7 @@ class Vertex:
     def __repr__(self) -> str:
         return f'Vertex({self.x}, {self.y})'
 
-    #equal and hash dunder method for using a Cell as dictionary's key
+    # equal and hash dunder method for using a Cell as dictionary's key
     def __eq__(self, vertex: object) -> bool:
         if isinstance(vertex, Vertex):
             return self.x == vertex.x and self.y == vertex.y
@@ -46,7 +46,7 @@ class Vertex:
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 
-    #less than dunder method for puttting a Cell in priority queue
+    # less than dunder method for puttting a Cell in priority queue
     def __lt__(self, vertex: object) -> bool:
         if isinstance(vertex, Vertex):
             return True
@@ -96,19 +96,19 @@ class Vertex:
         """
         Vertex is blocked (robot shouldn't go there) if it has too much robots in queue to it.
         """
-        #blue cell with robot in this and other robot is waiting
+        # blue cell with robot in this and other robot is waiting
         if self.color == 'b':
             return len([
                 vertex for vertex in self.neighbors
                 if (vertex.robot and vertex.robot.battery <= 30)
             ]) == 1 and self.robot is not None
-        #green cell with robot in this and two other robots is waiting
+        # green cell with robot in this and two other robots is waiting
         if self.color == 'gr':
             return len([
                 vertex for vertex in self.neighbors
                 if (vertex.robot and not vertex.robot.mail)
             ]) == 2 and self.robot is not None
-        #yellow cell with robot in this and two other robots is waiting
+        # yellow cell with robot in this and two other robots is waiting
         if self.color == 'y':
             return len([
                 vertex
@@ -142,7 +142,7 @@ class Graph:
 
     def __load_from_file(self, colors_map: str, targets_map: str) -> None:
 
-        #two dimension list of Cell
+        # two dimension list of Cell
         self.vertices: list[list[Vertex]] = []
 
         colors_map_file = open(colors_map, mode='r', encoding="utf-8")
@@ -151,7 +151,7 @@ class Graph:
         color_matrix = csv.reader(colors_map_file)
         target_matrix = csv.reader(targets_map_file)
 
-        #create cells with given colors and targets in csv files
+        # create cells with given colors and targets in csv files
         for i, (color_row,
                 target_row) in enumerate(zip(color_matrix, target_matrix)):
             self.vertices.append([])
@@ -165,7 +165,7 @@ class Graph:
         colors_map_file.close()
         targets_map_file.close()
 
-        #set for each cell its adjacent
+        # set for each cell its adjacent
         for i, _ in enumerate(self.vertices):
             for j, _ in enumerate(self.vertices[i]):
                 if (i - 1) >= 0:
@@ -219,8 +219,8 @@ class Graph:
                 return path
 
             neighbors = current.neighbors
-            #Reverse neighbors list if i is odd, change order putting cell to queue
-            #According to that, we don't get cell from queue over one row or column and search over diagonal
+            # reverse neighbors list if i is odd, change order putting cell to queue
+            # according to that, we don't get cell from queue over one row or column and search over diagonal
             if i % 2 == 1:
                 neighbors.reverse()
             for next_vertex in neighbors:
@@ -240,12 +240,12 @@ class Robot:
 
     def __init__(self,
                  pos: Vertex,
-                 battery: int,
+                 battery: int = 0,
                  mail: int = 0):
         self.pos = pos
         self.pos.robot = self
-        self.mail = mail
         self.battery = battery
+        self.mail = mail
         self.dest = None
 
     @property
@@ -281,9 +281,9 @@ class AStarAgent(BaseAgent):
     """
 
     def __init__(self,
-                 observation_space: spaces.Dict,
                  colors_map: str,
                  targets_map: str,
+                 num_robots: int,
                  maximum_battery: int|None = None) -> None:
         """
         :param colors_map: colors map of the board game.
@@ -293,28 +293,26 @@ class AStarAgent(BaseAgent):
         :param maximum_battery: maximum battery for robot.
         :type maximum_battery: int
         """
-        super().__init__(observation_space)
         self.graph = Graph(colors_map=colors_map, targets_map=targets_map)
-        robot_obs_size = 4 if maximum_battery is not None else 3
-        self.number_robots = int(self.observation_space['observation'].shape[0]/robot_obs_size)
-        robot_cells_init = random.sample(self.graph.white_vertecies, k=self.number_robots)
-        self.robots: list[Robot] = [Robot(robot_cells_init[i], 50) for i in range(self.number_robots)]
-        self.max_values_for_robot_attributes = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices)]
+        self.num_robots = num_robots
+        robot_cells_init = random.sample(self.graph.white_vertecies, k=self.num_robots)
+        self.robots = [Robot(robot_cells_init[i]) for i in range(self.num_robots)]
+        self.max_values_for_robot_attrs = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices)]
         if maximum_battery is not None:
-            self.max_values_for_robot_attributes.append(maximum_battery)
+            self.max_values_for_robot_attrs.append(maximum_battery)
     
     def load_state_from_obs(self, obs: np.ndarray) -> None:
         """
         Load states of all robots to local board.
         """
-        robot_states = np.split(obs, self.number_robots)
+        robot_states = np.split(obs, self.num_robots)
         for robot, robot_state in zip(self.robots, robot_states):
             robot.pos.robot = None
-            robot.pos = self.graph[int(robot_state[0]*self.max_values_for_robot_attributes[0]), 
-                                   int(robot_state[1]*self.max_values_for_robot_attributes[1])]
-            robot.mail = int(robot_state[2]*self.max_values_for_robot_attributes[2])
-            if len(self.max_values_for_robot_attributes) > 3:
-                robot.battery = int(robot_state[3]*self.max_values_for_robot_attributes[3])
+            robot.pos = self.graph[int(robot_state[0]*self.max_values_for_robot_attrs[0]), 
+                                   int(robot_state[1]*self.max_values_for_robot_attrs[1])]
+            robot.mail = int(robot_state[2]*self.max_values_for_robot_attrs[2])
+            if len(self.max_values_for_robot_attrs) > 3:
+                robot.battery = int(robot_state[3]*self.max_values_for_robot_attrs[3])
         for robot in self.robots:
             robot.pos.robot = robot
 
@@ -354,7 +352,7 @@ class AStarAgent(BaseAgent):
                     return self.apply_action_mask(0, mask)
                 acting_robot.set_destination(self.graph, [vertex for vertex in self.graph.green_vertices if vertex.is_blocked])
 
-        #build the path
+        # build the path
         path = self.graph.a_star_search(acting_robot.pos, acting_robot.dest)
         if len(path) != 0:
             next = path[0]

@@ -70,20 +70,21 @@ agents = []
 game = Game(args.color_map, 
             args.target_map, 
             required_mail=args.required_mail, 
-            agent_colors=args.robot_colors,
-            number_robots_per_player=args.number_robots_per_player,
+            robot_colors=args.robot_colors,
+            num_robots_per_player=args.number_robots_per_player,
             with_battery=args.with_battery,
-            random_steps_per_turn=args.random_steps_per_turn,
+            random_num_steps=args.random_steps_per_turn,
             max_step=args.max_step,
             render_mode=render_mode,
             log_to_file=args.logger)
 
 maximum_battery = game.robots[game.agent_selection].battery if args.with_battery else None
-astar = AStarAgent(game.observation_space(game.agent_selection),
-                    args.color_map,
-                    args.target_map, 
-                    maximum_battery,
-                    )
+astar = AStarAgent(
+    args.color_map,
+    args.target_map,
+    game.num_robots, 
+    maximum_battery,
+)
 
 for _ in range(len(game.agents) - args.number_persons*args.number_robots_per_player):
     agents.append(astar)

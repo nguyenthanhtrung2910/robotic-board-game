@@ -1,0 +1,56 @@
+env_config:
+  colors_map: assets/csv_files/colors_map.csv
+  targets_map: assets/csv_files/targets_map.csv
+  required_mail: 4
+  robot_colors: 
+    - r
+    - b
+  num_robots_per_player: 1
+  with_battery: false
+  random_num_steps: false
+  max_step: 500
+
+net_config:
+  hidden_sizes: [256, 256, 128, 128, 64, 64]
+  norm_layer: torch.nn.LayerNorm
+  dueling_param:
+    - {}
+    - {}
+
+policy_type: src.agents.dqn_agent.NoisyDQNPolicy
+optim_type: torch.optim.Adam
+learning_rate: 0.0001
+
+policy_config:
+  discount_factor: 0.99
+  estimation_step: 20
+  target_update_freq: 100
+  is_double: true
+
+memory_config:
+  total_size: 2_500_000
+  alpha: 0.6
+  beta: 0.4
+
+training_config:
+  batch_size: 64
+  steps_per_update: 16
+  episodes_per_update: 0
+  episodes_per_train: 1
+  episodes_per_test: 1
+  test_freq: 10
+
+max_eps: 1.0
+min_eps: 0.05
+eps_rate: 0.99
+
+max_beta: 0.4 
+min_beta: 1.0
+beta_rate: 0.04
+
+num_train_envs: 8
+num_test_envs: 8 
+best_checkpoint: DQN_best.pth
+last_checkpoint: DQN_last.pth
+
+
