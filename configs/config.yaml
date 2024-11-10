@@ -17,7 +17,8 @@ net_config:
     - {}
     - {}
 
-policy_type: src.agents.dqn_agent.NoisyDQNPolicy
+policy_type: src.agents.rl_agent.NoisyDQNPolicy
+
 optim_type: torch.optim.Adam
 learning_rate: 0.0001
 
@@ -34,23 +35,29 @@ memory_config:
 
 training_config:
   batch_size: 64
-  steps_per_update: 16
-  episodes_per_update: 0
-  episodes_per_train: 1
-  episodes_per_test: 1
-  test_freq: 10
+  steps_per_update: 32
+  episodes_per_train: 5000
+  episodes_per_test: 8
+  test_freq: 100
 
+# max_eps should be also small if using NoisyLinear
 max_eps: 1.0
 min_eps: 0.05
-eps_rate: 0.99
+eps_rate: 0.9994
 
 max_beta: 0.4 
 min_beta: 1.0
-beta_rate: 0.04
+beta_rate: 0.0015
 
 num_train_envs: 8
 num_test_envs: 8 
-best_checkpoint: DQN_best.pth
-last_checkpoint: DQN_last.pth
+
+# if too big, training loop may stop early because of stop_fn
+episode_to_save: 1000
+# big mean training loop will never stop because of stop_fn
+required_reward: 1000
+best_checkpoint: my_checkpoint.pth
+last_checkpoint: null
+trained_checkpoint: null
 
 

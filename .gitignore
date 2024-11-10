@@ -154,10 +154,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-
+checkpoints
 events.log
 log_files*
-test.py
 evaluate.py
 *.pth
 *stats*
