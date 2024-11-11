@@ -29,10 +29,18 @@ def set_class(config: dict[str, Any], key: str) -> None:
 
 with open(args.config, "r") as file:
     yaml_content =re.sub(r"(agent\d:)", r"\1 !agent", file.read())\
-                    .replace("agent:", "agent: !agent")
+                    .replace("agent:", "agent: !agent")\
+                    .replace("env:", "env: !env")\
+                
+def env_constructor(loader: Loader, node: MappingNode):
+    data = loader.construct_mapping(node, deep=True)
+    data['render_mode'] = 'human'
+
+    return Game(**data)
     
 def agent_constructor(loader: Loader, node: MappingNode):
     data = loader.construct_mapping(node, deep=True)
+    count = data.pop('count', 1)
     try:
         set_class(data, 'agent_type')
         agent_type = data.pop('agent_type')
@@ -46,10 +54,12 @@ def agent_constructor(loader: Loader, node: MappingNode):
         set_class(data['model_args']['dueling_param'], 'linear_layer')
     except KeyError:
         pass
-    return agent_type(**data)
+    return [agent_type(**data)]*count
   
 yaml.add_constructor('!agent', agent_constructor) 
-agent = yaml.load(yaml_content, Loader=yaml.FullLoader)['agent']
+yaml.add_constructor('!env', env_constructor) 
+all_objects = yaml.load(yaml_content, Loader=yaml.FullLoader)
 
-testing_stats = agent.test(eval_metrics=True)
-pprint(testing_stats)
+env = all_objects.pop('env')
+agents = [item for sublist in all_objects.values() for item in sublist]
+print(env.run(agents))

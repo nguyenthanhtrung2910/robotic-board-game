@@ -296,7 +296,7 @@ class AStarAgent(BaseAgent):
         self.graph = Graph(colors_map=colors_map, targets_map=targets_map)
         self.num_robots = num_robots
         robot_cells_init = random.sample(self.graph.white_vertecies, k=self.num_robots)
-        self.robots = [Robot(robot_cells_init[i]) for i in range(self.num_robots)]
+        self.robots = [Robot(robot_cells_init[i], 50) for i in range(self.num_robots)]
         self.max_values_for_robot_attrs = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices)]
         if maximum_battery is not None:
             self.max_values_for_robot_attrs.append(maximum_battery)

@@ -1,0 +1,79 @@
+ env:
+    colors_map: assets/csv_files/colors_map.csv
+    targets_map: assets/csv_files/targets_map.csv
+    required_mail: 4
+    robot_colors: 
+      - r
+      - b
+      - gr
+    num_robots_per_player: 1
+    with_battery: false
+    random_num_steps: false
+    max_step: 500
+
+ agent1: 
+  count: 2
+  agent_type: src.agents.rl_agent.RLAgent
+  env_args:
+    colors_map: assets/csv_files/colors_map.csv
+    targets_map: assets/csv_files/targets_map.csv
+    required_mail: 4
+    robot_colors: 
+      - r
+      - b
+      - gr
+    num_robots_per_player: 1
+    with_battery: false
+    random_num_steps: false
+    max_step: 500
+  model: tianshou.utils.net.common.Net
+  model_args:
+    hidden_sizes: [64, 256, 512, 512, 256, 128, 64]
+    norm_layer: torch.nn.LayerNorm
+    dueling_param:
+      - hidden_sizes: [32]
+      - hidden_sizes: [32]
+  policy: src.agents.rl_agent.NoisyDQNPolicy
+  policy_args:
+    discount_factor: 0.99
+    estimation_step: 30
+    target_update_freq: 240
+    is_double: true
+  memory_args:
+    # there no need big within testing
+    total_size: 2
+    alpha: 0.6
+    beta: 0.4
+
+  num_train_envs: 16
+  num_test_envs: 16  
+  batch_size: 64
+  lr: 0.0001
+  steps_per_update: 64
+  episodes_per_train: 4000
+  episodes_per_test: 64
+  test_freq: 128
+
+  # max_eps should be also small if using NoisyLinear
+  max_eps: 1.0
+  min_eps: 0.05
+  eps_rate: 0.9993
+  max_beta: 0.4 
+  min_beta: 1.0
+  beta_rate: 0.0025
+  # if too big, training loop may stop early because of stop_fn
+  episode_to_save: 2000
+  # big mean training loop will never stop because of stop_fn
+  reward_to_stop: 1000
+  best_ckpt: checkpoints/3robots_best.pth
+  last_ckpt: checkpoints/3robots_last.pth
+  trained_ckpt: checkpoints/3robots_best.pth
+
+ agent2:
+  count: 1
+  agent_type: src.agents.astar_agent.AStarAgent
+  colors_map: assets/csv_files/colors_map.csv
+  targets_map: assets/csv_files/targets_map.csv
+  num_robots: 3
+  maximum_battery: null
+
