@@ -5,6 +5,8 @@ import warnings
 import time
 
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import torch
 from torch import nn
 from tianshou.policy import DQNPolicy, C51Policy
@@ -150,7 +152,7 @@ class RLAgent(BaseAgent):
                                               weights_only=True, 
                                               map_location=torch.device(self.policy.model.device)))
 
-    def train(self, reset_memory: bool = True) -> list[float]:
+    def train(self, reset_memory: bool = True, plot: bool = True) -> list[float]:
         """
         E - number of enviroments
         B - collected batch size
@@ -161,6 +163,7 @@ class RLAgent(BaseAgent):
         num_collected_episodes = 0
         last_num_collected_steps = num_collected_steps
         last_num_collected_episodes = num_collected_episodes
+        epidodes = []
         rewards = []
         start = time.time()
         while num_collected_episodes < self.episodes_per_train:
@@ -225,6 +228,7 @@ class RLAgent(BaseAgent):
                         self.save_best_fn(num_collected_episodes)
                     elif num_collected_episodes >= self.episode_to_save and self.best_ckpt:
                         torch.save(self.policy.state_dict(), self.best_ckpt)
+                epidodes.append(num_collected_episodes)
                 rewards.append(reward_metric)
                 print("===episode {:04d} done with epsilon {:5.3f}, number steps: {:5.1f}, reward: {:+06.2f}==="
                       .format((num_collected_episodes), self.policy.eps, num_steps, reward_metric))
@@ -243,12 +247,27 @@ class RLAgent(BaseAgent):
             torch.save(self.policy.state_dict(), self.last_ckpt)
         if reset_memory:
             self.memory.reset()
+        if plot:
+            self.plot_stats(epidodes, rewards)
+
         return {'reward_metric_stats': rewards,
                 'num_collected_steps': num_collected_steps,
                 'num_collected_episodes': num_collected_episodes,
                 'training_time': finish - start,
                 }
     
+    @staticmethod
+    def plot_stats(episodes: list[int], rewards: list[float]) -> None:
+        fig, axes = plt.subplots(1, 1, figsize=(6, 4))
+        axes.plot(np.array(episodes), np.array(rewards), marker='o', color='b', label='reward')
+        axes.set_xlabel("Number of collected episodes")
+        axes.set_ylabel("Reward metric")
+        axes.set_title("Performance of agent through episode.")
+        axes.legend()
+        axes.grid()
+        fig.tight_layout()
+        fig.savefig("plots/results.png", dpi=150, bbox_inches="tight")
+
     def test(self, eval_metrics: bool = False) -> tuple[float, float]:
         """
         P - number of episodes

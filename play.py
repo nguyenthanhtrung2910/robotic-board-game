@@ -16,7 +16,7 @@ from src.game.robotic_board_game import Game
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--config", 
-    default=os.path.join('configs', 'config.yaml'),
+    default=os.path.join('configs', 'animate_config_template.yaml'),
     help="path to configuration .yaml file",
     type=str,
 )

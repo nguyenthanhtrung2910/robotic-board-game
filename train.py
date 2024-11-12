@@ -16,9 +16,14 @@ from src.game.robotic_board_game import Game
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--config", 
-    default=os.path.join('configs', 'config.yaml'),
+    default=os.path.join('configs', 'train_config_template.yaml'),
     help="path to configuration .yaml file",
     type=str,
+)
+parser.add_argument(
+    "--plot", 
+    help="Save graphic of training process.",
+    action='store_true'
 )
 
 args = parser.parse_args()
@@ -52,5 +57,5 @@ yaml.add_constructor('!agent', agent_constructor)
 agent = yaml.load(yaml_content, Loader=yaml.FullLoader)['agent']
 
 print(agent.policy.model)
-training_stats = agent.train()
+training_stats = agent.train(plot=args.plot)
 pprint(training_stats)

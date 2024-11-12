@@ -160,3 +160,5 @@ log_files*
 evaluate.py
 *.pth
 *stats*
+*agent*
+*plot*
