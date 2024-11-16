@@ -4,11 +4,42 @@ from typing import Any
 import numpy as np
 import torch
 from torch import nn
-from tianshou.policy import DQNPolicy
 from tianshou.data import Batch, VectorReplayBuffer
+from tianshou.utils.net.discrete import NoisyLinear
+from tianshou.data.types import RolloutBatchProtocol
+from tianshou.policy.modelfree.dqn import TDQNTrainingStats, DQNPolicy
+from tianshou.policy.modelfree.c51 import TC51TrainingStats, C51Policy
 
 from src.agents.base_agent import RLAgent
 
+class NoisyDQNPolicy(DQNPolicy[TDQNTrainingStats]):
+    """
+    DQN using NoisyLinear.
+    """
+    def learn(self, batch: RolloutBatchProtocol, *args: Any, **kwargs: Any) -> TDQNTrainingStats:
+        for module in self.model.modules():
+            if isinstance(module, NoisyLinear):
+                module.sample()
+        if self._target:
+            for module in self.model.modules():
+                if isinstance(module, NoisyLinear):
+                    module.sample()
+        return super().learn(batch, *args, **kwargs)
+    
+class RainbowPolicy(C51Policy[TC51TrainingStats]):
+    """
+    Rainbow.
+    """
+    def learn(self, batch: RolloutBatchProtocol, *args: Any, **kwargs: Any) -> TC51TrainingStats:
+        for module in self.model.modules():
+            if isinstance(module, NoisyLinear):
+                module.sample()
+        if self._target:
+            for module in self.model.modules():
+                if isinstance(module, NoisyLinear):
+                    module.sample()
+        return super().learn(batch, *args, **kwargs)
+    
 class DQNAgent(RLAgent):
     def __init__(
             self,

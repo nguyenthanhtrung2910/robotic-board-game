@@ -11,7 +11,7 @@ import torch
 import pygame
 from yaml.loader import Loader
 from yaml.nodes import MappingNode
-from src.agents.trainer import MultiAgentTrainer
+from src.trainer import MultiAgentTrainer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
