@@ -157,8 +157,8 @@ cython_debug/
 checkpoints
 events.log
 log_files*
-evaluate.py
-*.pth
-*stats*
-*agent*
 *plot*
+*stats*
+agent*.yaml
+*.pth
+evaluate.py
