@@ -15,7 +15,7 @@ trainer:
   batch_size: 64
   update_freq: 200
   test_freq: 100
-  episodes_per_train: 2000
+  episodes_per_train: 5000
   episodes_per_test: 64
 
 agent:
@@ -25,7 +25,7 @@ agent:
   model_args:
     state_shape: 6
     action_shape: 5
-    hidden_sizes: [256, 256, 128, 128, 64, 64]
+    hidden_sizes: [512, 512, 256, 256, 128, 128, 64, 64]
     norm_layer: torch.nn.LayerNorm
     device: cpu
     dueling_param:
@@ -50,12 +50,12 @@ agent:
 # max_eps should be also small if using NoisyLinear
 max_eps: 1.0
 min_eps: 0.05
-eps_rate: 0.9987
+eps_rate: 0.9994
 begin_beta: 0.4
 end_beta: 1.0
-beta_rate: 0.004
-episode_to_save: 500
-reward_to_stop: 19
+beta_rate: 0.0018
+episode_to_save: 0
+reward_to_stop: .inf
 best_ckpt: checkpoints/best.pth
 last_ckpt: checkpoints/last.pth
 
