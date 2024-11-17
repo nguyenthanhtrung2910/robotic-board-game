@@ -17,7 +17,7 @@ agent1:
   model_args:
     state_shape: 6
     action_shape: 5
-    hidden_sizes: [256, 256, 128, 128, 64, 64]
+    hidden_sizes: [512, 512 ,256, 256, 128, 128, 64, 64]
     norm_layer: torch.nn.LayerNorm
     device: cpu
     dueling_param:
@@ -29,7 +29,7 @@ agent1:
     estimation_step: 30
     target_update_freq: 500
     is_double: true
-  update_per_step: 0.04
+  update_per_step: 0.05
   learning_rate: 0.0001
   trained_ckpt: checkpoints/best.pth
 

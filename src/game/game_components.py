@@ -604,6 +604,12 @@ class Robot(pygame.sprite.Sprite):
             # robot with mail can't stand in the green cell
             if self.pos.color == 'gr' and self.mail:
                 return False
+            # robot with high battery can't stand waiting for charging
+            if any([cell.color == 'b' for cell in self.pos.neighbors]) and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
+                return False
+            # robot, stucked between two yellow cells in the edge of the board, can't stand
+            if sum([int(cell.color == 'y') for cell in self.pos.neighbors]) == 2:
+                return False
             # robot can't stand constantly
             if self.pos.color != 'b' and self.stand_times >= 5:
                 return False
@@ -743,7 +749,7 @@ class Robot(pygame.sprite.Sprite):
         """
         Action mask for legal actions.
         """
-        return np.array([int(self.is_legal_move(action)) for action in Action], dtype=np.uint8)
+        return np.array([self.is_legal_move(action) for action in Action], dtype=np.uint8)
     
 class Mail(pygame.sprite.Sprite):
     
