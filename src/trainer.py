@@ -7,10 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tianshou.data import Batch
 from tianshou.env import DummyVectorEnv
-from tianshou.utils.torch_utils import (
-    policy_within_training_step, 
-    torch_train_mode,
-    )
+# from tianshou.utils.torch_utils import (
+#     policy_within_training_step, 
+#     torch_train_mode,
+#     )
 
 from src.agents.base_agent import RLAgent
 from src.game.robotic_board_game import Game
@@ -122,8 +122,8 @@ class MultiAgentTrainer:
                     obs_b_o = np.array([obs['observation'] for obs in obs_b])
                     action_mask_b = np.array([obs['action_mask'] for obs in obs_b])
                     obs_batch_b = Batch(obs=Batch(obs=obs_b_o, mask=action_mask_b), info=None)
-                    with policy_within_training_step(agent.policy):
-                        act_b = agent.infer_act(obs_batch_b, exploration_noise=True)
+                    # with policy_within_training_step(agent.policy):
+                    act_b = agent.infer_act(obs_batch_b, exploration_noise=True)
 
                     # step in the right envs
                     next_obs_b, rew_b, terminated_b, truncated_b, info_b = self.train_env.step(act_b, ids_b)
@@ -153,9 +153,11 @@ class MultiAgentTrainer:
                 if ((num_collected_steps-last_num_collected_steps) >= self.update_freq):
                     for agent_index, agent in enumerate(agents.values()):
                         if learning_mask[agent_index]:
-                            with policy_within_training_step(agent.policy), torch_train_mode(agent.policy):
-                                num_bonus_steps = num_collected_steps-last_num_collected_steps
-                                agent.policy_update_fn(self.batch_size, num_bonus_steps)
+                            # with policy_within_training_step(agent.policy), torch_train_mode(agent.policy):
+                            agent.policy.train()
+                            num_bonus_steps = num_collected_steps-last_num_collected_steps
+                            agent.policy_update_fn(self.batch_size, num_bonus_steps)
+                            agent.policy.eval()
                     last_num_collected_steps=num_collected_steps
 
                 # observe new observations and dones of all envs 
