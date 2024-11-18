@@ -60,7 +60,7 @@ class MultiAgentTrainer:
         self.stop_fn = stop_fn if stop_fn else \
         lambda reward, episode: False
         self.reward_metric = reward_metric if reward_metric else \
-        lambda rewards: rewards.max(axis=-1).mean()
+        lambda rewards: rewards.mean()
         self.shared_memory = shared_memory
 
         self.num_agents = self.train_env.get_env_attr('num_agents')[0]
