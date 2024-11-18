@@ -61,6 +61,7 @@ class DQNAgent(RLAgent):
             'optim': torch.optim.Adam(model.parameters(), lr=learning_rate),
             })
         super().__init__(policy_class, policy_args, memory_class, memory_args, update_per_step)
+        self.policy.to(model_args.get('device', 'cpu'))
         if trained_ckpt:
             self.policy.load_state_dict(
                 torch.load(
