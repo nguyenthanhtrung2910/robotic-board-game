@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any, Callable
 from collections import Counter
 import time
+import os
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -206,7 +207,8 @@ class MultiAgentTrainer:
         axes.legend()
         axes.grid()
         fig.tight_layout()
-        fig.savefig("plots/results.png", dpi=150, bbox_inches="tight")
+        os.makedirs(os.path.join(os.getcwd(), 'plots'), exist_ok=True)
+        fig.savefig(os.path.join(os.getcwd(), 'plots', 'results.png'), dpi=150, bbox_inches="tight")
 
     def test(
             self, 
@@ -227,6 +229,7 @@ class MultiAgentTrainer:
         num_envs = self.test_env.env_num
         num_collected_steps = 0
         num_collected_episodes = 0
+        num_finished_episodes = 0
         rewards_p_a = np.array([]).reshape(0, self.num_agents)
         if eval_metrics:
             time_spans = 0
@@ -274,9 +277,11 @@ class MultiAgentTrainer:
             num_collected_episodes += num_envs
             rewards_p_a = np.concatenate((rewards_p_a, rewards_e_a), axis=0)
             if eval_metrics:
-                time_spans += sum([clock.now for clock in self.test_env.get_env_attr('game_clock')])
-                count_wins.update(self.test_env.get_env_attr('winner'))
-
+                winners_e = np.array(self.test_env.get_env_attr('winner'))
+                id_finished_envs =  np.where(winners_e != None)[0]
+                time_spans += sum([clock.now for clock in self.test_env.get_env_attr('game_clock', id=id_finished_envs)])
+                num_finished_episodes += id_finished_envs.size
+                count_wins.update(winners_e)
         reward = self.reward_metric(rewards_p_a)  
         test_stats = {
             'reward': reward,
@@ -285,6 +290,6 @@ class MultiAgentTrainer:
             'num_collected_episodes': num_collected_episodes,
         }
         if eval_metrics:
-            test_stats.update({'time_spans': time_spans/num_collected_episodes, 'count_wins': dict(count_wins)})
+            test_stats.update({'time_spans': time_spans/num_finished_episodes, 'count_wins': dict(count_wins)})
         return test_stats
  
