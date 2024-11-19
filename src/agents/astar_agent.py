@@ -260,7 +260,7 @@ class Robot:
         """
         Set destination for robot base on its state.
         """
-        if self.battery <= 20:
+        if self.battery <= 4:
             self.dest = min(
                 [cell for cell in board.blue_vertices if cell not in blocked],
                 key=lambda blue_cell: Graph.heuristic(
@@ -296,7 +296,7 @@ class AStarAgent(BaseAgent):
         self.graph = Graph(colors_map=colors_map, targets_map=targets_map)
         self.num_robots = num_robots
         robot_cells_init = random.sample(self.graph.white_vertecies, k=self.num_robots)
-        self.robots = [Robot(robot_cells_init[i], 50) for i in range(self.num_robots)]
+        self.robots = [Robot(robot_cells_init[i], 10) for i in range(self.num_robots)]
         self.max_values_for_robot_attrs = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices)]
         if maximum_battery is not None:
             self.max_values_for_robot_attrs.append(maximum_battery)
@@ -334,7 +334,7 @@ class AStarAgent(BaseAgent):
         obs = obs['observation']
         self.load_state_from_obs(obs)
         acting_robot = self.robots[0]
-        if acting_robot.is_charged and acting_robot.battery < 40:
+        if acting_robot.is_charged and acting_robot.battery < 8:
             return self.apply_action_mask(0, mask)
         
         acting_robot.set_destination(self.graph)

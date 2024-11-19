@@ -130,7 +130,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                     (CELL_SIZE[1] - images_for_cell_coordinate[i].get_height()) / 2)) 
             # draw baterry side identification for each robot
             images_for_baterry_bar = [
-            pygame.font.SysFont(None, 10).render(str(i+1), True, (255,255, 255))
+            pygame.font.SysFont(None, 24).render(str(i+1), True, (0, 0, 0))
             for i in range(self.num_robots_per_player)]
             for i, robot in enumerate(self.robots.values()):
                 rect = pygame.Rect(
@@ -138,7 +138,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                     11 * CELL_SIZE[1] + i * CELL_BATTERY_SIZE[1], 
                     CELL_BATTERY_SIZE[0],
                     CELL_BATTERY_SIZE[1])
-                pygame.draw.rect(self.background, COLOR2RBG[robot.color], rect, 0)
+                pygame.draw.circle(self.background, COLOR2RBG[robot.color], rect.center, CELL_BATTERY_SIZE[0] / 2 * 0.8, 0)
                 pygame.draw.rect(self.background, (0,0,0), rect, 1)
                 self.background.blit(
                     images_for_baterry_bar[robot.index - 1],

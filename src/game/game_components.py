@@ -298,7 +298,7 @@ class Robot(pygame.sprite.Sprite):
         self.clock = clock
         self.mail = mail
         self.count_mail = count_mail
-        self.__battery = battery
+        self.__battery = STEP_PER_BATTERY*battery
         self.with_battery = with_battery
         self.render_mode = render_mode
         self.log = log_to_file 
@@ -335,19 +335,23 @@ class Robot(pygame.sprite.Sprite):
 
     @property
     def battery(self) -> int:
+        return (self.__battery-1)//STEP_PER_BATTERY + 1
+    
+    @property
+    def inner_battery(self) -> int:
         """
         Battery of the robot. It must be positive and less than ```MAXIMUM_ROBOT_BATTERY```.
         """
         return self.__battery
     
-    @battery.setter
-    def battery(self, battery: int) -> None:
+    @inner_battery.setter
+    def inner_battery(self, battery: int) -> None:
         if not self.with_battery:
             return
         if battery < 0:
             self.__battery = 0
-        elif battery > MAXIMUM_ROBOT_BATTERY:
-            self.__battery = MAXIMUM_ROBOT_BATTERY
+        elif battery > STEP_PER_BATTERY*MAXIMUM_ROBOT_BATTERY:
+            self.__battery = STEP_PER_BATTERY*MAXIMUM_ROBOT_BATTERY
         else:
             self.__battery = battery
 
@@ -357,7 +361,7 @@ class Robot(pygame.sprite.Sprite):
         Observation of the single robot. Each of attributes x, y, mail, battery is normalized and all this concatenated.
         """
         mail = self.mail.mail_number if self.mail else 0
-        return np.array([self.pos.x/8, self.pos.y/8, mail/9, self.battery/50], dtype=np.float32) if self.with_battery \
+        return np.array([self.pos.x/8, self.pos.y/8, mail/9, self.battery/10], dtype=np.float32) if self.with_battery \
             else np.array([self.pos.x/8, self.pos.y/8, mail/9], dtype=np.float32)
     
     @property
@@ -401,7 +405,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.front
         self.pos.robot = self
-        self.battery -= 1
+        self.inner_battery -= 1
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
@@ -429,7 +433,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.back
         self.pos.robot = self
-        self.battery -= 1
+        self.inner_battery -= 1
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
@@ -457,7 +461,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.right
         self.pos.robot = self
-        self.battery -= 1
+        self.inner_battery -= 1
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
@@ -485,7 +489,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.left
         self.pos.robot = self
-        self.battery -= 1
+        self.inner_battery -= 1
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
@@ -531,7 +535,7 @@ class Robot(pygame.sprite.Sprite):
         Charge.
         """
         # we assume this action is legal.
-        self.battery += BATERRY_UP_PER_STEP
+        self.inner_battery += STEP_PER_BATTERY*BATTERY_UP_PER_STEP
     
     def reset(self, pos: Cell) -> None:
         """
@@ -541,7 +545,7 @@ class Robot(pygame.sprite.Sprite):
         self.pos.robot = self
         self.mail = None
         self.count_mail = 0
-        self.battery = MAXIMUM_ROBOT_BATTERY
+        self.inner_battery = STEP_PER_BATTERY*MAXIMUM_ROBOT_BATTERY
         if self.render_mode == 'human':
             self.rect = self.next_rect
 
@@ -574,7 +578,7 @@ class Robot(pygame.sprite.Sprite):
 
         if action == Action.DO_NOTHING:
             # robot with high battery can't stand in the blue cell
-            if self.pos.color == 'b' and self.battery >= MAXIMUM_ROBOT_BATTERY - BATERRY_UP_PER_STEP:
+            if self.pos.color == 'b' and self.battery >= MAXIMUM_ROBOT_BATTERY - 1:
                 return False
             # robot without mail can't stand in the yellow cell
             if self.pos.color == 'y' and not self.mail:
@@ -594,7 +598,7 @@ class Robot(pygame.sprite.Sprite):
         
         if action == Action.GO_AHEAD:
             # robot can't move if battery is exhausted
-            if not self.battery:
+            if not self.inner_battery:
                 return False
             # if robot is charging, it can't move until battery is nearly full
             if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
@@ -623,7 +627,7 @@ class Robot(pygame.sprite.Sprite):
 
         if action == Action.GO_BACK:
             # robot can't move if battery is exhausted
-            if not self.battery:
+            if not self.inner_battery:
                 return False
             # if robot is charging, it can't move until battery is nearly full
             if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
@@ -652,7 +656,7 @@ class Robot(pygame.sprite.Sprite):
 
         if action == Action.TURN_LEFT:
             # robot can't move if battery is exhausted
-            if not self.battery:
+            if not self.inner_battery:
                 return False
             # if robot is charging, it can't move until battery is nearly full
             if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
@@ -681,7 +685,7 @@ class Robot(pygame.sprite.Sprite):
                 
         if action == Action.TURN_RIGHT:
             # robot can't move if battery is exhausted
-            if not self.battery:
+            if not self.inner_battery:
                 return False
             # if robot is charging, it can't move until battery is nearly full
             if self.pos.color == 'b' and self.battery < PERCENT_BATTERY_TO_LEAVE*MAXIMUM_ROBOT_BATTERY:
