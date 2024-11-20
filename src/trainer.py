@@ -200,7 +200,7 @@ class MultiAgentTrainer:
     @staticmethod
     def plot_stats(episodes: list[int], rewards: list[float]) -> None:
         fig, axes = plt.subplots(1, 1, figsize=(6, 4))
-        axes.plot(np.array(episodes), np.array(rewards), marker='o', color='b', label='reward')
+        axes.plot(np.array(episodes), np.array(rewards), marker='.', color='b', label='reward')
         axes.set_xlabel("Number of collected episodes")
         axes.set_ylabel("Reward metric")
         axes.set_title("Performance of agent through episode.")
