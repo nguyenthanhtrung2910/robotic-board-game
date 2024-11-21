@@ -71,7 +71,7 @@ class DQNAgent(RLAgent):
                     )
                 )
     
-    def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> None:
+    def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
         num_gradient_steps = round(self.update_per_step * num_collected_steps)
         if num_gradient_steps == 0:
             raise ValueError(
@@ -80,7 +80,8 @@ class DQNAgent(RLAgent):
             )
         for _ in range(num_gradient_steps):
             self.policy.update(sample_size=batch_size, buffer=self.memory)
-
+        return num_gradient_steps
+    
     def get_action(self, obs: dict[str, np.ndarray]) -> int:
         mask = obs['action_mask'].reshape(1,-1)
         obs = obs['observation'].reshape(1, -1)

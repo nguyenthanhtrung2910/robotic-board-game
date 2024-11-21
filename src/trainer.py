@@ -91,6 +91,7 @@ class MultiAgentTrainer:
         num_envs = self.train_env.env_num
         num_collected_steps = 0
         num_collected_episodes = 0
+        num_gradient_steps = 0
         last_num_collected_steps = num_collected_steps
         last_num_collected_episodes = num_collected_episodes
         # lists to record data for plotting
@@ -157,7 +158,7 @@ class MultiAgentTrainer:
                             # with policy_within_training_step(agent.policy), torch_train_mode(agent.policy):
                             agent.policy.train()
                             num_bonus_steps = num_collected_steps-last_num_collected_steps
-                            agent.policy_update_fn(self.batch_size, num_bonus_steps)
+                            num_gradient_steps += agent.policy_update_fn(self.batch_size, num_bonus_steps)
                             agent.policy.eval()
                     last_num_collected_steps=num_collected_steps
 
@@ -194,6 +195,7 @@ class MultiAgentTrainer:
             'reward_metric_stats': rewards,
             'num_collected_steps': num_collected_steps,
             'num_collected_episodes': num_collected_episodes,
+            'num_gradient_steps': num_gradient_steps,
             'training_time': finish - start,
             }
     

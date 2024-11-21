@@ -52,7 +52,7 @@ class RLAgent(BaseAgent):
             return act
         
         @abstractmethod
-        def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> None:
+        def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
             """
             Update policy.
             """

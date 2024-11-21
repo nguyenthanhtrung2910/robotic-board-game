@@ -21,9 +21,12 @@ parser.add_argument(
 
 args = parser.parse_args()
 def set_class(config: dict[str, Any], key: str) -> None:
-    class_path = config[key]
-    module_path, class_name = class_path.rsplit(".", 1)
-    config[key] = getattr(importlib.import_module(module_path), class_name)
+    try:
+        class_path = config[key]
+        module_path, class_name = class_path.rsplit(".", 1)
+        config[key] = getattr(importlib.import_module(module_path), class_name)
+    except KeyError:
+        pass
 
 with open(args.config, "r") as file:
     yaml_content =re.sub(r"(agent\d:)", r"\1 !agent", file.read())\
@@ -40,19 +43,17 @@ def agent_constructor(loader: Loader, node: MappingNode):
     count = data.pop('count', 1)
     data.pop('memory_class', None)
     data.pop('memory_args', None)
-    try:
-        set_class(data, 'agent_class')
-        agent_type = data.pop('agent_class')
-        set_class(data, 'model_class')
-        set_class(data, 'policy_class')
-        set_class(data['model_args'], 'norm_layer')
-        set_class(data['model_args'], 'activation')
-        set_class(data['model_args'], 'linear_layer')
-        set_class(data['model_args']['dueling_param'], 'norm_layer')
-        set_class(data['model_args']['dueling_param'], 'activation')
-        set_class(data['model_args']['dueling_param'], 'linear_layer')
-    except KeyError:
-        pass
+    set_class(data, 'agent_class')
+    agent_type = data.pop('agent_class')
+    set_class(data, 'model_class')
+    set_class(data, 'policy_class')
+    set_class(data['model_args'], 'norm_layer')
+    set_class(data['model_args'], 'activation')
+    set_class(data['model_args'], 'linear_layer')
+    for i in range(2):
+        set_class(data['model_args']['dueling_param'][i], 'norm_layer')
+        set_class(data['model_args']['dueling_param'][i], 'activation')
+        set_class(data['model_args']['dueling_param'][i], 'linear_layer')
     return [agent_type(**data)]*count
   
 yaml.add_constructor('!agent', agent_constructor) 
