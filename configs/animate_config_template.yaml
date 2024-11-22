@@ -29,7 +29,7 @@ agent1:
     estimation_step: 30
     target_update_freq: 500
     is_double: true
-  update_per_step: 0.05
+  update_per_step: 0.02
   learning_rate: 0.0001
   trained_ckpt: checkpoints/best.pth
 
