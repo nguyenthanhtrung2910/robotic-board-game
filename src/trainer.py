@@ -13,7 +13,7 @@ from tianshou.env import DummyVectorEnv
 #     torch_train_mode,
 #     )
 
-from src.agents.base_agent import RLAgent
+from src.agents.rl_agent import RLAgent
 from src.game.robotic_board_game import Game
 
 class MultiAgentTrainer:

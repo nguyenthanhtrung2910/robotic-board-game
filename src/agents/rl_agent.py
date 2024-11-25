@@ -1,17 +1,16 @@
 from __future__ import annotations
-from typing import Any
+from abc import abstractmethod
 
 import numpy as np
 import torch
-from torch import nn
 from tianshou.data import Batch, VectorReplayBuffer
-from tianshou.policy import DQNPolicy
+from tianshou.policy.base import BasePolicy
 # from tianshou.utils.net.discrete import NoisyLinear
 # from tianshou.data.types import RolloutBatchProtocol
 # from tianshou.policy.modelfree.dqn import TDQNTrainingStats, DQNPolicy
 # from tianshou.policy.modelfree.c51 import TC51TrainingStats, C51Policy
 
-from src.agents.base_agent import RLAgent
+from src.agents.base_agent import BaseAgent
 
 # class NoisyDQNPolicy(DQNPolicy[TDQNTrainingStats]):
 #     """
@@ -40,37 +39,41 @@ from src.agents.base_agent import RLAgent
 #                 if isinstance(module, NoisyLinear):
 #                     module.sample()
 #         return super().learn(batch, *args, **kwargs)
-    
-class DQNAgent(RLAgent):
-    def __init__(
+
+class RLAgent(BaseAgent):
+        def __init__(
             self,
-            model_class: type[nn.Module],
-            model_args: dict[str, Any],
-            policy_class: type[DQNPolicy],
-            policy_args: dict[str, Any],
-            
-            memory_class: type[VectorReplayBuffer]|None = None,
-            memory_args: dict[str, Any]|None = None,
+            policy: BasePolicy,
+            memory: VectorReplayBuffer|None = None,
+            # how many times policy samples and learns, using only in offpolicy
             update_per_step: float = 1.0,
-            learning_rate: float = 0.0001,
-            trained_ckpt: str|None = None,
-        ):
-        model = model_class(**model_args)
-        policy_args.update({
-            'model': model,
-            'optim': torch.optim.Adam(model.parameters(), lr=learning_rate),
-            })
-        super().__init__(policy_class, policy_args, memory_class, memory_args, update_per_step)
-        self.policy.to(model_args.get('device', 'cpu'))
-        if trained_ckpt:
-            self.policy.load_state_dict(
-                torch.load(
-                    f=trained_ckpt, 
-                    weights_only=True, 
-                    map_location=torch.device(model_args.get('device', 'cpu')),
-                    )
-                )
-    
+            # how many times policy learns on sampled data, using only in onpolicy
+            repeat_per_collect: float = 1000,
+        ) -> None:
+            
+            self.policy = policy
+            self.memory = memory if memory is not None else None
+            self.update_per_step = update_per_step
+            self.repeat_per_collect = repeat_per_collect
+
+            # policy should be always in eval mode to inference action
+            # training mode is turned on only within context manager
+            self.policy.eval()
+        
+        def infer_act(self, obs_batch: Batch, exploration_noise: bool) -> np.ndarray:
+            with torch.no_grad():
+                act = self.policy(obs_batch).act
+                if exploration_noise:
+                    act = self.policy.exploration_noise(act, obs_batch)
+            return act
+        
+        @abstractmethod
+        def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
+            """
+            Update policy.
+            """  
+
+class OffPolicyAgent(RLAgent):
     def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
         num_gradient_steps = round(self.update_per_step * num_collected_steps)
         if num_gradient_steps == 0:
