@@ -406,7 +406,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.front
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
@@ -434,7 +434,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.back
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
@@ -462,7 +462,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.right
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
@@ -490,7 +490,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.left
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'

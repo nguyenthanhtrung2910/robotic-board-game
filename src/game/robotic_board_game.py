@@ -2,6 +2,7 @@
 Base class for our game
 """
 import random
+import os
 import logging as log
 from typing import Any
 
@@ -44,6 +45,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
 
         self.board = game_components.Board(colors_map=colors_map, targets_map=targets_map)
         self.required_mail = required_mail
+        self.robot_colors = robot_colors
         self.max_step = max_step
         self.num_robots_per_player = num_robots_per_player
         self.num_robots = num_robots_per_player * len(robot_colors)
@@ -155,6 +157,12 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                         CELL_BATTERY_SIZE[0],
                         CELL_BATTERY_SIZE[1])
                     pygame.draw.rect(self.background, (0, 0, 0), rect, 1)
+            # draw progress bar which show count of collected mails
+            bar_background = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'loading_bar_background.png'))
+            bar_background =  pygame.transform.scale(bar_background, (3*CELL_SIZE[0],  CELL_SIZE[0]/2))
+            for i,_ in enumerate(self.robot_colors):
+                self.background.blit(bar_background, (15*CELL_SIZE[0], CELL_SIZE[1]+i*CELL_SIZE[0]*1.5/2))
+
             # clock to tuning fps        
             self.clock = pygame.time.Clock()
     
@@ -309,7 +317,9 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
             
         acting_robot = self.robots[self.agent_selection]
         pygame.draw.rect(self.screen, COLOR2RBG[acting_robot.color], acting_robot.rect, 3)
-
+        for i,color in enumerate(self.robot_colors):
+            pygame.draw.rect(self.screen, COLOR2RBG[color], (15*CELL_SIZE[0]+3, CELL_SIZE[1]+i*CELL_SIZE[0]*1.5/2+3, \
+                                                             (3*CELL_SIZE[0]-6)*self.sum_count_mail(color)/self.required_mail, CELL_SIZE[0]/2-6))
         self.clock.tick(self.metadata["render_fps"])
         pygame.display.update()
     
