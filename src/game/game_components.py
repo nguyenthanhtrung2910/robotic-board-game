@@ -157,12 +157,12 @@ class Cell:
         # draw rectangle of the cell
         pygame.draw.rect(
             surface, COLOR2RBG[self.color],
-            ((self.x + 5) * CELL_SIZE[0],
+            ((self.x + 1) * CELL_SIZE[0],
              (self.y + 1) * CELL_SIZE[1], CELL_SIZE[0], CELL_SIZE[1]))
         # draw border
         pygame.draw.rect(
             surface, (0, 0, 0),
-            ((self.x + 5) * CELL_SIZE[0],
+            ((self.x + 1) * CELL_SIZE[0],
              (self.y + 1) * CELL_SIZE[1], CELL_SIZE[0], CELL_SIZE[1]), 1)
         # draw target number if it isn't 0 
         if self.target:
@@ -170,7 +170,7 @@ class Cell:
             target_image = target_font.render(str(self.target), True,
                                               (0, 0, 0))
             surface.blit(target_image,
-                         ((self.x + 5) * CELL_SIZE[0] +
+                         ((self.x + 1) * CELL_SIZE[0] +
                           (CELL_SIZE[0] - target_image.get_width()) / 2,
                           (self.y + 1) * CELL_SIZE[1] +
                           (CELL_SIZE[1] - target_image.get_height()) / 2))
@@ -310,7 +310,7 @@ class Robot(pygame.sprite.Sprite):
             self.__set_image()
             self.__set_number_image()
             self.rect = self.image.get_rect()
-            self.rect.topleft = ((self.pos.x + 5) * CELL_SIZE[0],
+            self.rect.topleft = ((self.pos.x + 1) * CELL_SIZE[0],
                                  (self.pos.y + 1) * CELL_SIZE[1])
 
     def __set_image(self) -> None:
@@ -378,7 +378,7 @@ class Robot(pygame.sprite.Sprite):
         Rectangle to define where to draw robot.
         """
         rect = self.image.get_rect()
-        rect.topleft = ((self.pos.x + 5) * CELL_SIZE[0],
+        rect.topleft = ((self.pos.x + 1) * CELL_SIZE[0],
                         (self.pos.y + 1) * CELL_SIZE[1])
         return rect
     
@@ -406,7 +406,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.front
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
@@ -434,7 +434,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.back
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
@@ -462,7 +462,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.right
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
@@ -490,7 +490,7 @@ class Robot(pygame.sprite.Sprite):
             self.pos.generate_mail(self.sprites_group, self.render_mode)
         self.pos = self.pos.left
         self.pos.robot = self
-        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 1 else BATTERY_PER_STEP/2
+        self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
                 f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
@@ -747,7 +747,7 @@ class Mail(pygame.sprite.Sprite):
             self.image.blit(mail_number_images,
                             (0.5 * CELL_SIZE[0], 0.2 * CELL_SIZE[1]))
             self.rect = self.image.get_rect()
-            self.rect.topleft = ((pos.x + 5) * CELL_SIZE[0],
+            self.rect.topleft = ((pos.x + 1) * CELL_SIZE[0],
                                  (pos.y + 1) * CELL_SIZE[1])
     
 class Clock:
