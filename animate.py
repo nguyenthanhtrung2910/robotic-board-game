@@ -38,7 +38,7 @@ parser.add_argument("--required_mail",
 parser.add_argument("--robot_colors",
                     help="chose robot colors",
                     nargs="+",
-                    choices=['r', 'b', 'o', 'gr', 'y'],
+                    choices=['b', 'r', 'p', 'gr', 'o', 'pi'],
                     default=['r', 'b'])
 parser.add_argument("--num_robots_per_player",
                     help="chose number robots per player. It shouldn't more than 6",

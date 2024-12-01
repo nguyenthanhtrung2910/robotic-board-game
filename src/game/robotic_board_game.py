@@ -139,7 +139,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                     5*CELL_SIZE[1] + i * CELL_BATTERY_SIZE[1], 
                     CELL_BATTERY_SIZE[0],
                     CELL_BATTERY_SIZE[1])
-                pygame.draw.circle(self.background, COLOR2RBG[robot.color], rect.center, CELL_BATTERY_SIZE[0] / 2 * 0.8, 0)
+                pygame.draw.circle(self.background, ROBOT_COLORS[robot.color], rect.center, CELL_BATTERY_SIZE[0] / 2 * 0.8, 0)
                 pygame.draw.rect(self.background, (0,0,0), rect, 1)
                 self.background.blit(
                     images_for_baterry_bar[robot.index - 1],
@@ -310,15 +310,15 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
 
         for i, robot in enumerate(self.robots.values()):
             pygame.draw.circle(
-                self.screen, COLOR2RBG[robot.color],
+                self.screen, ROBOT_COLORS[robot.color],
                 (10*CELL_SIZE[0] + (5*CELL_SIZE[0] - (MAXIMUM_ROBOT_BATTERY+2)*CELL_BATTERY_SIZE[0])/2 + (robot.battery + 1.5) * CELL_BATTERY_SIZE[0],
                 5*CELL_SIZE[1] + (i + 0.5) * CELL_BATTERY_SIZE[1]),
                 CELL_BATTERY_SIZE[0] / 2 * 0.8, 0)
             
         acting_robot = self.robots[self.agent_selection]
-        pygame.draw.rect(self.screen, COLOR2RBG[acting_robot.color], acting_robot.rect, 3)
+        pygame.draw.rect(self.screen, ROBOT_COLORS[acting_robot.color], acting_robot.rect, 3)
         for i,color in enumerate(self.robot_colors):
-            pygame.draw.rect(self.screen, COLOR2RBG[color], (11*CELL_SIZE[0]+3, CELL_SIZE[1]+i*1.5*CELL_SIZE[1]/2+3, \
+            pygame.draw.rect(self.screen, ROBOT_COLORS[color], (11*CELL_SIZE[0]+3, CELL_SIZE[1]+i*1.5*CELL_SIZE[1]/2+3, \
                                                              (3*CELL_SIZE[0]-6)*self.sum_count_mail(color)/self.required_mail, CELL_SIZE[1]/2-6))
         self.clock.tick(self.metadata["render_fps"])
         pygame.display.update()

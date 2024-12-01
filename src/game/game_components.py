@@ -156,7 +156,7 @@ class Cell:
         """
         # draw rectangle of the cell
         pygame.draw.rect(
-            surface, COLOR2RBG[self.color],
+            surface, MAP_COLORS[self.color],
             ((self.x + 1) * CELL_SIZE[0],
              (self.y + 1) * CELL_SIZE[1], CELL_SIZE[0], CELL_SIZE[1]))
         # draw border
@@ -314,17 +314,20 @@ class Robot(pygame.sprite.Sprite):
                                  (self.pos.y + 1) * CELL_SIZE[1])
 
     def __set_image(self) -> None:
-        assert self.color in COLOR_MAP.keys(), "Colors of the robot can only be 'b', 'r', 'y', 'gr', 'o'"
         if self.color == 'b':
             self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'blue_robot.png'))
         elif self.color == 'r':
             self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'red_robot.png'))
-        elif self.color == 'y':
-            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'yellow_robot.png'))
+        elif self.color == 'p':
+            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'purple_robot.png'))
         elif self.color == 'gr':
             self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'green_robot.png'))
         elif self.color == 'o':
             self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'orange_robot.png'))
+        elif self.color == 'pi':
+            self.image = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'pink_robot.png'))
+        else:
+            raise ValueError("Colors of the robot can only be 'b', 'r', 'p', 'gr', 'o', 'pi'")
         self.image = pygame.transform.scale(self.image, CELL_SIZE)
 
     def __set_number_image(self) -> None:
@@ -409,7 +412,7 @@ class Robot(pygame.sprite.Sprite):
         self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go up to position ({self.pos.x},{self.pos.y})'
             )
         if self.pos.color == 'gr':
             self.pick_up()
@@ -437,7 +440,7 @@ class Robot(pygame.sprite.Sprite):
         self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go down to position ({self.pos.x},{self.pos.y})'
             )
         if self.pos.color == 'gr':
             self.pick_up()
@@ -465,7 +468,7 @@ class Robot(pygame.sprite.Sprite):
         self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
             )
         if self.pos.color == 'gr':
             self.pick_up()
@@ -493,7 +496,7 @@ class Robot(pygame.sprite.Sprite):
         self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
             )
         if self.pos.color == 'gr':
             self.pick_up()
@@ -514,7 +517,7 @@ class Robot(pygame.sprite.Sprite):
         self.mail = self.pos.mail
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} pick up mail {self.mail.mail_number}'
             )
 
     def drop_off(self) -> None:
@@ -528,7 +531,7 @@ class Robot(pygame.sprite.Sprite):
         self.count_mail += 1
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR_MAP[self.color]:>5} robot {self.index} drop off mail {deliveried_mail.mail_number}'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} drop off mail {deliveried_mail.mail_number}'
             )
 
     def charge(self) -> None:
@@ -591,7 +594,7 @@ class Robot(pygame.sprite.Sprite):
             if any([cell.color == 'b' for cell in self.pos.neighbors]) and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
             # robot, stucked between two yellow cells in the edge of the board, can't stand
-            if sum([int(cell.color == 'y') for cell in self.pos.neighbors]) == 2:
+            if sum([int(cell.color == 'y' or cell.color == 'r') for cell in self.pos.neighbors]) == 2:
                 return False
             # robot can't stand constantly
             if self.pos.color != 'b' and self.stand_times >= 5:
