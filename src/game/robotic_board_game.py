@@ -39,6 +39,7 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                  log_to_file: bool = False) -> None:
         
         super().__init__()
+        assert len(robot_colors) >= 2 
         self.game_clock = game_components.Clock()
         self.robot_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.mail_sprites: pygame.sprite.Group = pygame.sprite.Group()
@@ -260,6 +261,8 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         self.steps_to_change_turn -= 1
         if self.steps_to_change_turn == 0:
             self.agent_selection = self._agent_selector.next() 
+            if self.render_mode == "human":
+                self.render()
             self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_num_steps else 1
             # return previous agent's observation as next observation if game changes turn
             return (
@@ -328,53 +331,51 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
 
     def watch(self) -> None:
         running = True
+        self.render()
         while running :
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-            self.render()
 
     def run(self, agents: list[BaseAgent]) -> tuple[str | None, int]:
         
-        assert len(agents) <= len(self.agents)
+        assert len(agents) == len(self.agents)
         self.reset()
-        num_robots_for_people = len(self.agents) - len(agents)
-        if num_robots_for_people > 0 and self.render_mode is None:
+        if any(agent is None for agent in agents) and self.render_mode is None:
             raise ValueError("Person-player can't play without rendering animation")
-        agents: dict[str, BaseAgent] = {name: a for name, a in zip(self.agents[num_robots_for_people:], agents)}
-
+        agents: dict[str, BaseAgent] = {name: a for name, a in zip(self.agents, agents)}
         running = True
         while running and not self.terminations[self.agent_selection] and not self.truncations[self.agent_selection]:
+            if agents[self.agent_selection] is not None:
+                obs = self.observe(self.agent_selection)
+                action = agents[self.agent_selection].get_action(obs)  
+                self.step(action)
             # Human behaviors
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
-
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_r:
                         self.reset()
                     if event.key == pygame.K_SPACE:
-                        if not any(self.robots[self.agent_selection].mask) or self.robots[self.agent_selection].is_legal_move(game_components.Action.DO_NOTHING):
+                        mask = self.robots[self.agent_selection].mask
+                        if not any(mask) or mask[0]:
                             self.step(game_components.Action.DO_NOTHING)
                     if event.key == pygame.K_UP:
-                        if not any(self.robots[self.agent_selection].mask) or self.robots[self.agent_selection].is_legal_move(game_components.Action.GO_AHEAD):
+                        mask = self.robots[self.agent_selection].mask
+                        if not any(mask) or mask[1]:
                             self.step(game_components.Action.GO_AHEAD)
                     if event.key == pygame.K_DOWN:
-                        if not any(self.robots[self.agent_selection].mask) or self.robots[self.agent_selection].is_legal_move(game_components.Action.GO_BACK):
+                        mask = self.robots[self.agent_selection].mask
+                        if not any(mask) or mask[2]:
                             self.step(game_components.Action.GO_BACK)
-                    if event.key == pygame.K_RIGHT:
-                        if not any(self.robots[self.agent_selection].mask) or self.robots[self.agent_selection].is_legal_move(game_components.Action.TURN_RIGHT):
-                            self.step(game_components.Action.TURN_RIGHT)
                     if event.key == pygame.K_LEFT:
-                        if not any(self.robots[self.agent_selection].mask) or self.robots[self.agent_selection].is_legal_move(game_components.Action.TURN_LEFT):
+                        mask = self.robots[self.agent_selection].mask
+                        if not any(mask) or mask[3]:
                             self.step(game_components.Action.TURN_LEFT)
-
-            if self.agents.index(self.agent_selection) - num_robots_for_people >= 0:
-                obs = self.observe(self.agent_selection)
-                action = agents[self.agent_selection].get_action(obs)  
-                self.step(action)
-            else:
-                if self.render_mode == "human":
-                    self.render()
+                    if event.key == pygame.K_RIGHT:
+                        mask = self.robots[self.agent_selection].mask
+                        if not any(mask) or mask[4]:
+                            self.step(game_components.Action.TURN_RIGHT)
 
         return self.winner, self.game_clock.now

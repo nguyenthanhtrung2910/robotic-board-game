@@ -18,7 +18,8 @@ COLOR2STR = {
     'r': 'Red',
     'b': 'Blue',
     'gr': 'Green',
-    'y': 'Yellow',
+    'p': 'Purple',
+    'pi': 'Pink',
     'o': 'Orange'
 }
 CELL_SIZE = (48, 48)
