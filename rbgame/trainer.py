@@ -13,10 +13,10 @@ from tianshou.env import DummyVectorEnv
 #     torch_train_mode,
 #     )
 
-from src.agents.rl_agent import RLAgent
-from src.game.robotic_board_game import Game
+from rbgame.agent.rl_agent import RLAgent
+from rbgame.game.game import RoboticBoardGame
 
-class MultiAgentTrainer:
+class DecentralizedTrainer:
     def __init__(
             self,
             env_args: dict[str, Any],
@@ -45,7 +45,7 @@ class MultiAgentTrainer:
             'log_to_file': False,
             })
         def make_env():
-            return Game(**env_args)
+            return RoboticBoardGame(**env_args)
         self.train_env = DummyVectorEnv([make_env for _ in range(num_train_envs)])
         self.test_env = DummyVectorEnv([make_env for _ in range(num_test_envs)])
 

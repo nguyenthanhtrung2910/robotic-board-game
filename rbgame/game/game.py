@@ -13,12 +13,12 @@ import gymnasium
 from gymnasium import spaces
 from pettingzoo import utils
 
-from src.game import game_components
-from src.game.consts import *
-from src.agents.base_agent import BaseAgent
+from rbgame.game import components
+from rbgame.game.consts import *
+from rbgame.agent.base_agent import BaseAgent
 pygame.init()
 
-class Game(gymnasium.Env, pettingzoo.AECEnv):
+class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
 
     """
     A class representing our game. The game can be configured with difference parameters.
@@ -40,11 +40,11 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
         
         super().__init__()
         assert len(robot_colors) >= 2 
-        self.game_clock = game_components.Clock()
+        self.game_clock = components.Clock()
         self.robot_sprites: pygame.sprite.Group = pygame.sprite.Group()
         self.mail_sprites: pygame.sprite.Group = pygame.sprite.Group()
 
-        self.board = game_components.Board(colors_map=colors_map, targets_map=targets_map)
+        self.board = components.Board(colors_map=colors_map, targets_map=targets_map)
         self.required_mail = required_mail
         self.robot_colors = robot_colors
         self.max_step = max_step
@@ -56,14 +56,14 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
 
         robot_cells_init = random.sample(self.board.white_cells,
                                          k=self.num_robots)
-        robots: list[game_components.Robot] = [
-                game_components.Robot(
+        robots: list[components.Robot] = [
+                components.Robot(
                     robot_cells_init[num_robots_per_player * j + i],
                     i + 1, robot_color, self.mail_sprites, self.game_clock, with_battery=self.with_battery, render_mode=render_mode, log_to_file=log_to_file)
             for j, robot_color in enumerate(robot_colors)
             for i in range(num_robots_per_player)
         ]
-        self.robots: dict[str, game_components.Robot] = {robot.color + str(robot.index):robot for robot in robots}
+        self.robots: dict[str, components.Robot] = {robot.color + str(robot.index):robot for robot in robots}
 
         # generate new mail in green cells
         for green_cell in self.board.green_cells:
@@ -360,22 +360,22 @@ class Game(gymnasium.Env, pettingzoo.AECEnv):
                     if event.key == pygame.K_SPACE:
                         mask = self.robots[self.agent_selection].mask
                         if not any(mask) or mask[0]:
-                            self.step(game_components.Action.DO_NOTHING)
+                            self.step(components.Action.DO_NOTHING)
                     if event.key == pygame.K_UP:
                         mask = self.robots[self.agent_selection].mask
                         if not any(mask) or mask[1]:
-                            self.step(game_components.Action.GO_AHEAD)
+                            self.step(components.Action.GO_AHEAD)
                     if event.key == pygame.K_DOWN:
                         mask = self.robots[self.agent_selection].mask
                         if not any(mask) or mask[2]:
-                            self.step(game_components.Action.GO_BACK)
+                            self.step(components.Action.GO_BACK)
                     if event.key == pygame.K_LEFT:
                         mask = self.robots[self.agent_selection].mask
                         if not any(mask) or mask[3]:
-                            self.step(game_components.Action.TURN_LEFT)
+                            self.step(components.Action.TURN_LEFT)
                     if event.key == pygame.K_RIGHT:
                         mask = self.robots[self.agent_selection].mask
                         if not any(mask) or mask[4]:
-                            self.step(game_components.Action.TURN_RIGHT)
+                            self.step(components.Action.TURN_RIGHT)
 
         return self.winner, self.game_clock.now

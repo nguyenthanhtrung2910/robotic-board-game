@@ -9,13 +9,14 @@ import pygame
 import pygame_menu
 pygame.init()
 
-from src.game.robotic_board_game import Game
-from src.agents.base_agent import BaseAgent
-from src.agents.rl_agent import OffPolicyAgent
-from src.agents.astar_agent import AStarAgent
-from src.game.consts import *
+from rbgame.game.game import RoboticBoardGame
+from rbgame.game.consts import *
+from rbgame.agent.base_agent import BaseAgent
+from rbgame.agent.rl_agent import OffPolicyAgent
+from rbgame.agent.astar_agent import AStarAgent
 
 surface = pygame.display.set_mode((15*CELL_SIZE[0], 11*CELL_SIZE[1]))
+pygame.display.set_caption('Robotics Board Game Menu')
 main_menu = pygame_menu.Menu(
     'Welcome', 15*CELL_SIZE[0], 11*CELL_SIZE[1],
     theme=pygame_menu.themes.THEME_BLUE,
@@ -85,7 +86,7 @@ def run_game() -> None:
                                      env_args['num_robots_per_player'], 
                                      env_args['num_robots_per_player']*len(env_args['robot_colors']),
                                      env_args['with_battery']))
-    game = Game(**env_args)
+    game = RoboticBoardGame(**env_args)
     main_menu.close()
     winner, _ = game.run(agents)
     if winner:

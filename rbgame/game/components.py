@@ -9,7 +9,7 @@ import enum
 import numpy as np
 import pygame
 
-from src.game.consts import *
+from rbgame.game.consts import *
 
 class Action(enum.IntEnum):
     '''
@@ -628,6 +628,12 @@ class Robot(pygame.sprite.Sprite):
             # robot with high battery can't move to blue cell
             if self.pos.front.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
+            if self.pos.color != 'y' and sum([int(cell.color == 'y' or cell.color == 'r') for cell in self.pos.front.neighbors]) == 2:
+                if not self.mail:
+                    return False
+                if self.mail.mail_number not in [cell.target for cell in self.pos.front.neighbors]:
+                    return False
+
 
         if action == Action.GO_BACK:
             # robot can't move if battery is exhausted
@@ -657,6 +663,12 @@ class Robot(pygame.sprite.Sprite):
             # robot with high battery can't move to blue cell
             if self.pos.back.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
+            # robot avoid go to corner if don't need drop off mail
+            if self.pos.color != 'y' and sum([int(cell.color == 'y' or cell.color == 'r') for cell in self.pos.back.neighbors]) == 2:
+                if not self.mail:
+                    return False
+                if self.mail.mail_number not in [cell.target for cell in self.pos.back.neighbors]:
+                    return False
 
         if action == Action.TURN_LEFT:
             # robot can't move if battery is exhausted
@@ -686,7 +698,12 @@ class Robot(pygame.sprite.Sprite):
             # robot with high battery can't move to blue cell
             if self.pos.left.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
-                
+            if self.pos.color != 'y' and sum([int(cell.color == 'y' or cell.color == 'r') for cell in self.pos.left.neighbors]) == 2:
+                if not self.mail:
+                    return False
+                if self.mail.mail_number not in [cell.target for cell in self.pos.left.neighbors]:
+                    return False
+                               
         if action == Action.TURN_RIGHT:
             # robot can't move if battery is exhausted
             if not self.battery:
@@ -715,7 +732,11 @@ class Robot(pygame.sprite.Sprite):
             # robot with high battery can't move to blue cell
             if self.pos.right.color == 'b' and self.battery > PERCENT_BATTERY_TO_CHARGE*MAXIMUM_ROBOT_BATTERY:
                 return False
-                
+            if self.pos.color != 'y' and sum([int(cell.color == 'y' or cell.color == 'r') for cell in self.pos.right.neighbors]) == 2:
+                if not self.mail:
+                    return False
+                if self.mail.mail_number not in [cell.target for cell in self.pos.right.neighbors]:
+                    return False 
         return True
     
     @property

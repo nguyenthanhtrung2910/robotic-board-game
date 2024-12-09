@@ -4,8 +4,8 @@ import csv
 import queue
 
 import numpy as np
-from gymnasium import spaces
-from src.agents.base_agent import BaseAgent
+
+from rbgame.agent.base_agent import BaseAgent
 
 class Vertex:
 

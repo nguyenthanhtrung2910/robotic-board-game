@@ -10,7 +10,7 @@ from tianshou.policy.base import BasePolicy
 # from tianshou.policy.modelfree.dqn import TDQNTrainingStats, DQNPolicy
 # from tianshou.policy.modelfree.c51 import TC51TrainingStats, C51Policy
 
-from src.agents.base_agent import BaseAgent
+from rbgame.agent.base_agent import BaseAgent
 
 # class NoisyDQNPolicy(DQNPolicy[TDQNTrainingStats]):
 #     """
