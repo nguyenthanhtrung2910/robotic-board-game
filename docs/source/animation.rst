@@ -31,8 +31,8 @@ to edit it:
 
    Setting screen
 
-All players use :doc:`DQN agent <rl_agent>` by default. You can chose **astar** if you want to 
-use :doc:`agent using A* path finding algorithm <astar_agent>` or **person** if you want 
+All players use :doc:`DQN agent <rl_agent_doc>` by default. You can chose **astar** if you want to 
+use :doc:`agent using A* path finding algorithm <astar_agent_doc>` or **person** if you want 
 play by yourself.
 
 Click **OK** to back to main menu and now click **Play** to animate with new configuration:

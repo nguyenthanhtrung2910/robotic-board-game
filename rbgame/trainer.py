@@ -17,28 +17,53 @@ from rbgame.agent.rl_agent import RLAgent
 from rbgame.game.game import RoboticBoardGame
 
 class DecentralizedTrainer:
+    """
+    A decentralized trainer.
+
+    :param env_args: Arguments for enviroment.
+    :param num_train_env: Number enviroments used in train phase.
+    :param num_test_env: Number enviroments used in test phase.
+    :param batch_size: Batch size. 
+    :param update_freq: After how many steps do a policy update, now only update by steps.
+    :param test_freq: After how many episodes do a test.
+    :param episodes_per_train: Total number episodes of training. 
+    :param episodes_per_test: Total number episodes in a test. 
+    :param train_fn: A hook called after each :code:`num_train_env` episodes during training.
+                     It can be used to perform custom additional operations,
+                     with the signature :code:`f(num_collected_episodes: int, num_collected_steps: int) -> None`.
+    :param test_fn: A hook called after each :code:`num_test_env` episodes during testing.
+                    It can be used to perform custom additional operations, 
+                    with the signature :code:`f(num_collected_episodes: int, num_collected_steps: int) -> None`.
+    :param save_best_fn: A hook called when the reward metric get better during training.
+                         with the signature :code:`f(episode_to_call: int) -> None`.
+    :param save_last_fn: A hook called when training has finished.
+    :param stop_fn: A hook called after each :code:`num_train_env` episodes during training 
+                    with the signature :code:`f(reward_to_stop: int, episode_to_stop: int) -> bool`.
+    :param reward_metric: A function with signature :code:`f(rewards: np.ndarray with shape 
+                          (num_episode, agent_num)) -> a scalar np.ndarray`. We need to return a single scalar 
+                          to monitor training. This function specifies what is the desired metric, 
+                          e.g., the reward of agent 1 or the average reward over all agents.
+    """
     def __init__(
-            self,
-            env_args: dict[str, Any],
-            
-            num_train_envs: int = 16,
-            num_test_envs: int = 16,
-            batch_size: int = 64,
-            # after how many steps do update, now only update by steps
-            update_freq: int = 100,
-            # after how many episodes do a test
-            test_freq: int = 100,
-            episodes_per_train: int = 5000,
-            episodes_per_test: int = 50,
-            train_fn: Callable[[int, int], None]|None = None,
-            test_fn: Callable[[int, int], None]|None = None,
-            save_best_fn: Callable[[int], None]|None = None,
-            save_last_fn: Callable[[], None]|None = None,
-            stop_fn: Callable[[float, int], bool]|None = None,
-            reward_metric: Callable[[np.ndarray], float]|None = None,
-            # agent stores in memory transitions of the other or not
-            shared_memory: bool = True,
-        ):
+        self,
+        env_args: dict[str, Any],
+        
+        num_train_envs: int = 16,
+        num_test_envs: int = 16,
+        batch_size: int = 64,
+        update_freq: int = 100,
+        test_freq: int = 100,
+        episodes_per_train: int = 5000,
+        episodes_per_test: int = 50,
+        train_fn: Callable[[int, int], None]|None = None,
+        test_fn: Callable[[int, int], None]|None = None,
+        save_best_fn: Callable[[int], None]|None = None,
+        save_last_fn: Callable[[], None]|None = None,
+        stop_fn: Callable[[float, int], bool]|None = None,
+        reward_metric: Callable[[np.ndarray], float]|None = None,
+        # agent stores in memory transitions of the other or not
+        shared_memory: bool = True,
+    ) -> None:
 
         env_args.update({
             'render_mode': None,
@@ -74,11 +99,18 @@ class DecentralizedTrainer:
             plot: bool=True
         ) -> dict[str, Any]:
         """
-        E - number of enviroments
-        B - collected batch size
-        R - number of running envs 
-        O - observation-vector size
+        Agents play together to learn.
+
+        :param agents: :py:class:`list` of agents, which participate in game.
+        :param learning_mask: A binary vector to define which agent need to learn.
+        :param plot: Plot a graph of metric evolulation and save it. 
+        :return: Training statistic.
         """
+
+        # E - number of enviroments
+        # B - collected batch size
+        # R - number of running envs 
+        # O - observation-vector size
         assert any(learning_mask), 'We need at least one learning agent.'
         assert self.num_agents == len(agents), f'Please provide number of agents is {self.num_agents}'
         assert self.num_agents == len(learning_mask), f'Please provide learning_mask size is {self.num_agents}'
@@ -218,13 +250,19 @@ class DecentralizedTrainer:
             eval_metrics: bool = False,
         ) -> dict[str, Any]:
         """
-        P - number of episodes
-        E - number of enviroments
-        B - collected batch size
-        R - number of running envs
-        O - observation-vector size
-        A - number of agents
+        Test trained agents.
+
+        :param agents: :py:class:`list` of agents, which participate in game.
+        :param eval_metrics: Evaluate some addition metric of game process.
+        :return: Testing statistic.
         """
+
+        # P - number of episodes
+        # E - number of enviroments
+        # B - collected batch size
+        # R - number of running envs
+        # O - observation-vector size
+        # A - number of agents
         assert self.num_agents == len(agents), f'Please provide number of agents is {self.num_agents}'
 
         agents: dict[str, RLAgent] = {k: v for k, v in zip(self.agent_names, agents)}

@@ -4,10 +4,14 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 class BaseAgent(ABC):
+    """
+    Base agent. All agents should inherit this class.
+    """
     @abstractmethod
     def get_action(self, obs: dict[str, np.ndarray]) -> int:
         """
         Compute action from observation.
-        :param obs: observation and action mask from game.
-        :type obs: dict[str, numpy.array]
+
+        :param obs: Observation and action mask from game.
+        :return: Action. 
         """

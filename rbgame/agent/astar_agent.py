@@ -8,19 +8,34 @@ import numpy as np
 from rbgame.agent.base_agent import BaseAgent
 
 class Vertex:
+    """
+    Similar to :py:class:`Cell <rbgame.game.components.Cell>`.
 
-    def __init__(self,
-                 y: int,
-                 x: int,
-                 color: str = 'w',
-                 target: int = 0,
-                 robot: Robot | None = None,
-                 mail: int = 0,
-                 *,
-                 front: 'Vertex | None' = None,
-                 back: 'Vertex | None' = None,
-                 left: 'Vertex | None' = None,
-                 right: 'Vertex | None' = None) -> None:
+    :param x: The abscissa in the graph. The coordinate origin is at the top left point, positive direction from left to right.
+    :param y: The ordinate in the graph. The coordinate origin is at the top left point, positive direction from top to bottom.
+    :param color: The color of the vertex. Possible colors are ``'w'`` - white, ``'b'`` - blue,  ``'r'`` - red, ``'y'`` - yellow, ``'gr'`` - green, ``'g'`` - gray.
+    :param target: The target of this vertex. 
+    :param robot: The located in this vertex robot.
+    :param mail: Generated mail in this vertex.
+    :param front: The front vertex of this vertex.
+    :param back: The back vertex of this vertex.
+    :param left: The left vertex of this vertex.
+    :param right: The right vertex of this vertex.
+    """
+    def __init__(
+        self,
+        y: int,
+        x: int,
+        color: str = 'w',
+        target: int = 0,
+        robot: VRobot | None = None,
+        mail: int = 0,
+        *,
+        front: 'Vertex | None' = None,
+        back: 'Vertex | None' = None,
+        left: 'Vertex | None' = None,
+        right: 'Vertex | None' = None
+    ) -> None:
 
         self.__x = x
         self.__y = y
@@ -74,7 +89,7 @@ class Vertex:
 
     @color.setter
     def color(self, color: str) -> None:
-        raise ValueError('You can\'t change cell color')
+        raise ValueError('You can\'t change vertex color')
 
     @property
     def target(self) -> int:
@@ -82,10 +97,13 @@ class Vertex:
 
     @target.setter
     def target(self, target: int) -> None:
-        raise ValueError('You can\'t change cell target')
+        raise ValueError('You can\'t change vertex target')
 
     @property
     def neighbors(self) -> list['Vertex']:
+        """
+        Returns neighboring verties of this vertex.
+        """
         return [
             vertex for vertex in [self.front, self.back, self.left, self.right]
             if vertex
@@ -94,21 +112,22 @@ class Vertex:
     @property
     def is_blocked(self) -> bool:
         """
-        Vertex is blocked (robot shouldn't go there) if it has too much robots in queue to it.
+        Vertex is blocked (robot shouldn't go there) if it has too much robots 
+        waiting to go to this vertex.
         """
-        # blue cell with robot in this and other robot is waiting
+        # blue vertex with robot in this and other robot is waiting
         if self.color == 'b':
             return len([
                 vertex for vertex in self.neighbors
                 if (vertex.robot and vertex.robot.battery <= 30)
             ]) == 1 and self.robot is not None
-        # green cell with robot in this and two other robots is waiting
+        # green vertex with robot in this and two other robots is waiting
         if self.color == 'gr':
             return len([
                 vertex for vertex in self.neighbors
                 if (vertex.robot and not vertex.robot.mail)
             ]) == 2 and self.robot is not None
-        # yellow cell with robot in this and two other robots is waiting
+        # yellow vertex with robot in this and two other robots is waiting
         if self.color == 'y':
             return len([
                 vertex
@@ -117,6 +136,14 @@ class Vertex:
         return False
 
 class Graph:
+    """
+    Similar to :py:class:`Board <rbgame.game.components.Board>`. It is set of :py:class:`Vertex`.
+
+    :param colors_map: csv file name for color map. 
+                       Each element define :py:attr:`color` of each :py:class:`Vertex`.
+    :param targets_map: csv file name for target map. 
+                        Each element define :py:attr:`target` of each :py:class:`Vertex`. 
+    """
 
     def __init__(self, colors_map: str, targets_map: str) -> None:
         self.__load_from_file(colors_map, targets_map)
@@ -128,7 +155,7 @@ class Graph:
         self.blue_vertices = self.__get_vertices_by_color('b')
         self.white_vertecies = self.__get_vertices_by_color('w')
 
-    # allow us access cell by coordinate
+    # allow us access vertex by coordinate
     def __getitem__(self, coordinate: tuple[int,
                                             int]) -> Vertex:
         return self.vertices[coordinate[1]][coordinate[0]]
@@ -151,7 +178,7 @@ class Graph:
         color_matrix = csv.reader(colors_map_file)
         target_matrix = csv.reader(targets_map_file)
 
-        # create cells with given colors and targets in csv files
+        # create vertices with given colors and targets in csv files
         for i, (color_row,
                 target_row) in enumerate(zip(color_matrix, target_matrix)):
             self.vertices.append([])
@@ -165,7 +192,7 @@ class Graph:
         colors_map_file.close()
         targets_map_file.close()
 
-        # set for each cell its adjacent
+        # set for each vertex its adjacent
         for i, _ in enumerate(self.vertices):
             for j, _ in enumerate(self.vertices[i]):
                 if (i - 1) >= 0:
@@ -194,8 +221,13 @@ class Graph:
             self, start: Vertex,
             goal: Vertex) -> list[Vertex]:
         """
-        A* search for shortest path to destination.
-        Return a list of vertices as shortest path.
+        A* search for shortest path from :code:`start` to :code:`goal`
+        . About algorithm, go `here <https://en.wikipedia.org/wiki/A*_search_algorithm>`_.
+
+        :param start: start vertex.
+        :param goal: end vertex.
+        :return: Path from start vertex to end vertex. Start vertex doesn't includes in found path. 
+                 Return to empty :py:class:`list` if path not found.
         """
         open_set: queue.PriorityQueue = queue.PriorityQueue()
         open_set.put((0, start))
@@ -219,8 +251,8 @@ class Graph:
                 return path
 
             neighbors = current.neighbors
-            # reverse neighbors list if i is odd, change order putting cell to queue
-            # according to that, we don't get cell from queue over one row or column and search over diagonal
+            # reverse neighbors list if i is odd, change order putting vertex to queue
+            # according to that, we don't get vertex from queue over one row or column and search over diagonal
             if i % 2 == 1:
                 neighbors.reverse()
             for next_vertex in neighbors:
@@ -236,12 +268,20 @@ class Graph:
             i += 1
         return []
 
-class Robot:
+class VRobot:
+    """
+    Similar to :py:class:`Robot <rbgame.game.components.Robot>`.
 
-    def __init__(self,
-                 pos: Vertex,
-                 battery: int = 0,
-                 mail: int = 0):
+    :param pos: Current position of the robot.
+    :param mail: The mail that robot are carring.
+    :param battery: The battery.
+    """
+    def __init__(
+        self,
+        pos: Vertex,
+        battery: int = 0,
+        mail: int = 0,
+    ) -> None:
         self.pos = pos
         self.pos.robot = self
         self.battery = battery
@@ -250,6 +290,9 @@ class Robot:
 
     @property
     def is_charged(self) -> bool:
+        """
+        Robot is charging or not.
+        """
         return self.pos.color == 'b'
     
     def set_destination(
@@ -259,25 +302,34 @@ class Robot:
     ) -> None:
         """
         Set destination for robot base on its state.
+
+        :param board: A graph to get destination from it.
+        :param blocked: List of blocked vertices that destination shouldn't be in.
         """
         if self.battery <= 4:
             self.dest = min(
-                [cell for cell in board.blue_vertices if cell not in blocked],
-                key=lambda blue_cell: Graph.heuristic(
-                    self.pos, blue_cell))
+                [vertex for vertex in board.blue_vertices if vertex not in blocked],
+                key=lambda blue_vertex: Graph.heuristic(
+                    self.pos, blue_vertex))
         else:
             if self.mail:
-                self.dest = [yellow_cell for yellow_cell in board.yellow_vertices if yellow_cell.target == self.mail][0]
+                self.dest = [yellow_vertex for yellow_vertex in board.yellow_vertices if yellow_vertex.target == self.mail][0]
             else:
                 self.dest = min([
-                    cell for cell in board.green_vertices if cell not in blocked
+                    vertex for vertex in board.green_vertices if vertex not in blocked
                 ],
-                           key=lambda green_cell: Graph.
-                           heuristic(self.pos, green_cell))
+                           key=lambda green_vertex: Graph.
+                           heuristic(self.pos, green_vertex))
     
 class AStarAgent(BaseAgent):
     """
-    A controller for single robot, using A* star search shortest path through graph.
+    A controller for single robot, using A* star search shortest path.
+    See algorithm in :doc:`../../../astar_agent_doc`.
+
+    :param colors_map: Colors map of the graph.
+    :param targets_map: Target map of the graph.
+    :param num_robots: Number of robots on the game board.
+    :param maximum_battery: Maximum battery for robot.
     """
 
     def __init__(self,
@@ -285,26 +337,15 @@ class AStarAgent(BaseAgent):
                  targets_map: str,
                  num_robots: int,
                  maximum_battery: int|None = None) -> None:
-        """
-        :param colors_map: colors map of the board game.
-        :type colors_map: str
-        :param targets_map: target map of the board game.
-        :type targets_map: str
-        :param maximum_battery: maximum battery for robot.
-        :type maximum_battery: int
-        """
         self.graph = Graph(colors_map=colors_map, targets_map=targets_map)
         self.num_robots = num_robots
-        robot_cells_init = random.sample(self.graph.white_vertecies, k=self.num_robots)
-        self.robots = [Robot(robot_cells_init[i], 10) for i in range(self.num_robots)]
+        robot_vertices_init = random.sample(self.graph.white_vertecies, k=self.num_robots)
+        self.robots = [VRobot(robot_vertices_init[i], 10) for i in range(self.num_robots)]
         self.max_values_for_robot_attrs = [self.graph.size-1, self.graph.size-1, len(self.graph.yellow_vertices)]
         if maximum_battery is not None:
             self.max_values_for_robot_attrs.append(maximum_battery)
     
-    def load_state_from_obs(self, obs: np.ndarray) -> None:
-        """
-        Load states of all robots to local board.
-        """
+    def __load_state_from_obs(self, obs: np.ndarray) -> None:
         robot_states = np.split(obs, self.num_robots)
         for robot, robot_state in zip(self.robots, robot_states):
             robot.pos.robot = None
@@ -317,39 +358,32 @@ class AStarAgent(BaseAgent):
             robot.pos.robot = robot
 
     @staticmethod
-    def apply_action_mask(action: int, action_mask: np.ndarray) -> int:
-        """
-        Handle if given action is illegal.
-        """
+    def __apply_action_mask(action: int, action_mask: np.ndarray) -> int:
         if not any(action_mask): 
             return action
         return action if action_mask[action] else random.choice([act for act in range(5) if action_mask[act]])
         
-    def get_action(self, obs: dict[str, np.ndarray]) -> int:
-        """
-        Get action base on robot state.
-        """
-        
+    def get_action(self, obs: dict[str, np.ndarray]) -> int:        
         mask = obs.get('action_mask', np.array([1]*5, dtype = np.uint8))
         obs = obs['observation']
-        self.load_state_from_obs(obs)
+        self.__load_state_from_obs(obs)
         acting_robot = self.robots[0]
         if acting_robot.is_charged and acting_robot.battery < 8:
-            return self.apply_action_mask(0, mask)
+            return self.__apply_action_mask(0, mask)
         
         acting_robot.set_destination(self.graph)
         # when many other robot wait for queue to destination, go to other destination or don't move
         # we want avoid draw when all players don't want to move
         if acting_robot.dest.is_blocked and acting_robot.pos not in acting_robot.dest.neighbors:
             if acting_robot.dest.color == 'y':
-                return self.apply_action_mask(0, mask)
+                return self.__apply_action_mask(0, mask)
             if acting_robot.dest.color == 'b':
                 if all([vertex.is_blocked for vertex in self.graph.blue_vertices]):
-                    return self.apply_action_mask(0, mask)
+                    return self.__apply_action_mask(0, mask)
                 acting_robot.set_destination(self.graph, [vertex for vertex in self.graph.blue_vertices if vertex.is_blocked])
             if acting_robot.dest.color == 'gr':
                 if all([vertex.is_blocked for vertex in self.graph.green_vertices]):
-                    return self.apply_action_mask(0, mask)
+                    return self.__apply_action_mask(0, mask)
                 acting_robot.set_destination(self.graph, [vertex for vertex in self.graph.green_vertices if vertex.is_blocked])
 
         # build the path
@@ -364,5 +398,5 @@ class AStarAgent(BaseAgent):
                 action = 3
             elif next is acting_robot.pos.right:
                 action = 4
-            return action if mask[action] else self.apply_action_mask(0, mask)
-        return self.apply_action_mask(0, mask)
+            return action if mask[action] else self.__apply_action_mask(0, mask)
+        return self.__apply_action_mask(0, mask)

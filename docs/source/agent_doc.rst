@@ -3,7 +3,7 @@ Agents
 
 .. toctree::
     :maxdepth: 2
-    :hidden:
     
-    astar_agent.rst
-    rl_agent.rst
+    astar_agent_doc.rst
+    rl_agent_doc.rst
+    

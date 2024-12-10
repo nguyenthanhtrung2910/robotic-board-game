@@ -6,8 +6,9 @@ Robotic Board Game Documentation
    :hidden:
    :caption: Tables of Contents
    
-   env_desc.rst
-   agents.rst
+   env_description.rst
+   agent_doc.rst
    animation.rst
+   api/index.rst
 
 

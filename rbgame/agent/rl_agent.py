@@ -41,13 +41,19 @@ from rbgame.agent.base_agent import BaseAgent
 #         return super().learn(batch, *args, **kwargs)
 
 class RLAgent(BaseAgent):
+        """
+        Base Reinforcement Learning agent.
+
+        :param policy: Policy.
+        :param memory: Replay Buffer.
+        :param update_per_step: How many times agent samples from memory and learns per one step, using only in offpolicy algorithms.
+        :param repeat_per_collect: How many times agents learns on sampled data, using only in onpolicy algorithms.
+        """
         def __init__(
             self,
             policy: BasePolicy,
             memory: VectorReplayBuffer|None = None,
-            # how many times policy samples and learns, using only in offpolicy
             update_per_step: float = 1.0,
-            # how many times policy learns on sampled data, using only in onpolicy
             repeat_per_collect: float = 1000,
         ) -> None:
             
@@ -61,6 +67,13 @@ class RLAgent(BaseAgent):
             self.policy.eval()
         
         def infer_act(self, obs_batch: Batch, exploration_noise: bool) -> np.ndarray:
+            """
+            Forward batch of observations through network.
+
+            :param obs_batch: Batch of observations. 
+            :param exploration_noise: Exploration or not.
+            :return: Batch of actions.
+            """
             with torch.no_grad():
                 act = self.policy(obs_batch).act
                 if exploration_noise:
@@ -71,10 +84,23 @@ class RLAgent(BaseAgent):
         def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
             """
             Update policy.
+
+            :param batch_size: Batch size.
+            :param num_collected_step: Number collected steps.
+            :return: Number gradient steps.
             """  
 
 class OffPolicyAgent(RLAgent):
     def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
+        """
+        Update policy.
+        For offpolicy algorithms, agent samples :code:`batch_size` of transitions from
+        replay buffer to learn and repeats it several times.
+
+        :param batch_size: Batch size.
+        :param num_collected_step: Number collected steps.
+        :return: Number gradient steps.
+        """
         num_gradient_steps = round(self.update_per_step * num_collected_steps)
         if num_gradient_steps == 0:
             raise ValueError(

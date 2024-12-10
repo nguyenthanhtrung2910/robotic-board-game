@@ -75,5 +75,23 @@ in both cases. In this experiment, we combine following algorithm:
 * `Prioritized Experience Replay <https://arxiv.org/abs/1511.05952>`_
 * `Multi-step DQN <https://arxiv.org/pdf/1901.07510>`_
 
+And the hypers-parameters:
+
++------------------------------------------------------+------------+
+|Parameter                                             |Value       |
++======================================================+============+
+|Adam learning rate                                    |0.0001      |
++------------------------------------------------------+------------+
+|Exploration :math:`\epsilon`                          |1.0 → 0.05  |
++------------------------------------------------------+------------+
+|Prioritization type                                   |proportional|
++------------------------------------------------------+------------+
+|Prioritization exponent :math:`\alpha`                |0.6         |
++------------------------------------------------------+------------+
+|Prioritization importance sampling :math:`\beta`      |0.4 → 1.0   |
++------------------------------------------------------+------------+
+|Multi-step returns :math:`n`                          |30          |
++------------------------------------------------------+------------+
+
 In second case, agent need to learn to control robots that not only deliver mails to destination 
 but also charge their battery when battery run low. So we have slower convergence.

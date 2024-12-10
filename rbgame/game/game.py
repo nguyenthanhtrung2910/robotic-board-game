@@ -1,6 +1,3 @@
-"""
-Base class for our game
-"""
 import random
 import os
 import logging as log
@@ -21,23 +18,35 @@ pygame.init()
 class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
 
     """
-    A class representing our game. The game can be configured with difference parameters.
+    Main class representing the game. The game can be configured with difference parameters.
+
+    :param colors_map: Color map for board.
+    :param target_map: Target map for board.
+    :param required_mail: Number of mails to win.
+    :param robot_colors: Colors of robots.
+    :param num_robots_per_player: Number robots per player.
+    :param with_battery: Battery is considered or not.
+    :param random_num_steps: Robot can move random number of steps each turn or not.
+    :param max_step: Maximum enviroment step.
+    :param render_mode: The render mode. It can be :py:data:`None` or :code:`'human'`.
+    :param log_to_file: Log game process to file or not.
     """
 
     metadata = {"render_modes": ["human"], "name": "robotic_board_game", "is_parallelizable": False, "render_fps": 20}
 
-    def __init__(self, 
-                 colors_map: str, 
-                 targets_map: str,
-                 required_mail: int,
-                 robot_colors: list[str],
-                 num_robots_per_player: int = 1, 
-                 with_battery: bool = False,
-                 random_num_steps = False,
-                 max_step: int = 500,
-                 render_mode: str|None = None,
-                 log_to_file: bool = False) -> None:
-        
+    def __init__(
+        self, 
+        colors_map: str, 
+        targets_map: str,
+        required_mail: int,
+        robot_colors: list[str],
+        num_robots_per_player: int = 1, 
+        with_battery: bool = False,
+        random_num_steps = False,
+        max_step: int = 500,
+        render_mode: str|None = None,
+        log_to_file: bool = False,
+    ) -> None:
         super().__init__()
         assert len(robot_colors) >= 2 
         self.game_clock = components.Clock()
@@ -59,7 +68,14 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         robots: list[components.Robot] = [
                 components.Robot(
                     robot_cells_init[num_robots_per_player * j + i],
-                    i + 1, robot_color, self.mail_sprites, self.game_clock, with_battery=self.with_battery, render_mode=render_mode, log_to_file=log_to_file)
+                    i + 1, 
+                    robot_color, 
+                    self.mail_sprites, 
+                    self.game_clock, 
+                    with_battery=self.with_battery, 
+                    render_mode=render_mode, 
+                    log_to_file=log_to_file
+                )
             for j, robot_color in enumerate(robot_colors)
             for i in range(num_robots_per_player)
         ]
@@ -83,7 +99,9 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
                     "observation": spaces.Box(
                         low=0, high=1, shape=(robot_obs_size*self.num_robots,), dtype=np.float32
                     ),
-                    "action_mask": spaces.Box(low=0, high=1, shape=(self.action_spaces[a].n,), dtype=np.uint8),
+                    "action_mask": spaces.Box(
+                        low=0, high=1, shape=(self.action_spaces[a].n,), dtype=np.uint8
+                    ),
                 }
             )
             for a in self.agents
@@ -168,9 +186,24 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
             self.clock = pygame.time.Clock()
     
     def sum_count_mail(self, color: str) -> int:
+        """
+        :param color: Color of player.
+        :return: Sum collected mails of one player.
+        """
         return sum([robot.count_mail for robot in self.robots.values() if robot.color == color])
     
     def observe(self, agent: str) -> dict[str, np.ndarray]:
+        """
+        :param agent: Agent that need to observe.
+        :return: Observation of this agent.
+                 Is is a :py:class:`dict` with two key: :code:`'observation'` and :code:`'action_mask'`.
+                 Value of :code:`'observation'` key is the :py:attr:`observation <rbgame.game.components.Robot.observation>` 
+                 vectors of all robots concatenated. :py:attr:`Observation <rbgame.game.components.Robot.observation>` of robot
+                 that is controlled by :code:`agent` is placed in the first place.
+                 Value of :code:`'action_mask'` key is a binary vector where each element
+                 of the vector represents whether the action is legal or not.
+
+        """
         robot_states = np.hstack([self.robots[a].observation for a in self.agents if a != agent])
         robot_states = np.hstack([self.robots[agent].observation, robot_states])
 
@@ -179,12 +212,28 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         return {'observation': robot_states, 'action_mask': mask}
             
     def observation_space(self, agent: str) -> spaces.Dict:
+        """
+        :param agent: Agent that need to get observation space.
+        :return: Observation space of :code:`agent`.
+        """
         return self.observation_spaces[agent]
     
     def action_space(self, agent: str) -> spaces.Discrete:
+        """
+        :param agent: Agent that need to get action space.
+        :return: Action space of :code:`agent`.
+        """
         return self.action_spaces[agent]
 
-    def reset(self, seed: int|None = None, options=None) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+    def reset(self, seed: int|None = None, options: Any|None=None) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
+        """
+        Reset enviroment.
+
+        :param seed: Random module seed. If it isn't :py:data:`None`, reset 
+                     enviroment to same initial state every time.
+        :param option: Unused.
+        :return: Observation of current agent and some infomations.
+        """
         random.seed(seed)
         self.agents = self.possible_agents[:]
         self.rewards = {agent: 0 for agent in self.agents}
@@ -218,16 +267,24 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         return self.observe(self.agent_selection), self.infos[self.agent_selection]
 
     def step(self, action: int|None) -> tuple[dict[str, np.ndarray], float, bool, bool, dict[str, Any]]:
+        """
+        Perform enviroment step with input :code:`action`.
+
+        :param action: Action from agent.
+        :return: Next observation of acting agent, the reward, termination, truncation and infomations.
+                 Flag termination - enviroment has finished?,
+                 flag truncation - enviroment reaches maximum step and has finished?
+        """
         if (
             self.terminations[self.agent_selection]
             or self.truncations[self.agent_selection]
         ):
             return self._was_dead_step(action)
-        
+        # TODO: is this caculation worth keeping? we can simply return reward
         self._cumulative_rewards = {agent: 0 for agent in self.agents}
         self.rewards = {agent: 0 for agent in self.agents}
 
-        # #r(s,a) and s'(s,a)
+        # #r(s, a, s') and s'(s, a)
         acting_robot = self.robots[self.agent_selection]
         is_moved, reward = acting_robot.step(action)
         self.rewards[self.agent_selection] = reward
@@ -283,12 +340,18 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
     
     @property
     def previous_agent(self):
+        """
+        Previous agent.
+        """
         index = self.agents.index(self.agent_selection)
         if index == 0: 
             return self.agents[-1]
         return self.agents[index-1]
 
     def render(self) -> None:
+        """
+        Display all animations to screen. Only works if enviroment render mode is :code:`'human'`.
+        """
         if self.render_mode is None:
             gymnasium.logger.warn(
                 "You are calling render method without specifying any render mode."
@@ -327,6 +390,9 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         pygame.display.update()
     
     def close(self) -> None:
+        """
+        Close the enviroment.
+        """
         pass
 
     def watch(self) -> None:
@@ -338,7 +404,12 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
                     running = False
 
     def run(self, agents: list[BaseAgent]) -> tuple[str | None, int]:
+        """
+        Animate game process between agents. User can control robots by keyboard.
         
+        :param agents: Agents to act. If it's :py:data:`None`, action is provided from keyboard.
+        :return: Game time and the winner.
+        """
         assert len(agents) == len(self.agents)
         self.reset()
         if any(agent is None for agent in agents) and self.render_mode is None:
