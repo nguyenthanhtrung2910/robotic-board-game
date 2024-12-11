@@ -5,4 +5,5 @@ build-backend = "hatchling.build"
 [project]
 name = "rbgame"
 authors = [{name = "Nguyen Thanh Trung", email = "nguyenthanhtrung291099@gmail.com"}]
-dynamic = ["version", "description"]
+version = "2024.0.0"
+description = "Board game simulator."
