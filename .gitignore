@@ -155,10 +155,5 @@ dmypy.json
 cython_debug/
 
 checkpoints
-events.log
-log_files*
-*plot*
-*stats*
-agent*.yaml
-*.pth
 evaluate.py
+*plot*

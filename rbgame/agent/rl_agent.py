@@ -3,6 +3,7 @@ from abc import abstractmethod
 
 import numpy as np
 import torch
+import pygame
 from tianshou.data import Batch, VectorReplayBuffer
 from tianshou.policy.base import BasePolicy
 # from tianshou.utils.net.discrete import NoisyLinear

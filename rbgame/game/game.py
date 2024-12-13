@@ -2,6 +2,7 @@ import random
 import os
 import logging as log
 from typing import Any
+from pathlib import Path
 
 import pygame
 import numpy as np
@@ -176,7 +177,8 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
                         CELL_BATTERY_SIZE[1])
                     pygame.draw.rect(self.background, (0, 0, 0), rect, 1)
             # draw progress bar which show count of collected mails
-            bar_background = pygame.image.load(os.path.join(os.getcwd(), 'assets', 'images', 'loading_bar_background.png'))
+            parent_dir = str(Path(__file__).resolve().parents[2])
+            bar_background = pygame.image.load(os.path.join(parent_dir, 'assets', 'images', 'loading_bar_background.png'))
             bar_background =  pygame.transform.scale(bar_background, (3*CELL_SIZE[0],  CELL_SIZE[0]/2))
             bar_rect = bar_background.get_rect()
             for i,_ in enumerate(self.robot_colors):
@@ -272,7 +274,7 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
 
         :param action: Action from agent.
         :return: Next observation of acting agent, the reward, termination, truncation and infomations.
-                 Flag termination - enviroment has finished?,
+                 Flag termination - enviroment has finished?, 
                  flag truncation - enviroment reaches maximum step and has finished?
         """
         if (

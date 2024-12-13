@@ -2,16 +2,42 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "docs",
+]
+
 [project]
 name = "rbgame"
-authors = [{name = "Nguyen Thanh Trung", email = "nguyenthanhtrung291099@gmail.com"}]
-version = "2024.0.0"
-description = "Board game simulator."
-
+version = "0.0.1"
 dependencies = [
-  "tianshou",
-  "pygame",
-  "pygame-menu",
-  "pyyaml",
-  "matplotlib",
+  "tianshou >= 0.5.1",
+  "pygame >= 2.6.1",
+  "pygame-menu >= 4.4.8",
+  "pyyaml >= 6.0.2",
+  "matplotlib >= 3.8.0",
 ]
+requires-python = ">= 3.10"
+authors = [{name = "Nguyen Thanh Trung", email = "nguyenthanhtrung291099@gmail.com"}]
+description = "Board game simulator."
+readme = "README.rst"
+license = {file = "LICENSE.md"}
+keywords = ["board game", "multiagentRL", "astar", "simulator"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Games/Entertainment :: Board Games",
+  "Topic :: Games/Entertainment :: Simulation",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+docs = ['sphinx', 'sphinx-autodoc-typehints', 'sphinx-rtd-theme']
+
+[project.urls]
+Documentation = "https://robotic-board-game.readthedocs.io/en/latest/"
+Repository = "https://github.com/nguyenthanhtrung2910/robotic-board-game.git"
