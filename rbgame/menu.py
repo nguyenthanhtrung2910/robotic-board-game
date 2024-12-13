@@ -62,7 +62,7 @@ class RoboticBoardGameMenu:
             theme=pygame_menu.themes.THEME_BLUE,
             onclose=pygame_menu.events.CLOSE,
         )
-        parent_dir = str(Path(__file__).resolve().parents[1])
+        parent_dir = os.path.dirname(__file__)
         self.env_args = {
             'colors_map': os.path.join(parent_dir, 'assets', 'csv_files', 'colors_map.csv'),
             'targets_map': os.path.join(parent_dir, 'assets', 'csv_files', 'targets_map.csv'),

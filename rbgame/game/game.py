@@ -2,7 +2,6 @@ import random
 import os
 import logging as log
 from typing import Any
-from pathlib import Path
 
 import pygame
 import numpy as np
@@ -177,7 +176,7 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
                         CELL_BATTERY_SIZE[1])
                     pygame.draw.rect(self.background, (0, 0, 0), rect, 1)
             # draw progress bar which show count of collected mails
-            parent_dir = str(Path(__file__).resolve().parents[2])
+            parent_dir = os.path.dirname(os.path.dirname(__file__))
             bar_background = pygame.image.load(os.path.join(parent_dir, 'assets', 'images', 'loading_bar_background.png'))
             bar_background =  pygame.transform.scale(bar_background, (3*CELL_SIZE[0],  CELL_SIZE[0]/2))
             bar_rect = bar_background.get_rect()

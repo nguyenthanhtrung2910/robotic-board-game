@@ -5,7 +5,6 @@ import csv
 import math
 import logging as log
 import enum
-from pathlib import Path
 
 import numpy as np
 import pygame
@@ -299,7 +298,7 @@ class Robot(pygame.sprite.Sprite):
                                  (self.pos.y + 1) * CELL_SIZE[1])
 
     def __set_image(self) -> None:
-        parent_dir = str(Path(__file__).resolve().parents[2])
+        parent_dir = os.path.dirname(os.path.dirname(__file__))
         if self.color == 'b':
             self.image = pygame.image.load(os.path.join(parent_dir, 'assets', 'images', 'blue_robot.png'))
         elif self.color == 'r':
@@ -760,7 +759,7 @@ class Mail(pygame.sprite.Sprite):
         super().__init__()
         self.mail_number = mail_number
         if render_mode == 'human':
-            parent_dir = str(Path(__file__).resolve().parents[2])
+            parent_dir = os.path.dirname(os.path.dirname(__file__))
             self.image = pygame.transform.scale(
                 pygame.image.load(os.path.join(parent_dir, 'assets', 'images','mail.png')), CELL_SIZE)
             mail_number_images = pygame.font.SysFont(None, 16).render(

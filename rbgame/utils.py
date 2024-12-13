@@ -75,7 +75,7 @@ def astar_constructor(num_robots: int, with_battery: bool) -> AStarAgent:
     :param with_battery: Battery is considered or not.
     :return: The agent.
     """
-    parent_dir = os.path.dirname(os.path.dirname(__file__))
+    parent_dir = os.path.dirname(__file__)
     agent = AStarAgent(
         colors_map=os.path.join(parent_dir, 'assets', 'csv_files', 'colors_map.csv'),
         targets_map=os.path.join(parent_dir, 'assets', 'csv_files', 'targets_map.csv'),
