@@ -14,8 +14,8 @@ def selection_placeholder_format(items: list[str]) -> str:
     """
     A function to specify what display in robot colors selector.
 
-    :param items: list of selected items.
-    :return: formated text.
+    :param items: List of selected items.
+    :return: Formated text.
     """
     text = ', '.join(items) + ' selected'
     if len(items) <= 1:
@@ -27,13 +27,14 @@ class RoboticBoardGameMenu:
     A simple menu to custom game parameters and animate the game process with
     these parameters.
 
-    :param agent_fn: Parameter - agent's type, argument - a function with the signature 
-    :code:`f(num_robots: int, with_battery: bool) -> BaseAgent`. For example:
+    :param agent_fn: Parameter - agent's type, argument - a function with the 
+                     signature :code:`f(num_robots: int, with_battery: bool) -> BaseAgent`. For example:
 
-    .. code-block::
+                     .. code-block:: python
 
-        RoboticBoardGameMenu(astar=astar_constructor, dqn=dqn_constuctor)
+                         RoboticBoardGameMenu(astar=astar_constructor, dqn=dqn_constuctor)
 
+        
     """
     def __init__(
         self,

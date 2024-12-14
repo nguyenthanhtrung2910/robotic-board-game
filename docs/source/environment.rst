@@ -1,8 +1,8 @@
-Enviroment Description
-======================
+Environment
+===========
 
 The robotic board game environment simulates a board game with robots moving and delivering mails to their destinations.
-The robotic board game enviroment is parameterized. See its details below.
+The robotic board game environment is parameterized. See its details below.
 
 What does it look like?
 -----------------------
@@ -14,7 +14,7 @@ single robot can make maximum only one move per turn.
     :alt: Robotic Board Game Example.
     :width: 500
 
-    Robotic Board Game Example.
+    Robotic board game example.
 
 
 Game rule
@@ -25,7 +25,7 @@ required number of mails as soon as possible.
 
 The next table show you details of the field, in which player moves his own robots.
 
-.. table:: 
+.. table:: Cell description.
     :align: center
 
     +---------------------+-------------------------------------------------------------------------------------+
@@ -63,12 +63,12 @@ The robotic board game is parameterized by:
 * The number of robots for each players.
 * Battery of robot is considered or not.
 * Robot can move maximum 1 step per turn or randomly set that number.
-* Maximum step enviroment (our game) can reach.
+* Maximum step environment (our game) can reach.
 
 Layout of the board is set with the .csv files, what are accepted as arguments for game contructor. 
 Examples of these files are as follows:
 
-.. table:: 
+.. table:: Board layout example.
     :align: center
 
     +-----------------+-------------------------------------------------+------------------------------------+
@@ -117,7 +117,7 @@ Other parameters you can pass directly to contructor. For example:
         with_battery=True,
         # robot can move maximum one step per turn
         random_num_steps=False,
-        # maximum enviroment step
+        # maximum environment step
         max_step=1000,
     ),
 
@@ -143,7 +143,7 @@ Beside, this allow agent learn from not only its own transitions but also
 from transitions of other agents.
 
 For example, with notation that :math:`(x_i, y_i), m_i, b_i` is coordinates, mail's index and
-battery of :math:`i`-th robot respectively, for agent that controls first robot, enviroment 
+battery of :math:`i`-th robot respectively, for agent that controls first robot, environment 
 provides vector:
 
 .. math::
@@ -221,7 +221,7 @@ Action space
 
 In this simulation, 5 discrete actions are available for each robot:
 
-.. table:: 
+.. table:: Possible actions.
     :align: center
 
     +-----------+-----------------------------------------------------+
@@ -251,6 +251,6 @@ Our reward system could be defined as follows:
 * Go to blue cell to charge = 1
 * Otherwise = -0.1 to encourage the agent to try to complete as soon as possible.
 
-|
+For more details, please access the :mod:`API reference <rbgame.game>`.
 
 

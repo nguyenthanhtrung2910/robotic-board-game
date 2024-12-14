@@ -10,6 +10,10 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from pygments.lexers import PythonLexer
+from sphinx.highlighting import lexers
+lexers['ipython3'] = PythonLexer()
+
 project = 'Robotic Board Game'
 copyright = '2024, Nguyen Thanh Trung'
 author = 'Nguyen Thanh Trung'
@@ -22,7 +26,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.autosectionlabel',
               'sphinx.ext.mathjax',
-              'sphinx_autodoc_typehints'
+              'sphinx_autodoc_typehints',
+              'nbsphinx',
               ]
 
 templates_path = ['_templates']

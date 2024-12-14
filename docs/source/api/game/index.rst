@@ -6,6 +6,6 @@ game
 .. toctree::
     :maxdepth: 1
     
-    components.rst
-    game.rst
+    components
+    game
     

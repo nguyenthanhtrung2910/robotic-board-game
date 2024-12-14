@@ -16,7 +16,7 @@ don't need to worry about that.
 
 Algorithm for controlling single robot is described below:
 
-.. figure:: _static/algorithm_for_auto_play.svg
+.. figure:: ../_static/algorithm_for_auto_play.svg
     :align: center
     :alt: Algorithm for controlling single robot.
     :width: 500
@@ -37,13 +37,11 @@ Algorithm for controlling single robot is described below:
 
 Higher schema using algorithm for chosing destination, which is described below:
 
-.. figure:: ../source/_static/algorithm_for_chosing_destination.svg
+.. figure:: ../_static/algorithm_for_chosing_destination.svg
     :align: center
     :alt: Algorithm for chosing destination.
     :width: 300
 
     Algorithm for chosing destination.
 
-|
-
-For more details, please access the API reference.
+For more details, please access the :mod:`API reference <rbgame.agent.astar_agent>`.

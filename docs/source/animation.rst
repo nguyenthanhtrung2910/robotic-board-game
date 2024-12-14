@@ -1,53 +1,62 @@
 Animation
 =========
 
-In this section, we visualize the game process. It loads pre-trained model to 
+In this section, we'll visualize the game process. It loads pre-trained model to 
 see how it acts after training so if you want to use it, you have to download our 
-folder of pre-trained models here and save it in same directory with file :code:`animate.py`.
-Otherwise program can't find checkpoints to load.
+folder of pre-trained model. Please follow these steps:
 
-Now it's compatible with only built-in agents. For user-defined agent, we will adaptive after.
+* Download and extract our pre-trained models folder in current working directory. You can download 
+  directly `here <https://drive.google.com/file/d/1SmrYhUC9PNyBR_yUJQJxJsBrNjSARZQD>`_.
 
-To run animation, simply run file :code:`animate.py`:
+   .. warning::
 
-.. code-block:: bash
+      Make sure you have :code:`checkpoints` folder in current working directory, otherwise program can't find 
+      it for loading.
 
-    python animate.py
+* To run animation, run in a normal python file or interactive mode 
 
-It will show you below screen:
+   .. code-block:: python
 
-.. figure:: _static/intro.png
-   :width: 500px
-   :align: center
+      >>> from rbgame.menu import RoboticBoardGameMenu
+      >>> from rbgame.utils import astar_construtor, dqn_constructor
+      >>> RoboticBoardGameMenu(astar=astar_construtor, dqn=dqn_constructor)
 
-   Introdution screen
+* It will show you below screen:
 
-You can right away run with default configuration by clicking **Play** or click **Setting**
-to edit it:
+   .. figure:: _static/intro.png
+      :width: 500px
+      :align: center
 
-.. figure:: _static/setting.png
-   :width: 500px
-   :align: center
+      Introdution screen.
 
-   Setting screen
+  You can right away run with default configuration by clicking **Play** or click **Setting**
+  to edit it:
 
-All players use :doc:`DQN agent <rl_agent_doc>` by default. You can chose **astar** if you want to 
-use :doc:`agent using A* path finding algorithm <astar_agent_doc>` or **person** if you want 
-play by yourself.
+   .. figure:: _static/setting.png
+      :width: 500px
+      :align: center
 
-Click **OK** to back to main menu and now click **Play** to animate with new configuration:
+      Setting screen.
 
-.. figure:: _static/game_screen.png
-   :width: 500px
-   :align: center
+  All players is human by default. You can chose **astar** if you want to 
+  use :doc:`agent using A* path finding algorithm <agents/astar>` or **dqn**
+  to use :doc:`DQN agent <agents/rl/introduction>`.
 
-   Game process screen. Bar progress in top-right corner shows how many mails player has 
-   collected. Grid in bottom-right corner shows batteries of the robots.
+* Click **OK** to back to main menu and now click **Play** to animate with new configuration:
+  
+   .. figure:: _static/game_screen.png
+      :width: 500px
+      :align: center
+
+      Game process screen. Bar progress in top-right corner shows how many mails player 
+      has collected. Grid in bottom-right corner shows batteries of the robots.
+
+
 
 
 If you play by yourself, table following will show you how to:
 
-.. table:: 
+.. table:: Button details.
     :align: center
 
     +---------------+--------+----------------------------------------------------+

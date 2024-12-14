@@ -1,14 +1,22 @@
 Robotic Board Game Documentation
 ================================
 
+.. include:: ../../README.rst
+
 .. toctree::
    :maxdepth: 2
    :hidden:
    :caption: Tables of Contents
    
-   env_description.rst
-   agent_doc.rst
-   animation.rst
-   api/index.rst
+   environment
+   agents/index
+   animation
+   api/index
 
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 

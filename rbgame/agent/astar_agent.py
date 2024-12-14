@@ -324,7 +324,7 @@ class VRobot:
 class AStarAgent(BaseAgent):
     """
     A controller for single robot, using A* star search shortest path.
-    See algorithm in :doc:`../../../astar_agent_doc`.
+    See algorithm in :doc:`../../../agents/astar`.
 
     :param colors_map: Colors map of the graph.
     :param targets_map: Target map of the graph.

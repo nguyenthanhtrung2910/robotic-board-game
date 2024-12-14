@@ -59,7 +59,7 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         self.max_step = max_step
         self.num_robots_per_player = num_robots_per_player
         self.num_robots = num_robots_per_player * len(robot_colors)
-        self.with_battery = with_battery
+        self.__with_battery = with_battery
         self.random_num_steps = random_num_steps
         self.steps_to_change_turn = random.choice(range(1, MAXIMUM_STEP_PER_TURN)) if self.random_num_steps else 1
 
@@ -72,7 +72,7 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
                     robot_color, 
                     self.mail_sprites, 
                     self.game_clock, 
-                    with_battery=self.with_battery, 
+                    with_battery=self.__with_battery, 
                     render_mode=render_mode, 
                     log_to_file=log_to_file
                 )
@@ -92,7 +92,7 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         self.possible_agents = self.agents[:]
 
         self.action_spaces: dict[str, spaces.Discrete] = {a: spaces.Discrete(5) for a in self.agents}
-        robot_obs_size = 4 if self.with_battery else 3
+        robot_obs_size = 4 if self.__with_battery else 3
         self.observation_spaces: dict[str, spaces.Dict]= {
             a: spaces.Dict(
                 {
@@ -186,6 +186,31 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
             # clock to tuning fps        
             self.clock = pygame.time.Clock()
     
+    @property
+    def with_battery(self) -> bool:
+        return self.__with_battery
+    
+    @with_battery.setter
+    def with_battery(self, with_battery: bool) -> None:
+        self.__with_battery = with_battery
+        for robot in self.robots.values():
+            robot.with_battery = self.__with_battery
+        robot_obs_size = 4 if self.__with_battery else 3
+        self.observation_spaces: dict[str, spaces.Dict]= {
+            a: spaces.Dict(
+                {
+                    "observation": spaces.Box(
+                        low=0, high=1, shape=(robot_obs_size*self.num_robots,), dtype=np.float32
+                    ),
+                    "action_mask": spaces.Box(
+                        low=0, high=1, shape=(self.action_spaces[a].n,), dtype=np.uint8
+                    ),
+                }
+            )
+            for a in self.agents
+        }
+        
+
     def sum_count_mail(self, color: str) -> int:
         """
         :param color: Color of player.

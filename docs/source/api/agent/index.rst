@@ -6,6 +6,6 @@ agent
 .. toctree::
     :maxdepth: 1
     
-    base_agent.rst
-    astar_agent.rst
-    rl_agent.rst
+    base_agent
+    astar_agent
+    rl_agent
