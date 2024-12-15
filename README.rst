@@ -12,6 +12,13 @@ For more details, read the documention in `here <https://robotic-board-game.read
 Installation
 ============
 
+Installation in virtual environment is always recommended:
+
+.. code-block:: console
+
+    python -m venv .venv
+    source .venv/bin/activate
+
 Simply install with :code:`pip`:
 
 .. code-block:: console

@@ -11,6 +11,7 @@ Robotic Board Game Documentation
    environment
    agents/index
    animation
+   evaluation
    api/index
 
 Indices and tables

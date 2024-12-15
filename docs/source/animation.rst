@@ -6,7 +6,18 @@ see how it acts after training so if you want to use it, you have to download ou
 folder of pre-trained model. Please follow these steps:
 
 * Download and extract our pre-trained models folder in current working directory. You can download 
-  directly `here <https://drive.google.com/file/d/1SmrYhUC9PNyBR_yUJQJxJsBrNjSARZQD>`_.
+  directly `here <https://drive.google.com/file/d/1SmrYhUC9PNyBR_yUJQJxJsBrNjSARZQD>`_ or you can
+  use :code:`gdown` library to download and unzip by :code:`unzip` command.
+
+   .. code-block:: python
+
+      >>> import gdown
+      >>> file_url = 'https://drive.google.com/uc?id=1SmrYhUC9PNyBR_yUJQJxJsBrNjSARZQD'
+      >>> gdown.download(file_url, 'checkpoints.zip', quiet=False)
+   
+   .. code-block:: bash
+
+      unzip checkpoints.zip
 
    .. warning::
 
