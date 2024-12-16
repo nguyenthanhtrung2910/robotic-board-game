@@ -1,11 +1,14 @@
-.. meta::
-   :figure_from_readme: False
-
 .. figure:: _static/logo.gif
    :align: center
    :width: 400
-    
+
+|   
+
 .. include:: ../../README.rst
+   :start-line: 4
+   :end-line: -1
+
+|
 
 .. toctree::
    :maxdepth: 2

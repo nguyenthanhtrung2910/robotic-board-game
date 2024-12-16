@@ -1,15 +1,6 @@
-======
-rbgame
-======
-
-.. meta::
-   :figure_from_readme: True
-
-.. only:: figure_from_readme
-
-   .. figure:: docs/source/_static/logo.gif
-      :align: center
-      :width: 400
+.. figure:: docs/source/_static/logo.gif
+   :align: center
+   :width: 400
 
 .. image:: https://img.shields.io/badge/author-Nguyen_Thanh_Trung-blue
    :alt: Static Badge
