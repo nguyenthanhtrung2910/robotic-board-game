@@ -2,6 +2,9 @@
 rbgame
 ======
 
+.. meta::
+   :figure_from_readme: True
+
 .. only:: figure_from_readme
 
    .. figure:: docs/source/_static/logo.gif
