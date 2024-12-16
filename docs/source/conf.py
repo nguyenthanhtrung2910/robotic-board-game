@@ -36,7 +36,7 @@ exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'petting_zoo': ('https://pettingzoo.farama.org', None),
+    'pettingzoo': ('https://pettingzoo.farama.org', None),
     'gymnasium': ('https://gymnasium.farama.org', None),
     'tianshou': ('https://tianshou.org/en/stable', None),
     'numpy': ('https://numpy.org/doc/stable', None),

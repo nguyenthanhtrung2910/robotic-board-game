@@ -1,3 +1,7 @@
+.. figure:: _static/logo.gif
+   :align: center
+   :width: 400
+   
 .. include:: ../../README.rst
 
 .. toctree::

@@ -1,9 +1,6 @@
-.. figure:: _static/logo.gif
-    :align: center
-    :alt: 
-    :width: 400
-
-|
+.. figure:: docs/source/_static/logo.gif
+   :align: center
+   :width: 400
 
 .. image:: https://img.shields.io/badge/author-Nguyen_Thanh_Trung-blue
    :alt: Static Badge
@@ -29,8 +26,6 @@
 .. image:: https://img.shields.io/github/issues/nguyenthanhtrung2910/robotic-board-game
    :alt: GitHub Issues or Pull Requests
 
-|
-
 Overview
 ========
 
@@ -49,20 +44,20 @@ Installation in virtual environment is always recommended:
 
 .. code-block:: console
 
-    python -m venv .venv
-    source .venv/bin/activate
+   python -m venv .venv
+   source .venv/bin/activate
 
 Simply install with :code:`pip`:
 
 .. code-block:: console
 
-    pip install rbgame
+   pip install rbgame
 
 
 .. warning::
 
-    If you want to animate the game process with pre-trained models, please follow steps in
-    our `documention <https://robotic-board-game.readthedocs.io/en/latest/animation.html>`_.
+   If you want to animate the game process with pre-trained models, please follow steps in
+   our `documention <https://robotic-board-game.readthedocs.io/en/latest/animation.html>`_.
 
 
 
