@@ -2,6 +2,8 @@
    :align: center
    :width: 400
 
+|
+
 .. image:: https://img.shields.io/badge/author-Nguyen_Thanh_Trung-blue
    :alt: Static Badge
 
@@ -25,6 +27,8 @@
 
 .. image:: https://img.shields.io/github/issues/nguyenthanhtrung2910/robotic-board-game
    :alt: GitHub Issues or Pull Requests
+
+|
 
 Overview
 ========
