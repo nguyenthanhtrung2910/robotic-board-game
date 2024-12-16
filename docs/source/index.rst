@@ -1,6 +1,3 @@
-Robotic Board Game Documentation
-================================
-
 .. include:: ../../README.rst
 
 .. toctree::
@@ -13,6 +10,11 @@ Robotic Board Game Documentation
    animation
    evaluation
    api/index
+
+Robotic Board Game Documentation
+================================
+
+Enjoy scrolling through!
 
 Indices and tables
 ==================

@@ -21,8 +21,8 @@ class DecentralizedTrainer:
     A decentralized trainer.
 
     :param env_args: Arguments for enviroment.
-    :param num_train_env: Number enviroments used in train phase.
-    :param num_test_env: Number enviroments used in test phase.
+    :param num_train_envs: Number enviroments for :class:`DummyVectorEnv <tianshou.env.venvs.DummyVectorEnv>` used in train phase.
+    :param num_test_envs: Number enviroments for :class:`DummyVectorEnv <tianshou.env.venvs.DummyVectorEnv>` used in test phase.
     :param batch_size: Batch size. 
     :param update_freq: After how many steps do a policy update, now only update by steps.
     :param test_freq: After how many episodes do a test.

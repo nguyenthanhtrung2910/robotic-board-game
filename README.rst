@@ -1,3 +1,36 @@
+.. figure:: _static/logo.gif
+    :align: center
+    :alt: 
+    :width: 400
+
+|
+
+.. image:: https://img.shields.io/badge/author-Nguyen_Thanh_Trung-blue
+   :alt: Static Badge
+
+.. image:: https://img.shields.io/github/license/nguyenthanhtrung2910/robotic-board-game
+   :alt: GitHub License
+
+.. image:: https://img.shields.io/pypi/pyversions/rbgame
+   :alt: PyPI - Python Version
+
+.. image:: https://badge.fury.io/py/rbgame.svg
+   :alt: PyPi package
+
+.. image:: https://img.shields.io/badge/pygame-2.6.1%2B-orange
+   :alt: Static Badge
+
+.. image:: https://img.shields.io/badge/tianshou-0.5.1%2B-purple
+   :alt: Static Badge
+
+.. image:: https://img.shields.io/pypi/dm/rbgame
+   :alt: PyPI - Downloads
+
+.. image:: https://img.shields.io/github/issues/nguyenthanhtrung2910/robotic-board-game
+   :alt: GitHub Issues or Pull Requests
+
+|
+
 Overview
 ========
 

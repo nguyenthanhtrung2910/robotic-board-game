@@ -36,11 +36,29 @@ exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'pygame_menu': ('https://pygame-menu.readthedocs.io/en/latest', None),
+    'petting_zoo': ('https://pettingzoo.farama.org', None),
+    'gymnasium': ('https://gymnasium.farama.org', None),
+    'tianshou': ('https://tianshou.org/en/stable', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'pygame':('https://www.pygame.org/docs', None),
 }
+
+html_title = 'Robotic Board Game Documentation'
+
+html_logo = '_static/logo.png'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+
+nbsphinx_prolog = """
+.. raw:: html
+
+    <a href="{{ env.docname.split('/')[-1] }}.ipynb" download="{{ env.docname.split('/')[-1] }}.ipynb">
+        <button style="background-color: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+            Download this Notebook
+        </button>
+    </a>
+"""
