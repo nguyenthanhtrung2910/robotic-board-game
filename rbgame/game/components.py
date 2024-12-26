@@ -346,6 +346,9 @@ class Robot(pygame.sprite.Sprite):
         """
         Observation of the single robot. Each of attributes x, y, mail, battery is normalized to forward in neural network.
         """
+        # TODO: Is return features of all robots is worthy, it makes observation space is larger and different 
+        # for each case of number robots. We can include features of robots that inside a square around this robot
+        # TODO: May be pixels of currrent frame better, it takes a CNN as features extraction but could extracts more features
         mail = self.mail.mail_number if self.mail else 0
         return np.array([self.pos.x/8, self.pos.y/8, mail/9, self.battery/10], dtype=np.float32) if self.with_battery \
             else np.array([self.pos.x/8, self.pos.y/8, mail/9], dtype=np.float32)

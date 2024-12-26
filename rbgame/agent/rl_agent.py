@@ -3,7 +3,6 @@ from abc import abstractmethod
 
 import numpy as np
 import torch
-import pygame
 from tianshou.data import Batch, VectorReplayBuffer
 from tianshou.policy.base import BasePolicy
 # from tianshou.utils.net.discrete import NoisyLinear
@@ -55,7 +54,7 @@ class RLAgent(BaseAgent):
             policy: BasePolicy,
             memory: VectorReplayBuffer|None = None,
             update_per_step: float = 1.0,
-            repeat_per_collect: float = 1000,
+            repeat_per_collect: int = 1000,
         ) -> None:
             
             self.policy = policy
@@ -67,19 +66,16 @@ class RLAgent(BaseAgent):
             # training mode is turned on only within context manager
             self.policy.eval()
         
-        def infer_act(self, obs_batch: Batch, exploration_noise: bool) -> np.ndarray:
+        @abstractmethod
+        def infer_act(self, obs_b_o: np.ndarray, mask_b: np.ndarray, exploration_noise: bool) -> np.ndarray:
             """
             Forward batch of observations through network.
 
-            :param obs_batch: Batch of observations. 
+            :param obs_b_o: Batch of observations. 
+            :param mask_b: Batch of action masks.
             :param exploration_noise: Exploration or not.
             :return: Batch of actions.
             """
-            with torch.no_grad():
-                act = self.policy(obs_batch).act
-                if exploration_noise:
-                    act = self.policy.exploration_noise(act, obs_batch)
-            return act
         
         @abstractmethod
         def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
@@ -87,7 +83,7 @@ class RLAgent(BaseAgent):
             Update policy.
 
             :param batch_size: Batch size.
-            :param num_collected_step: Number collected steps.
+            :param num_collected_steps: Number collected steps.
             :return: Number gradient steps.
             """  
 
@@ -99,7 +95,7 @@ class OffPolicyAgent(RLAgent):
         replay buffer to learn and repeats it several times.
 
         :param batch_size: Batch size.
-        :param num_collected_step: Number collected steps.
+        :param num_collected_steps: Number collected steps.
         :return: Number gradient steps.
         """
         num_gradient_steps = round(self.update_per_step * num_collected_steps)
@@ -111,10 +107,66 @@ class OffPolicyAgent(RLAgent):
         for _ in range(num_gradient_steps):
             self.policy.update(sample_size=batch_size, buffer=self.memory)
         return num_gradient_steps
+
+    def infer_act(self, obs_b_o: np.ndarray, mask_b: np.ndarray, exploration_noise: bool) -> np.ndarray:
+        """
+        Forward batch of observations through network.
+
+        :param obs_b_o: Batch of observations. 
+        :param mask_b: Batch of action masks.
+        :param exploration_noise: Exploration or not.
+        :return: Batch of actions.
+        """
+        obs_batch = Batch(obs=Batch(obs=obs_b_o, mask=mask_b), info=None)
+        with torch.no_grad():
+            act = self.policy(obs_batch).act
+            if exploration_noise:
+                act = self.policy.exploration_noise(act, obs_batch)
+        return act
     
     def get_action(self, obs: dict[str, np.ndarray]) -> int:
         mask = obs['action_mask'].reshape(1,-1)
         obs = obs['observation'].reshape(1, -1)
         with torch.no_grad():
             act = self.policy(Batch(obs=Batch(obs=obs, mask=mask), info=None)).act[0]
+        return act
+    
+class OnPolicyAgent(RLAgent):
+    def policy_update_fn(self, batch_size: int, num_collected_steps: int) -> int:
+        """
+        Perform one on-policy update by passing the entire buffer to the policy's update method.
+
+        :param batch_size: Batch size.
+        :param num_collected_steps: Number collected steps. Unused.
+        :return: Number gradient steps.
+        """
+        self.policy.update(
+            sample_size=0,
+            buffer=self.memory,
+            batch_size=batch_size,
+            repeat=self.repeat_per_collect,
+        )
+        num_gradient_steps = len(self.memory)//batch_size*self.repeat_per_collect
+        self.memory.reset(keep_statistics=True)
+
+        return num_gradient_steps
+    
+    def infer_act(self, obs_b_o: np.ndarray, mask_b: np.ndarray, exploration_noise: bool) -> np.ndarray:
+        """
+        Forward batch of observations through network.
+
+        :param obs_b_o: Batch of observations. 
+        :param mask_b: Batch of action masks. Unused.
+        :param exploration_noise: Exploration or not. Unused.
+        :return: Batch of actions.
+        """
+        obs_batch = Batch(obs=obs_b_o, info=None)
+        with torch.no_grad():
+            act = self.policy(obs_batch).act
+        return act
+
+    def get_action(self, obs: dict[str, np.ndarray]) -> int:
+        obs = obs['observation'].reshape(1, -1)
+        with torch.no_grad():
+            act = self.policy(Batch(obs=obs, info=None)).act[0]
         return act

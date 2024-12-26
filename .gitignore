@@ -154,6 +154,6 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-checkpoints
+checkpoints*
 evaluate.py
 *plot*

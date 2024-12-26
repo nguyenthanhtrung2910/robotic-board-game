@@ -88,6 +88,7 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         # add all robots to sprites group
         self.robot_sprites.add([robot for robot in self.robots.values()])
         
+        # TODO: separate player and robot index in tuple for centralized training
         self.agents = [robot_name for robot_name in self.robots.keys()]
         self.possible_agents = self.agents[:]
 
@@ -148,6 +149,7 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
                     ((CELL_SIZE[0] - images_for_cell_coordinate[i].get_width()) / 2,
                     (i + 1) * CELL_SIZE[1] +
                     (CELL_SIZE[1] - images_for_cell_coordinate[i].get_height()) / 2)) 
+            # TODO: display battery bar under robot image if agent observe pixels
             # draw baterry side identification for each robot
             images_for_baterry_bar = [
             pygame.font.SysFont(None, 24).render(str(i+1), True, (0, 0, 0))

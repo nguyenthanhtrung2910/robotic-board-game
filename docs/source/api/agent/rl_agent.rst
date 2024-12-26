@@ -12,3 +12,8 @@ rl_agent
     :members:
     :show-inheritance:
     :inherited-members:
+
+.. autoclass:: rbgame.agent.rl_agent.OnPolicyAgent
+    :members:
+    :show-inheritance:
+    :inherited-members:

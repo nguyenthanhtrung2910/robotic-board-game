@@ -95,14 +95,19 @@ class DecentralizedTrainer:
     def train(
             self, 
             agents: list[RLAgent], 
-            learning_mask: list|np.ndarray, 
-            plot: bool=True
+            learning_mask: list|np.ndarray,
+            exploration_mask: list|np.ndarray|None=None, 
+            plot: bool=True,
         ) -> dict[str, Any]:
         """
         Agents play together to learn.
 
         :param agents: :py:class:`list` of agents, which participate in game.
         :param learning_mask: A binary vector to define which agent need to learn.
+        :param exploration_mask: A binary vector to define how agent behaves within training.
+                                 Whether explore or not for off-policy agent 
+                                 and whether random sample or get mode for on-policy agent.
+                                 Default to :py:data:`None`, which mean all agents explore during training. 
         :param plot: Plot a graph of metric evolulation and save it. 
         :return: Training statistic.
         """
@@ -114,6 +119,9 @@ class DecentralizedTrainer:
         assert any(learning_mask), 'We need at least one learning agent.'
         assert self.num_agents == len(agents), f'Please provide number of agents is {self.num_agents}'
         assert self.num_agents == len(learning_mask), f'Please provide learning_mask size is {self.num_agents}'
+        if exploration_mask is None:
+            exploration_mask = np.ones_like(learning_mask, dtype=np.bool_)
+        assert self.num_agents == len(exploration_mask), f'Please provide exploration_mask size is {self.num_agents}'
         for agent_index, agent in enumerate(agents):
             if learning_mask[agent_index]:
                 assert agent.memory is not None, f'Learning agent {agent_index} must having a memory.'
@@ -155,9 +163,13 @@ class DecentralizedTrainer:
                     # policy generate action from right envs
                     obs_b_o = np.array([obs['observation'] for obs in obs_b])
                     action_mask_b = np.array([obs['action_mask'] for obs in obs_b])
-                    obs_batch_b = Batch(obs=Batch(obs=obs_b_o, mask=action_mask_b), info=None)
-                    # with policy_within_training_step(agent.policy):
-                    act_b = agent.infer_act(obs_batch_b, exploration_noise=True)
+                    if exploration_mask[agent_index]:
+                        # with policy_within_training_step(agent.policy):
+                        agent.policy.train()
+                        act_b = agent.infer_act(obs_b_o, action_mask_b, exploration_noise=True)
+                        agent.policy.eval()
+                    else:
+                        act_b = agent.infer_act(obs_b_o, action_mask_b, exploration_noise=False)
 
                     # step in the right envs
                     next_obs_b, rew_b, terminated_b, truncated_b, info_b = self.train_env.step(act_b, ids_b)
@@ -300,8 +312,7 @@ class DecentralizedTrainer:
                     # policy generate action from right envs
                     obs_b_o = np.array([obs['observation'] for obs in obs_b])
                     action_mask_b = np.array([obs['action_mask'] for obs in obs_b])
-                    obs_batch_b = Batch(obs=Batch(obs=obs_b_o, mask=action_mask_b), info=None)
-                    act_b = agent.infer_act(obs_batch_b, exploration_noise=False)
+                    act_b = agent.infer_act(obs_b_o, action_mask_b, exploration_noise=False)
 
                     # step in the right envs
                     _, rew_b, _, _, _ = self.test_env.step(act_b, ids_b)
