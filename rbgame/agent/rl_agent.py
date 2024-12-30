@@ -117,11 +117,16 @@ class OffPolicyAgent(RLAgent):
         :param exploration_noise: Exploration or not.
         :return: Batch of actions.
         """
-        obs_batch = Batch(obs=Batch(obs=obs_b_o, mask=mask_b), info=None)
-        with torch.no_grad():
-            act = self.policy(obs_batch).act
-            if exploration_noise:
-                act = self.policy.exploration_noise(act, obs_batch)
+        try:
+            obs_batch = Batch(obs=Batch(obs=obs_b_o, mask=mask_b), info=None)
+            with torch.no_grad():
+                act = self.policy(obs_batch).act
+        except:
+            obs_batch = Batch(obs=obs_b_o, info=None)
+            with torch.no_grad():
+                act = self.policy(obs_batch).act
+        if exploration_noise:
+            act = self.policy.exploration_noise(act, obs_batch)
         return act
     
     def get_action(self, obs: dict[str, np.ndarray]) -> int:
@@ -160,9 +165,14 @@ class OnPolicyAgent(RLAgent):
         :param exploration_noise: Exploration or not. Unused.
         :return: Batch of actions.
         """
-        obs_batch = Batch(obs=obs_b_o, info=None)
-        with torch.no_grad():
-            act = self.policy(obs_batch).act
+        try:
+            obs_batch = Batch(obs=Batch(obs=obs_b_o, mask=mask_b), info=None)
+            with torch.no_grad():
+                act = self.policy(obs_batch).act
+        except:
+            obs_batch = Batch(obs=obs_b_o, info=None)
+            with torch.no_grad():
+                act = self.policy(obs_batch).act
         return act
 
     def get_action(self, obs: dict[str, np.ndarray]) -> int:
