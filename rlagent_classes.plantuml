@@ -1,0 +1,28 @@
+@startuml classes
+set namespaceSeparator none
+class "BaseAgent" as rbgame.agent.base_agent.BaseAgent {
+  +{abstract}get_action(obs: dict[str, np.ndarray]) -> int
+}
+class "OffPolicyAgent" as rbgame.agent.rl_agent.OffPolicyAgent {
+  +get_action(obs: dict[str, np.ndarray]) -> int
+  +infer_act(obs_b_o: np.ndarray, mask_b: np.ndarray, \n exploration_noise: bool) -> np.ndarray
+  +policy_update_fn(batch_size: int, \n num_collected_steps: int) -> int
+}
+class "OnPolicyAgent" as rbgame.agent.rl_agent.OnPolicyAgent {
+  +get_action(obs: dict[str, np.ndarray]) -> int
+  +infer_act(obs_b_o: np.ndarray, mask_b: np.ndarray, \n exploration_noise: bool) -> np.ndarray
+  +policy_update_fn(batch_size: int, \n num_collected_steps: int) -> int
+}
+class "RLAgent" as rbgame.agent.rl_agent.RLAgent {
+  +memory : VectorReplayBuffer
+  +policy : BasePolicy
+  +repeat_per_collect : int
+  +update_per_step : float
+  +{abstract}infer_act(obs_b_o: np.ndarray, mask_b: np.ndarray, \n exploration_noise: bool) -> np.ndarray
+  +{abstract}policy_update_fn(batch_size: int, num_collected_steps: int) -> int
+}
+rbgame.agent.rl_agent.OffPolicyAgent --|> rbgame.agent.rl_agent.RLAgent
+rbgame.agent.rl_agent.OnPolicyAgent --|> rbgame.agent.rl_agent.RLAgent
+rbgame.agent.rl_agent.RLAgent --|> rbgame.agent.base_agent.BaseAgent
+@enduml
+

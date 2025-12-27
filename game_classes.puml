@@ -1,0 +1,138 @@
+@startuml
+set namespaceSeparator none
+class pygame.Sprite << (C,#4595e6) >>
+abstract class "gymnasium.Env" as gymnasium.core.Env 
+abstract class "pettingzoo.AECEnv" as pettingzoo.utils.env.AECEnv
+class "Robot" as rbgame.game.components.Robot {
+  +pos : Cell
+  +mail : Mail | None
+  +clock : Clock
+  +color : str
+  +index : int
+  +count_mail : int
+  +is_charged : bool
+  +log : bool
+  +with_battery : bool
+  +battery : int
+  +inner_battery : float
+  +mask : np.ndarray
+  +observation : np.ndarray
+  +image : pygame.Surface
+  +rect : pygame.Rect
+  +next_rect : pygame.Rect
+  +render_mode : str | None
+  +sprites_group : pygame.sprite.Group
+  +stand_times : int
+  +is_legal_move(action: int) -> bool
+  +stand() -> tuple[bool, float]
+  +move_down() -> tuple[bool, float]
+  +move_left() -> tuple[bool, float]
+  +move_right() -> tuple[bool, float]
+  +move_up() -> tuple[bool, float]
+  +pick_up() -> None
+  +drop_off() -> None
+  +charge() -> None
+  +reset(pos: Cell) -> None
+  +step(action: int) -> tuple[bool, float]
+}
+class "Cell" as rbgame.game.components.Cell {
+  +x : int 
+  +y : int
+  +color : str
+  +target : int
+  +robot : Robot | None
+  +mail : Mail | None
+  +neighbors : list[Cell]]
+  +back : Cell | None
+  +front : Cell | None
+  +left : Cell | None
+  +right : Cell | None
+  +draw(surface: pygame.Surface) -> None
+  +generate_mail(sprites_mail: pygame.sprite.Group, \nrender_mode: str | None) -> None
+}
+class "Mail" as rbgame.game.components.Mail {
+  +mail_number : int
+  +image : pygame.Surface
+  +rect : pygame.Rect
+}
+together{
+class "Clock" as rbgame.game.components.Clock {
+  +delta_t : float
+  +now : int
+  +reset() -> None
+  +up() -> None
+}
+class "Board" as rbgame.game.components.Board {
+  +cells : list[list[Cell]]
+  +size : int
+  +blue_cells : list[Cell]]
+  +green_cells : list[Cell]]
+  +red_cells : list[Cell]]
+  +white_cells : list[Cell]]
+  +yellow_cells : list[Cell]]
+  +reset() -> None
+}
+class "RoboticBoardGame" as rbgame.game.game.RoboticBoardGame {
+  +clock : pygame.Clock
+  +robot_sprites : pygame.sprite.Group
+  +mail_sprites: pygame.sprite.Group
+  +board : Board
+  +required_mail : int 
+  +robot_colors : list[str]
+  +max_step : int
+  +num_robots_per_player : int
+  +num_robots : int 
+  +with_battery : bool
+  +random_num_steps : bool
+  +steps_to_change_turn : int
+  +robots : dict[str, Robot]
+  +agents : list[str]
+  +agent_selection : int
+  +possible_agents : list[str]
+  +action_spaces : dict[str, spaces.Discrete]
+  +observation_spaces : dict[str, spaces.Dict]
+  +rewards : dict[str, float]
+  +terminations : dict[str, bool]
+  +truncations : dict[str, bool]
+  +infos : dict[str, Any]
+  +render_mode : str | None
+  +log : bool
+  +num_steps : int
+  +winner : str | None
+  +screen : pygame.Surface | None
+  +background : pygame.Surface
+  +game_clock : Clock
+  +metadata : dict
+  +previous_agent : str
+  +action_space(agent: str) -> spaces.Discrete
+  +close() -> None
+  +observation_space(agent: str) -> spaces.Dict
+  +observe(agent: str) -> dict[str, np.ndarray]
+  +render() -> None
+  +reset(seed: int | None, options: Any | None) \n-> tuple[dict[str, np.ndarray], dict[str, Any]]
+  +run(agents: list[BaseAgent]) -> tuple[str | None, int]
+  +step(action: int | None) -> tuple[dict[str, \nnp.ndarray], float, bool, bool, dict[str, Any]]
+  +sum_count_mail(color: str) -> int
+}
+enum "Action" as rbgame.game.components.Action {
+  +DO_NOTHING: 0 
+  +GO_AHEAD: 1 
+  +GO_BACK: 2 
+  +TURN_LEFT: 3 
+  +TURN_RIGHT: 4
+}
+}
+rbgame.game.components.Mail -|> pygame.Sprite :  Inheritance
+rbgame.game.components.Robot --|> pygame.Sprite : Inheritance
+rbgame.game.game.RoboticBoardGame --|> gymnasium.core.Env : Inheritance
+rbgame.game.game.RoboticBoardGame --|> pettingzoo.utils.env.AECEnv : Inheritance
+rbgame.game.components.Board *-- rbgame.game.components.Cell : Composition
+rbgame.game.components.Cell <-- rbgame.game.components.Robot : Association
+rbgame.game.components.Clock --o rbgame.game.components.Robot: Aggregation
+rbgame.game.components.Robot o-- rbgame.game.components.Mail : Aggregation
+rbgame.game.components.Cell o-- rbgame.game.components.Mail : Aggregation
+rbgame.game.components.Cell --> rbgame.game.components.Robot : Association
+rbgame.game.components.Robot --* rbgame.game.game.RoboticBoardGame: Composition
+rbgame.game.components.Board --* rbgame.game.game.RoboticBoardGame : Composition
+rbgame.game.components.Clock --* rbgame.game.game.RoboticBoardGame : Composition
+@enduml

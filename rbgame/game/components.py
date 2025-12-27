@@ -461,7 +461,7 @@ class Robot(pygame.sprite.Sprite):
         self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
             )
         if self.pos.color == 'gr':
             self.pick_up()
@@ -491,7 +491,7 @@ class Robot(pygame.sprite.Sprite):
         self.inner_battery -= BATTERY_PER_STEP if self.inner_battery > 2 else BATTERY_PER_STEP/2
         if self.log:
             log.info(
-                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go right to position ({self.pos.x},{self.pos.y})'
+                f'At t={self.clock.now:04} {COLOR2STR[self.color]:>5} robot {self.index} go left to position ({self.pos.x},{self.pos.y})'
             )
         if self.pos.color == 'gr':
             self.pick_up()

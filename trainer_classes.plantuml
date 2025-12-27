@@ -1,0 +1,24 @@
+@startuml classes
+set namespaceSeparator none
+class "DecentralizedTrainer" as rbgame.trainer.DecentralizedTrainer {
+  +batch_size : int
+  +train_env : DummyVectorEnv
+  +test_env : DummyVectorEnv
+  +update_freq : int
+  +test_freq : int
+  +episodes_per_test : int
+  +episodes_per_train : int
+  +train_fn : Callable[[int, int], None] | None
+  +test_fn : Callable[[int, int], None] | None
+  +save_best_fn : Callable[[int], None] | None
+  +save_last_fn : Callable[[], None] | None
+  +stop_fn : Callable[[float, int], bool]|None
+  +reward_metric : Callable[[np.ndarray], float]|None
+  +num_agents : int
+  +agent_names : list[str]
+  +plot_stats(episodes: list[int], rewards: list[float]) -> None
+  +test(agents: list[RLAgent], eval_metrics: bool) -> dict[str, Any]
+  +train(agents: list[RLAgent], learning_mask: list | np.ndarray, \n exploration_mask: list | np.ndarray | None, plot: bool) -> dict[str, Any]
+}
+rbgame.trainer.DecentralizedTrainer *-- DummyVectorEnv  : Composition
+@enduml

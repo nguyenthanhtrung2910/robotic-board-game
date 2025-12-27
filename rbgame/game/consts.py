@@ -12,15 +12,15 @@ ROBOT_COLORS = {
     'gr': '#8fce00',
     'b': '#2986cc',
     'p': '#6a329f',
-    'pi': '#c90076',
+    'l': '#c90076',
 }
 COLOR2STR = {
-    'r': 'Red',
-    'b': 'Blue',
-    'gr': 'Green',
-    'p': 'Purple',
-    'pi': 'Pink',
-    'o': 'Orange'
+    'r': 'R',
+    'b': 'B',
+    'gr': 'G',
+    'p': 'P',
+    'l': 'L',
+    'o': 'O'
 }
 CELL_SIZE = (48, 48)
 CELL_BATTERY_SIZE = (16, 16)

@@ -1,0 +1,57 @@
+@startuml
+set namespaceSeparator none
+together{
+class "Vertex" as rbgame.agent.astar_agent.Vertex {
+  +x : int
+  +y : int
+  +color : str
+  +target : int
+  +robot : LocalRobot | None
+  +mail : int
+  +back : Vertex|None
+  +front : Vertex|None
+  +left : Vertex|None
+  +right : Vertex|None
+  +neighbors : list[Vertex]
+  +is_blocked : bool
+}
+class "LocalRobot" as rbgame.agent.astar_agent.LocalRobot {
+  +pos : Vertex
+  +battery : int
+  +mail : int
+  +dest : Vextex
+  +is_charged : bool
+  +set_destination(board: Graph, \nblocked: list[Vertex]) -> None
+}
+}
+interface "BaseAgent" as rbgame.agent.base_agent.BaseAgent {
+  {abstract}get_action(obs: dict[str, np.ndarray]) -> int
+}
+together{
+class "Graph" as rbgame.agent.astar_agent.Graph {
+  +size : int
+  +vertices : list[list[Vertex]]
+  +blue_vertices : list[Vertex] 
+  +green_vertices : list[Vertex]
+  +red_vertices : list[Vertex]
+  +white_vertecies : list[Vertex]
+  +yellow_vertices : list[Vertex]
+  +cannot_step : list[Vertex]
+  +a_star_search(start: Vertex, goal: Vertex) -> list[Vertex]
+  +heuristic(a: Vertex, b: Vertex) -> float
+}
+class "AStarAgent" as rbgame.agent.astar_agent.AStarAgent {
+  +graph : Graph
+  +num_robots : int
+  +robots : list[LocalRobot]
+  +max_values_for_robot_attrs : list[int]
+  +get_action(obs: dict[str, np.ndarray]) -> int
+}
+}
+rbgame.agent.astar_agent.AStarAgent --|> rbgame.agent.base_agent.BaseAgent : Inheritance
+rbgame.agent.astar_agent.Graph --* rbgame.agent.astar_agent.AStarAgent : Composition
+rbgame.agent.astar_agent.LocalRobot -* rbgame.agent.astar_agent.AStarAgent : Composition
+rbgame.agent.astar_agent.Vertex -* rbgame.agent.astar_agent.Graph : Composition
+rbgame.agent.astar_agent.Vertex --> rbgame.agent.astar_agent.LocalRobot : Association
+rbgame.agent.astar_agent.Vertex <-- rbgame.agent.astar_agent.LocalRobot : Association
+@enduml

@@ -440,6 +440,10 @@ class RoboticBoardGame(gymnasium.Env, pettingzoo.AECEnv):
         """
         assert len(agents) == len(self.agents)
         self.reset()
+        if self.log:
+            log.info(f'At t={self.game_clock.now:04} game starts with {self.num_robots_per_player} number robots per player and {len(self.robot_colors)} players')
+            for robot in self.robots.values():
+                log.info(f'At t={self.game_clock.now:04} {COLOR2STR[robot.color]:>5} robot {robot.index} in position [{robot.pos.x},{robot.pos.y}]')
         if any(agent is None for agent in agents) and self.render_mode is None:
             raise ValueError("Person-player can't play without rendering animation")
         agents: dict[str, BaseAgent] = {name: a for name, a in zip(self.agents, agents)}
